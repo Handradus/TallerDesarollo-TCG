@@ -1,4 +1,6 @@
 # TallerDesarollo-TCG
 Scrapper para singles de Pokémon TCG
 
--Arquitectura: Javascript.
+-Arquitectura: 
+*Backend:Javascript.
+*Frontend: Por definir.
