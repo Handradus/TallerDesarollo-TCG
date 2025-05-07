@@ -25,7 +25,7 @@ function App() {
           Edit <code>src/App.jsx</code> and save to test HMR
         </p>
         <p>
-          Esto es un test de cambio
+          Esto es un test de cambio desde main, con la branch en page gh-pages
         </p>
       </div>
       <p className="read-the-docs">
