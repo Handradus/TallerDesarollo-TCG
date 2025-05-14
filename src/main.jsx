@@ -6,7 +6,7 @@ import App from './App.jsx'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
-   <title>Hola esto es un cambio</title>
+   <title>Portafolius</title>
     
   </StrictMode>,
 )
