@@ -4,7 +4,9 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
- 
+  <p>
+    Esto es un test de cambio desde main, con la branch en page gh-pages
+  </p>
 }
 
 export default App
