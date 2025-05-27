@@ -8,7 +8,9 @@ function App() {
   return (
     <div className="layout">
       <aside className="sidebar">
-        <img src="https://via.placeholder.com/150" alt="Foto de perfil" />
+        <img src={`${import.meta.env.BASE_URL}tan_yo_perfil.jpg`} alt="Foto de perfil" />
+
+
         <h3>Humberto Andrades Daza</h3>
         <p>Desarrollador Web</p>
         <ul>

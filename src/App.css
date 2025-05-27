@@ -1,60 +1,111 @@
-/* src/App.css */
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f0f0f0;
-  color: #333;
+  padding: 0;
+  background-color: #6d6a6a;
+  font-family: sans-serif;
 }
 
 .layout {
-  display: block;
-  margin: 2rem auto;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* usa center si quieres centro vertical también */
+  padding: 20px;
+   margin-left: 100px; 
 }
 
 .sidebar {
-  background: #222;
-  color: white;
-  padding: 2rem;
-  width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 
-.sidebar img {
-  border-radius: 50%;
-  width: 120px;
-  height: 120px;
-}
-
-.sidebar a {
-  color: #61dafb;
-  text-decoration: none;
-}
-
-.main-content {
-  flex: 1;
-  padding: 2rem;
-}
-
-.main-content a {
-  color: #007acc;
-}
-
-.main-content a:hover {
-  text-decoration: underline;
-}
-
-ul {
+.sidebar ul {
   list-style: none;
   padding: 0;
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
 }
 
-li {
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  background: #f9f9f9;
-  border-left: 4px solid #007acc;
+.sidebar ul li a {
+  display: inline-block;
+  width: 150px;
+  padding: 10px;
+  background-color: rgb(238, 235, 235);
+  border: 2px solid #00bfff;
+  color: #00bfff;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
 }
+
+.sidebar ul li a:hover {
+  background-color: #00bfff;
+  color: rgb(202, 89, 89);
+}
+
+.foto-perfil {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border: 3px solid white;
+}
+.repo-details {
+  background: #f9f9f9;
+  border-left: 4px solid #00bfff;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.repo-details summary {
+  list-style: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.summary-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  color: #00bfff;
+}
+
+.arrow {
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+
