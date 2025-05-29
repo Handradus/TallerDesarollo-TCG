@@ -5,18 +5,18 @@ function App() {
   const [cartas, setCartas] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const buscarCartas = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`http://localhost:3000/api/cartas?nombre=${nombre}`);
-      const data = await res.json();
-      setCartas(data);
-    } catch (err) {
-      console.error('Error al buscar cartas:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const buscarCartas = async () => {
+  setLoading(true);
+  try {
+    const res = await fetch(`http://localhost:3000/api/cartas?nombre=${encodeURIComponent(nombre)}`);
+    const data = await res.json();
+    setCartas(data);
+  } catch (err) {
+    console.error('Error al buscar cartas:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial' }}>
@@ -25,7 +25,7 @@ function App() {
         type="text"
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
-        placeholder="Ej: Pikachu"
+        placeholder="Ej: Pikachu o 6/12"
       />
       <button onClick={buscarCartas} style={{ marginLeft: '1rem' }}>
         Buscar

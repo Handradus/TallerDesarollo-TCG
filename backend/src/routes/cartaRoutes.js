@@ -1,27 +1,34 @@
 const express = require('express');
 const router = express.Router();
 const { AppDataSource } = require('../data-source');
-const { buscarCartasPorNombre } = require('../services/pokemonTCGService');
+const { buscarCarta } = require('../services/pokemonTCGService');
 const { ILike } = require('typeorm');
 
 const cartaRepo = AppDataSource.getRepository('Carta');
 
 router.get('/', async (req, res) => {
   const nombre = req.query.nombre;
+  console.log(`🟢 Llegó una búsqueda a /api/cartas con input: "${nombre}"`);
 
   if (!nombre) return res.status(400).json({ error: 'Falta el parámetro ?nombre=' });
 
   try {
-    let cartas = await cartaRepo.find({
-      where: { nombre: ILike(`%${nombre}%`) },
+    // 1. Buscar en la BD
+    const cartasBD = await cartaRepo.find({
+      where: [
+        { nombre: ILike(`%${nombre}%`) },
+        { numero: nombre.toUpperCase() }
+      ],
       order: { id: 'ASC' },
     });
 
-    if (cartas.length === 0) {
-      const cartasAPI = await buscarCartasPorNombre(nombre);
-      const cartasGuardadas = [];
+    // 2. Buscar en la API siempre
+    const cartasAPI = await buscarCarta(nombre);
+    const nuevasCartas = [];
 
-      for (const carta of cartasAPI) {
+    for (const carta of cartasAPI) {
+      const yaExiste = await cartaRepo.findOneBy({ numero: carta.number, setId: carta.set.id });
+      if (!yaExiste) {
         const nueva = cartaRepo.create({
           nombre: carta.name,
           numero: carta.number,
@@ -47,21 +54,33 @@ router.get('/', async (req, res) => {
           imagenGrande: carta.images?.large || null,
           precioNormal: carta.tcgplayer?.prices?.normal?.market || null,
           precioHolofoil: carta.tcgplayer?.prices?.holofoil?.market || null,
+          printedTotal: carta.set?.printedTotal || null,
         });
 
         const guardada = await cartaRepo.save(nueva);
-        cartasGuardadas.push(guardada);
+        nuevasCartas.push(guardada);
       }
-
-      cartas = cartasGuardadas;
     }
 
-    res.json(cartas);
+    const resultadoFinal = [...cartasBD, ...nuevasCartas];
+
+    if (cartasBD.length > 0) {
+      console.log(`📦 Se encontraron ${cartasBD.length} cartas en la base de datos`);
+    }
+
+    if (nuevasCartas.length > 0) {
+      console.log(`🌐 Se agregaron ${nuevasCartas.length} cartas nuevas desde la API`);
+    }
+
+    if (resultadoFinal.length === 0) {
+      console.log('⚠️ No se encontraron cartas ni en la BD ni en la API');
+    }
+
+    res.json(resultadoFinal);
   } catch (err) {
     console.error('❌ Error al procesar /api/cartas:', err.message);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
-
 
 module.exports = router;

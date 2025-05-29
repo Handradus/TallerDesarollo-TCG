@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# Node backend
+/backend/node_modules/
+/backend/.env
+/backend/*.log
+
+# Frontend Vite React
+/frontend/node_modules/
+/frontend/.env
+/frontend/dist/
+/frontend/.vite/
