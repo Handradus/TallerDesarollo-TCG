@@ -162,10 +162,18 @@ async function buscarCarta(input) {
       }
     }
 
+    let totalBD = cartasBD.length;
+    let totalAPI = cartasAPI.length;
+    let totalNuevas = nuevasCartas.length;
+
+    // Al final, antes de return:
+    console.log(`📊 Resultados - BD: ${totalBD}, API: ${totalAPI}, Nuevas agregadas: ${totalNuevas}`);
+
     return [...mapaBD.values()];
 
   } catch (error) {
     console.error('❌ Error al buscar carta:', error.message);
+    
     return [];
   }
 }
