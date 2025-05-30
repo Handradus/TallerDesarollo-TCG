@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './App.css'; // Asegúrate de tener un archivo CSS para estilos básicos 
+import './App.css'; 
 
 function App() {
   const [nombre, setNombre] = useState('');
