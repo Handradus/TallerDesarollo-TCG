@@ -13,6 +13,7 @@ module.exports = new EntitySchema({
     numero: { type: 'varchar' },
     set: { type: 'varchar' },
     setId: { type: 'varchar', nullable: true },
+    printedTotal: { type: 'int', nullable: true },
     serie: { type: 'varchar', nullable: true },
     fechaLanzamiento: { type: 'date', nullable: true },
     supertipo: { type: 'varchar', nullable: true },
