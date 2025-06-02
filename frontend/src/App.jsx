@@ -5,11 +5,12 @@ function App() {
   const [nombre, setNombre] = useState('');
   const [cartas, setCartas] = useState([]);
   const [loading, setLoading] = useState(false);
+  const apiUrl = import.meta.env.VITE_API_URL;
 
 const buscarCartas = async () => {
   setLoading(true);
   try {
-    const res = await fetch(`http://localhost:3000/api/cartas?nombre=${encodeURIComponent(nombre)}`);
+    const res = await fetch(`${apiUrl}/cartas?nombre=${encodeURIComponent(nombre)}`);
     const data = await res.json();
     setCartas(data);
   } catch (err) {
