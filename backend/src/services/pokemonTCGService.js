@@ -12,168 +12,128 @@ async function buscarCarta(input) {
   try {
     const cartaRepo = AppDataSource.getRepository(Carta);
 
-    function crearQueryAPI(input) {
-      if (/^\d{1,3}\/\d{1,3}$/.test(input)) {
-        const [num] = input.split('/');
-        return `number:${num}`;
-      }
-      if (/^([a-z]{2,4})(\d{3})$/i.test(input)) {
-        return `number:${input.toUpperCase()}`;
-      }
-      if (/^\d{1,3}$/.test(input)) {
-        return `number:${input}`;
-      }
-      return `name:${input}`;
-    }
-
     // Variables para BD y API resultados
     let cartasBD = [];
-    const matchFraccion = input.match(/^(\d{1,3})\/(\d{1,3})$/);
-    const matchCodigoPromo = input.match(/^([a-z]{2,4})(\d{3})$/i);
+    
+    // 1. Primero busca en la base de datos según el tipo de input
+    console.log(`Buscando por: ${input}`);  // Muestra el parámetro que se está buscando
 
+    // Si el input es una fracción
+    const matchFraccion = input.match(/^(\d{1,3})\/(\d{1,3})$/);
     if (matchFraccion) {
-      // Si input es fracción, filtrar BD por número y printedTotal
       const numero = matchFraccion[1];
       const printedTotal = parseInt(matchFraccion[2]);
 
+      console.log('Buscando fracción:', numero, 'con printedTotal:', printedTotal);
+
       cartasBD = await cartaRepo.find({ where: { numero, printedTotal } });
 
-      // Buscar en API solo por número
-      const queryAPI = `number:${numero}`;
+      if (cartasBD.length > 0) {
+        console.log('Fracción encontrada en BD.');
+      } else {
+        console.log('No encontrado en BD, buscando en API...');
+      }
+
+    } 
+    // Si el input es un código promocional
+    else if (/^([a-z]{2,6})(\d{2,6})$/i.test(input)) {
+      const fullNumber = input.toUpperCase().trim();
+      console.log('Buscando código promocional:', fullNumber);
+
+      cartasBD = await cartaRepo.find({ where: { numero: ILike(fullNumber) } });
+
+      if (cartasBD.length > 0) {
+        console.log('Código promocional encontrado en BD.');
+      } else {
+        console.log('No encontrado en BD, buscando en API...');
+      }
+    } 
+    // Si el input es un número puro
+    else if (/^\d{1,3}$/.test(input)) {
+      console.log('Buscando número puro:', input);
+      cartasBD = await cartaRepo.find({ where: { numero: input } });
+
+      if (cartasBD.length > 0) {
+        console.log('Número encontrado en BD.');
+      } else {
+        console.log('No encontrado en BD, buscando en API...');
+      }
+    } 
+    // Si el input no es fracción ni código promocional ni número, se busca por nombre
+    else {
+      console.log('Buscando por nombre:', input);
+      cartasBD = await cartaRepo.find({ where: { nombre: ILike(`%${input}%`) } });
+
+      if (cartasBD.length > 0) {
+        console.log('Nombre encontrado en BD.');
+      } else {
+        console.log('No encontrado en BD, buscando en API...');
+      }
+    }
+
+    // 2. Si no se encontró en la base de datos, buscar en la API
+    if (cartasBD.length === 0) {
+      const queryAPI = input.match(/^(\d{1,3})\/(\d{1,3})$/) ? `number:${matchFraccion[1]}` :
+                        /([a-z]{2,6})(\d{2,6})/i.test(input) ? `number:${input.toUpperCase()}` :
+                        /^\d{1,3}$/.test(input) ? `number:${input}` :
+                        `name:${input}`;
+
       const resFull = await axios.get(
         `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
         { headers }
       );
 
-      let cartasAPI = resFull.data.data || [];
+      const cartasAPI = resFull.data.data || [];
+      
+      // 3. Si la carta se encuentra en la API pero no está en la base de datos, se agrega a la base de datos
+      if (cartasAPI.length > 0) {
+        const cartaAPI = cartasAPI[0]; // Tomamos el primer resultado de la API
 
-      // Filtrar API para que coincida printedTotal exacto
-      cartasAPI = cartasAPI.filter(carta => carta.set?.printedTotal === printedTotal);
-
-      // Crear mapas para comparación
-      const mapaBD = new Map();
-      cartasBD.forEach(carta => mapaBD.set(`${carta.numero.toUpperCase()}_${carta.setId || ''}`, carta));
-      const mapaAPI = new Map();
-      cartasAPI.forEach(carta => mapaAPI.set(`${carta.number.toUpperCase()}_${carta.set?.id || ''}`, carta));
-
-      // Detectar cartas que están en API pero no en BD
-      const nuevasCartas = [];
-      for (const [key, cartaAPI] of mapaAPI.entries()) {
-        if (!mapaBD.has(key)) {
-          const nueva = cartaRepo.create({
-            nombre: cartaAPI.name,
-            numero: cartaAPI.number.toUpperCase(),
-            set: cartaAPI.set?.name || null,
-            setId: cartaAPI.set?.id || null,
-            serie: cartaAPI.set?.series || null,
-            fechaLanzamiento: cartaAPI.set?.releaseDate || null,
-            supertipo: cartaAPI.supertype || null,
-            subtipos: cartaAPI.subtypes || null,
-            nivel: cartaAPI.level || null,
-            hp: cartaAPI.hp || null,
-            tipos: cartaAPI.types || null,
-            evolucionaA: cartaAPI.evolvesTo || null,
-            retreatCost: cartaAPI.retreatCost || null,
-            debilidades: cartaAPI.weaknesses || null,
-            ataques: cartaAPI.attacks || null,
-            reglas: cartaAPI.rules || null,
-            rareza: cartaAPI.rarity || null,
-            ilustrador: cartaAPI.artist || null,
-            flavorText: cartaAPI.flavorText || null,
-            pokedexIds: cartaAPI.nationalPokedexNumbers || null,
-            imagenPequena: cartaAPI.images?.small || null,
-            imagenGrande: cartaAPI.images?.large || null,
-            precioNormal: cartaAPI.tcgplayer?.prices?.normal?.market || null,
-            precioHolofoil: cartaAPI.tcgplayer?.prices?.holofoil?.market || null,
-            printedTotal: cartaAPI.set?.printedTotal || null,
-          });
-          const guardada = await cartaRepo.save(nueva);
-          nuevasCartas.push(guardada);
-          mapaBD.set(key, guardada);
-        }
-      }
-
-      // Si hay cartas nuevas, devuelve unión; sino solo BD
-      if (nuevasCartas.length > 0) {
-        return [...mapaBD.values()];
-      } else {
-        return cartasBD;
-      }
-
-    } else if (matchCodigoPromo) {
-      const fullNumber = input.toUpperCase();
-      cartasBD = await cartaRepo.find({ where: { numero: fullNumber } });
-    } else if (/^\d{1,3}$/.test(input)) {
-      cartasBD = await cartaRepo.find({ where: { numero: input } });
-    } else {
-      cartasBD = await cartaRepo.find({ where: { nombre: ILike(`%${input}%`) } });
-    }
-
-    // Para los demás casos, sincroniza siempre la API con BD igual que antes
-    const queryAPI = crearQueryAPI(input);
-    const resFull = await axios.get(
-      `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
-      { headers }
-    );
-    const cartasAPI = resFull.data.data || [];
-
-    // Mapa para cartas BD existentes
-    const mapaBD = new Map();
-    cartasBD.forEach(carta => {
-      const key = `${carta.numero.toUpperCase()}_${carta.setId || ''}`;
-      mapaBD.set(key, carta);
-    });
-
-    const nuevasCartas = [];
-
-    for (const carta of cartasAPI) {
-      const key = `${carta.number.toUpperCase()}_${carta.set?.id || ''}`;
-      if (!mapaBD.has(key)) {
         const nueva = cartaRepo.create({
-          nombre: carta.name,
-          numero: carta.number.toUpperCase(),
-          set: carta.set?.name || null,
-          setId: carta.set?.id || null,
-          serie: carta.set?.series || null,
-          fechaLanzamiento: carta.set?.releaseDate || null,
-          supertipo: carta.supertype || null,
-          subtipos: carta.subtypes || null,
-          nivel: carta.level || null,
-          hp: carta.hp || null,
-          tipos: carta.types || null,
-          evolucionaA: carta.evolvesTo || null,
-          retreatCost: carta.retreatCost || null,
-          debilidades: carta.weaknesses || null,
-          ataques: carta.attacks || null,
-          reglas: carta.rules || null,
-          rareza: carta.rarity || null,
-          ilustrador: carta.artist || null,
-          flavorText: carta.flavorText || null,
-          pokedexIds: carta.nationalPokedexNumbers || null,
-          imagenPequena: carta.images?.small || null,
-          imagenGrande: carta.images?.large || null,
-          precioNormal: carta.tcgplayer?.prices?.normal?.market || null,
-          precioHolofoil: carta.tcgplayer?.prices?.holofoil?.market || null,
-          printedTotal: carta.set?.printedTotal || null,
+          nombre: cartaAPI.name,
+          numero: cartaAPI.number.toUpperCase(),
+          set: cartaAPI.set?.name || null,
+          setId: cartaAPI.set?.id || null,
+          serie: cartaAPI.set?.series || null,
+          fechaLanzamiento: cartaAPI.set?.releaseDate || null,
+          supertipo: cartaAPI.supertype || null,
+          subtipos: cartaAPI.subtypes || null,
+          nivel: cartaAPI.level || null,
+          hp: cartaAPI.hp || null,
+          tipos: cartaAPI.types || null,
+          evolucionaA: cartaAPI.evolvesTo || null,
+          retreatCost: cartaAPI.retreatCost || null,
+          debilidades: cartaAPI.weaknesses || null,
+          ataques: cartaAPI.attacks || null,
+          reglas: cartaAPI.rules || null,
+          rareza: cartaAPI.rarity || null,
+          ilustrador: cartaAPI.artist || null,
+          flavorText: cartaAPI.flavorText || null,
+          pokedexIds: cartaAPI.nationalPokedexNumbers || null,
+          imagenPequena: cartaAPI.images?.small || null,
+          imagenGrande: cartaAPI.images?.large || null,
+          precioNormal: cartaAPI.tcgplayer?.prices?.normal?.market || null,
+          precioHolofoil: cartaAPI.tcgplayer?.prices?.holofoil?.market || null,
+          printedTotal: cartaAPI.set?.printedTotal || null,
         });
+        
         const guardada = await cartaRepo.save(nueva);
-        nuevasCartas.push(guardada);
-        mapaBD.set(key, guardada);
+        cartasBD.push(guardada); // Agregar la nueva carta a las cartas encontradas
+        console.log('Carta agregada a la base de datos.');
       }
     }
 
-    let totalBD = cartasBD.length;
-    let totalAPI = cartasAPI.length;
-    let totalNuevas = nuevasCartas.length;
+    // Mensaje final indicando si se encontraron cartas en BD o si fueron agregadas desde la API
+    if (cartasBD.length === 0) {
+      console.log('No se encontró ninguna carta en BD ni en la API.');
+    } else {
+      console.log(`Se encontraron ${cartasBD.length} cartas en total.`);
+    }
 
-    // Al final, antes de return:
-    console.log(`📊 Resultados - BD: ${totalBD}, API: ${totalAPI}, Nuevas agregadas: ${totalNuevas}`);
-
-    return [...mapaBD.values()];
+    return cartasBD;  // Devuelve las cartas encontradas (ya sea de la BD o de la API)
 
   } catch (error) {
     console.error('❌ Error al buscar carta:', error.message);
-    
     return [];
   }
 }
