@@ -2,6 +2,8 @@ const express = require('express');
 const { AppDataSource } = require('./data-source');
 require('dotenv').config();
 
+
+
 const cartaRoutes = require('./routes/cartaRoutes');
 const cors = require('cors');
 
@@ -18,6 +20,8 @@ AppDataSource.initialize()
 
     // Rutas
     app.use('/api/cartas', cartaRoutes);
+   
+
     
 
     app.listen(PORT, HOST, () => {

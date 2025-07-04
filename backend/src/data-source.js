@@ -2,6 +2,7 @@ const { DataSource } = require('typeorm');
 require('dotenv').config();
 
 const Carta = require('./entities/Carta'); // ← sin destructuración
+const ConsultaAPI = require('./entities/ConsultaAPI');
 
 const AppDataSource = new DataSource({
   type: 'postgres',
@@ -12,7 +13,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: true,
   logging: true,
-  entities: [Carta], // ← arreglo de entidades reales, no strings
+  entities: [Carta,ConsultaAPI], // ← arreglo de entidades reales, no strings
 });
 
 module.exports = { AppDataSource };

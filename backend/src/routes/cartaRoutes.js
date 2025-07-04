@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { AppDataSource } = require('../data-source');
 const { buscarCarta } = require('../services/pokemonTCGService');
+const { obtenerCartaDetalle } = require('../controllers/cartas.controller');
+const { obtenerTiendasCarta } = require('../controllers/verificarTiendas');
+
+
 
 router.get('/', async (req, res) => {
   const nombreRaw = req.query.nombre;
@@ -31,5 +35,13 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
+
+router.get('/:id/tiendas', obtenerTiendasCarta);
+
+
+router.get('/:id', obtenerCartaDetalle);
+
+
+
 
 module.exports = router;
