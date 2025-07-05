@@ -3,7 +3,7 @@ const router = express.Router();
 const { AppDataSource } = require('../data-source');
 const { buscarCarta } = require('../services/pokemonTCGService');
 const { obtenerCartaDetalle } = require('../controllers/cartas.controller');
-const { obtenerTiendasCarta } = require('../controllers/verificarTiendas');
+const { obtenerTiendas } = require('../controllers/verificarTiendas');
 
 
 
@@ -36,12 +36,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id/tiendas', obtenerTiendasCarta);
-
 
 router.get('/:id', obtenerCartaDetalle);
-
-
+router.get('/:id/tiendas', obtenerTiendas);
 
 
 module.exports = router;

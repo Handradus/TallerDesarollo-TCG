@@ -4,38 +4,40 @@ import { useEffect, useState } from "react";
 
 export default function CartaDetalle() {
   const { id } = useParams();
-  const [carta, setCarta] = useState({}); // ⚠️ Estado inicial vacío
+  const [carta, setCarta] = useState({});
   const [mostrarModal, setMostrarModal] = useState(false);
   const [cargandoTiendas, setCargandoTiendas] = useState(false);
+  const [hasFetchedTiendas, setHasFetchedTiendas] = useState(false); // 🆕 Nuevo estado
   const apiUrl = import.meta.env.VITE_API_URL;
 
   // Cargar datos de la carta
   useEffect(() => {
     fetch(`${apiUrl}/cartas/${id}`)
       .then(res => res.json())
-      .then(data => setCarta(data))
+      .then(data => {
+        setCarta(data);
+        setHasFetchedTiendas(false); // 🆕 Reiniciar bandera al cambiar carta
+      })
       .catch(err => console.error("❌ Error al obtener carta:", err));
   }, [id]);
 
-  // Cargar datos de tiendas
+  // Cargar datos de tiendas solo una vez
   useEffect(() => {
-    if (carta && Object.keys(carta).length > 0 && !carta.tiendasDisponibles) {
+    if (!hasFetchedTiendas && carta && carta.id) {
       setCargandoTiendas(true);
       fetch(`${apiUrl}/cartas/${id}/tiendas`)
         .then(res => res.json())
         .then(tiendas => {
-          setCarta(prev => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              tiendasDisponibles: tiendas
-            };
-          });
+          setCarta(prev => ({
+            ...prev,
+            tiendasDisponibles: tiendas
+          }));
+          setHasFetchedTiendas(true); // 🆕 Marcar como ya buscado
         })
         .catch(err => console.error("❌ Error al obtener tiendas:", err))
         .finally(() => setCargandoTiendas(false));
     }
-  }, [carta]);
+  }, [carta, hasFetchedTiendas, id]);
 
   if (!carta || !carta.nombre) {
     return <p style={{ color: "white" }}>Cargando carta...</p>;
@@ -67,30 +69,22 @@ export default function CartaDetalle() {
         <div className="detalle-tiendas">
           <h3>Disponibilidad en tiendas:</h3>
           <ul>
-            {carta.tiendasDisponibles.levelup && (
-              <li>
-                <a href={carta.tiendasDisponibles.levelup.url} target="_blank" rel="noopener noreferrer">
-                  LevelUp 🛒
-                </a>{" "}
-                {carta.tiendasDisponibles.levelup.verificada ? "✅ Verificada" : "⚠️ No verificada"}
+            {Object.entries(carta.tiendasDisponibles).map(([nombreTienda, info]) => (
+              <li key={nombreTienda}>
+                {info.url ? (
+                  <>
+                    <a href={info.url} target="_blank" rel="noopener noreferrer">
+                      {nombreTienda} 🛒
+                    </a>{" "}
+                    {info.verificada ? "✅ Verificada" : "⚠️ No verificada"}
+                  </>
+                ) : (
+                  <>
+                    {nombreTienda} ❌ Sin stock
+                  </>
+                )}
               </li>
-            )}
-            {carta.tiendasDisponibles.gameofmagic && (
-              <li>
-                <a href={carta.tiendasDisponibles.gameofmagic.url} target="_blank" rel="noopener noreferrer">
-                  Game of Magic 🛒
-                </a>{" "}
-                {carta.tiendasDisponibles.gameofmagic.verificada ? "✅ Verificada" : "⚠️ No verificada"}
-              </li>
-            )}
-            {carta.tiendasDisponibles.huntercard && (
-              <li>
-                <a href={carta.tiendasDisponibles.huntercard.url} target="_blank" rel="noopener noreferrer">
-                  HunterCard 🛒
-                </a>{" "}
-                {carta.tiendasDisponibles.huntercard.verificada ? "✅ Verificada" : "⚠️ No verificada"}
-              </li>
-            )}
+            ))}
           </ul>
         </div>
       )}

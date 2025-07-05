@@ -1,5 +1,4 @@
 const { AppDataSource } = require('../data-source');
-const { generarURLsValidas } = require('../helpers/verificarTiendas');
 const Carta = require('../entities/Carta'); // 👈 agrega esta línea
 
 async function obtenerCartaDetalle(req, res) {

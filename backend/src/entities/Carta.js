@@ -36,4 +36,12 @@ module.exports = new EntitySchema({
     precioHolofoil: { type: 'decimal', nullable: true },
     fechaCreacion: { type: 'timestamp', createDate: true },
   },
+  relations: {
+  links: {
+    type: 'one-to-many',
+    target: 'CartaLink',
+    inverseSide: 'carta',
+  },
+}
+
 });
