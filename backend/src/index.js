@@ -1,6 +1,9 @@
 const express = require('express');
 const { AppDataSource } = require('./data-source');
+const { seedTiendas } = require('./scripts/seedTiendas');
 require('dotenv').config();
+
+
 
 const cartaRoutes = require('./routes/cartaRoutes');
 const cors = require('cors');
@@ -13,17 +16,20 @@ const HOST = process.env.HOST || '0.0.0.0';
 const PORT = process.env.PORT || 3000;
 
 AppDataSource.initialize()
-  .then(() => {
+  .then(async () => { // <- esta línea se corrige
     console.log('📦 Conectado a PostgreSQL correctamente');
+
+    await seedTiendas(); // ahora puedes usar await sin error
 
     // Rutas
     app.use('/api/cartas', cartaRoutes);
     
 
     app.listen(PORT, HOST, () => {
-  console.log(`🚀 Servidor escuchando en http://${HOST}:${PORT}`);
-  });
+      console.log(`🚀 Servidor escuchando en http://${HOST}:${PORT}`);
+    });
   })
   .catch((error) => {
     console.error('❌ Error al conectar con la base de datos:', error);
   });
+

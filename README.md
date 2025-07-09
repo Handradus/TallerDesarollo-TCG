@@ -13,6 +13,7 @@ Este proyecto permite buscar cartas Pokémon por nombre o número de serie, acce
 - cors  
 - jsonwebtoken
 - axios
+- Cheerio
 
 ### Frontend (React)
 

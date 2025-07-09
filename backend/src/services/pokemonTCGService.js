@@ -1,7 +1,8 @@
 const axios = require('axios');
-const { AppDataSource } = require('../data-source'); 
-const Carta = require('../entities/Carta'); 
-const { ILike } = require('typeorm');
+const { AppDataSource } = require('../data-source');
+const Carta = require('../entities/Carta');
+const ConsultaAPI = require('../entities/ConsultaAPI');
+const { ILike, Brackets } = require('typeorm');
 require('dotenv').config();
 
 async function buscarCarta(input) {
@@ -11,169 +12,242 @@ async function buscarCarta(input) {
 
   try {
     const cartaRepo = AppDataSource.getRepository(Carta);
+    const consultaRepo = AppDataSource.getRepository('ConsultaAPI');
+    const inputOriginal = input.trim();
+    const palabras = inputOriginal.split(/\s+/);
+    const posiblesNumeros = palabras.filter(p => /^\d{1,3}(\/\d{1,3})?$/.test(p));
+    const posiblesNombre = palabras.filter(p => !/^\d{1,3}(\/\d{1,3})?$/.test(p)).join(' ');
 
-    function crearQueryAPI(input) {
-      if (/^\d{1,3}\/\d{1,3}$/.test(input)) {
-        const [num] = input.split('/');
-        return `number:${num}`;
-      }
-      if (/^([a-z]{2,4})(\d{3})$/i.test(input)) {
-        return `number:${input.toUpperCase()}`;
-      }
-      if (/^\d{1,3}$/.test(input)) {
-        return `number:${input}`;
-      }
-      return `name:${input}`;
-    }
-
-    // Variables para BD y API resultados
     let cartasBD = [];
-    const matchFraccion = input.match(/^(\d{1,3})\/(\d{1,3})$/);
-    const matchCodigoPromo = input.match(/^([a-z]{2,4})(\d{3})$/i);
+    console.log(`🔍 Buscando por: "${inputOriginal}"`);
 
+    const hoy = new Date().toISOString().split('T')[0];
+    const matchFraccion = inputOriginal.match(/^(\d{1,3})\/(\d{1,3})$/);
+
+    // Fracción exacta
     if (matchFraccion) {
-      // Si input es fracción, filtrar BD por número y printedTotal
-      const numero = matchFraccion[1];
+      const numero = matchFraccion[1].replace(/^0+/, '');
       const printedTotal = parseInt(matchFraccion[2]);
 
-      cartasBD = await cartaRepo.find({ where: { numero, printedTotal } });
+      let cartasFraccion = await cartaRepo
+        .createQueryBuilder("carta")
+        .where("carta.numero = :numero", { numero })
+        .andWhere("carta.printedTotal = :printedTotal", { printedTotal })
+        .getMany();
 
-      // Buscar en API solo por número
-      const queryAPI = `number:${numero}`;
-      const resFull = await axios.get(
-        `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
-        { headers }
-      );
-
-      let cartasAPI = resFull.data.data || [];
-
-      // Filtrar API para que coincida printedTotal exacto
-      cartasAPI = cartasAPI.filter(carta => carta.set?.printedTotal === printedTotal);
-
-      // Crear mapas para comparación
-      const mapaBD = new Map();
-      cartasBD.forEach(carta => mapaBD.set(`${carta.numero.toUpperCase()}_${carta.setId || ''}`, carta));
-      const mapaAPI = new Map();
-      cartasAPI.forEach(carta => mapaAPI.set(`${carta.number.toUpperCase()}_${carta.set?.id || ''}`, carta));
-
-      // Detectar cartas que están en API pero no en BD
-      const nuevasCartas = [];
-      for (const [key, cartaAPI] of mapaAPI.entries()) {
-        if (!mapaBD.has(key)) {
-          const nueva = cartaRepo.create({
-            nombre: cartaAPI.name,
-            numero: cartaAPI.number.toUpperCase(),
-            set: cartaAPI.set?.name || null,
-            setId: cartaAPI.set?.id || null,
-            serie: cartaAPI.set?.series || null,
-            fechaLanzamiento: cartaAPI.set?.releaseDate || null,
-            supertipo: cartaAPI.supertype || null,
-            subtipos: cartaAPI.subtypes || null,
-            nivel: cartaAPI.level || null,
-            hp: cartaAPI.hp || null,
-            tipos: cartaAPI.types || null,
-            evolucionaA: cartaAPI.evolvesTo || null,
-            retreatCost: cartaAPI.retreatCost || null,
-            debilidades: cartaAPI.weaknesses || null,
-            ataques: cartaAPI.attacks || null,
-            reglas: cartaAPI.rules || null,
-            rareza: cartaAPI.rarity || null,
-            ilustrador: cartaAPI.artist || null,
-            flavorText: cartaAPI.flavorText || null,
-            pokedexIds: cartaAPI.nationalPokedexNumbers || null,
-            imagenPequena: cartaAPI.images?.small || null,
-            imagenGrande: cartaAPI.images?.large || null,
-            precioNormal: cartaAPI.tcgplayer?.prices?.normal?.market || null,
-            precioHolofoil: cartaAPI.tcgplayer?.prices?.holofoil?.market || null,
-            printedTotal: cartaAPI.set?.printedTotal || null,
-          });
-          const guardada = await cartaRepo.save(nueva);
-          nuevasCartas.push(guardada);
-          mapaBD.set(key, guardada);
-        }
-      }
-
-      // Si hay cartas nuevas, devuelve unión; sino solo BD
-      if (nuevasCartas.length > 0) {
-        return [...mapaBD.values()];
+      if (posiblesNombre) {
+        const nombreLower = posiblesNombre.toLowerCase();
+        cartasBD = cartasFraccion.filter(c =>
+          c.nombre.toLowerCase().includes(nombreLower)
+        );
       } else {
-        return cartasBD;
+        cartasBD = cartasFraccion;
       }
-
-    } else if (matchCodigoPromo) {
-      const fullNumber = input.toUpperCase();
-      cartasBD = await cartaRepo.find({ where: { numero: fullNumber } });
-    } else if (/^\d{1,3}$/.test(input)) {
-      cartasBD = await cartaRepo.find({ where: { numero: input } });
-    } else {
-      cartasBD = await cartaRepo.find({ where: { nombre: ILike(`%${input}%`) } });
     }
 
-    // Para los demás casos, sincroniza siempre la API con BD igual que antes
-    const queryAPI = crearQueryAPI(input);
+    // Código promocional
+    else if (/^([a-z]{2,6})(\d{2,6})$/i.test(inputOriginal)) {
+      const fullNumber = inputOriginal.toUpperCase();
+      cartasBD = await cartaRepo.find({ where: { numero: ILike(fullNumber) } });
+    }
+
+    // Nombre + número
+    else if (palabras.length >= 2 && posiblesNumeros.length === 1) {
+      const numero = posiblesNumeros[0];
+      const nombre = palabras.filter(p => p !== numero).join(' ');
+      const nombreGuiones = nombre.replace(/ /g, '-');
+      const isFraccion = /^\d{1,3}\/\d{1,3}$/.test(numero);
+
+      const qb = cartaRepo.createQueryBuilder("carta")
+        .where(new Brackets(qb => {
+          qb.where("LOWER(carta.nombre) LIKE LOWER(:nombre1)", { nombre1: `%${nombre}%` })
+            .orWhere("LOWER(carta.nombre) LIKE LOWER(:nombre2)", { nombre2: `%${nombreGuiones}%` });
+        }));
+
+      if (isFraccion) {
+        const [num, printedTotal] = numero.split('/');
+        qb.andWhere("carta.numero = :numero", { numero: num.replace(/^0+/, '') })
+          .andWhere("carta.printedTotal = :printedTotal", { printedTotal: parseInt(printedTotal) });
+      } else {
+        qb.andWhere("carta.numero = :numero", { numero: numero.replace(/^0+/, '') });
+      }
+
+      cartasBD = await qb.getMany();
+    }
+
+    // Solo número
+    else if (/^\d{1,3}$/.test(inputOriginal)) {
+      const numeroNormalizado = inputOriginal.replace(/^0+/, '');
+      cartasBD = await cartaRepo.find({
+        where: [
+          { numero: inputOriginal },
+          { numero: numeroNormalizado }
+        ]
+      });
+    }
+
+    // Nombre + código promocional
+    else if (
+      palabras.length === 2 &&
+      /^[a-z]+$/i.test(palabras[0]) &&
+      /^([a-z]{2,6})(\d{2,6})$/i.test(palabras[1])
+    ) {
+      const nombre = palabras[0];
+      const numeroPromo = palabras[1].toUpperCase();
+      const nombreGuiones = nombre.replace(/ /g, '-');
+
+      cartasBD = await cartaRepo
+        .createQueryBuilder("carta")
+        .where(new Brackets(qb => {
+          qb.where("LOWER(carta.nombre) LIKE LOWER(:nombre1)", { nombre1: `%${nombre}%` })
+            .orWhere("LOWER(carta.nombre) LIKE LOWER(:nombre2)", { nombre2: `%${nombreGuiones}%` });
+        }))
+        .andWhere("carta.numero = :numero", { numero: numeroPromo })
+        .getMany();
+    }
+
+    // Nombre simple
+    else if (posiblesNombre) {
+      const nombreConGuiones = posiblesNombre.replace(/ /g, '-');
+
+      cartasBD = await cartaRepo
+        .createQueryBuilder('carta')
+        .where(new Brackets(qb => {
+          qb.where('LOWER(carta.nombre) LIKE LOWER(:nombre1)', { nombre1: `%${posiblesNombre}%` })
+            .orWhere('LOWER(carta.nombre) LIKE LOWER(:nombre2)', { nombre2: `%${nombreConGuiones}%` });
+        }))
+        .getMany();
+    }
+
+    if (cartasBD.length === 0 && posiblesNombre) {
+      cartasBD = await cartaRepo.find({ where: { set: ILike(`%${posiblesNombre}%`) } });
+    }
+
+    if (
+      cartasBD.length > 0 &&
+      (palabras.length === 1 || (palabras.length === 2 && posiblesNumeros.length === 0)) &&
+      posiblesNombre.length > 0
+    ) {
+      const yaConsultada = await consultaRepo.findOne({
+        where: {
+          termino: posiblesNombre.toLowerCase(),
+          fechaConsulta: hoy
+        }
+      });
+
+      if (yaConsultada) {
+        console.log(`⛔ Consulta a API omitida: Ya se consultó "${posiblesNombre}" hoy`);
+        return cartasBD.map(c => ({ ...c, origen: "BD" }));
+      }
+    }
+
+   
+    let queryAPI = "";
+    if (matchFraccion) {
+      queryAPI = `number:${matchFraccion[1]}`;
+    } else if (/^([a-z]{2,6})(\d{2,6})$/i.test(inputOriginal)) {
+      queryAPI = `number:${inputOriginal.toUpperCase()}`;
+    } else if (/^\d{1,3}$/.test(inputOriginal)) {
+      queryAPI = `number:${inputOriginal}`;
+    } else if (posiblesNombre && posiblesNumeros.length > 0) {
+      const nombreEscapado = posiblesNombre.replace(/"/g, '').trim();
+      const numeroInput = posiblesNumeros[0];
+      if (/^\d{1,3}\/\d{1,3}$/.test(numeroInput)) {
+        const numeroSolo = numeroInput.split('/')[0].replace(/^0+/, '');
+        queryAPI = `name:"${nombreEscapado}" number:${numeroSolo}`;
+      } else {
+        const numeroLimpio = numeroInput.replace(/^0+/, '');
+        queryAPI = `name:"${nombreEscapado}" number:${numeroLimpio}`;
+      }
+    } else if (posiblesNombre) {
+      const nombreEscapado = posiblesNombre.replace(/"/g, '').trim();
+      queryAPI = `name:"${nombreEscapado}"`;
+    } else {
+      queryAPI = inputOriginal;
+    }
+
+    console.log(`📡 Consultando API con query: ${queryAPI}`);
+
     const resFull = await axios.get(
       `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
       { headers }
     );
+
     const cartasAPI = resFull.data.data || [];
+    const resultadosAPI = [];
 
-    // Mapa para cartas BD existentes
-    const mapaBD = new Map();
-    cartasBD.forEach(carta => {
-      const key = `${carta.numero.toUpperCase()}_${carta.setId || ''}`;
-      mapaBD.set(key, carta);
-    });
+    for (const cartaAPI of cartasAPI) {
+      const numero = cartaAPI.number?.toUpperCase();
+      const set = cartaAPI.set?.name || null;
+      const printedTotal = cartaAPI.set?.printedTotal || null;
 
-    const nuevasCartas = [];
+      if (matchFraccion) {
+        const esperadoNumero = matchFraccion[1].replace(/^0+/, '');
+        const esperadoTotal = parseInt(matchFraccion[2]);
 
-    for (const carta of cartasAPI) {
-      const key = `${carta.number.toUpperCase()}_${carta.set?.id || ''}`;
-      if (!mapaBD.has(key)) {
+        if ((numero !== esperadoNumero && numero !== matchFraccion[1]) || parseInt(printedTotal) !== esperadoTotal) {
+          continue;
+        }
+
+        if (posiblesNombre && !cartaAPI.name.toLowerCase().includes(posiblesNombre.toLowerCase())) {
+          continue;
+        }
+      }
+
+      const existe = await cartaRepo.findOne({ where: { numero, set } });
+
+      if (!existe) {
         const nueva = cartaRepo.create({
-          nombre: carta.name,
-          numero: carta.number.toUpperCase(),
-          set: carta.set?.name || null,
-          setId: carta.set?.id || null,
-          serie: carta.set?.series || null,
-          fechaLanzamiento: carta.set?.releaseDate || null,
-          supertipo: carta.supertype || null,
-          subtipos: carta.subtypes || null,
-          nivel: carta.level || null,
-          hp: carta.hp || null,
-          tipos: carta.types || null,
-          evolucionaA: carta.evolvesTo || null,
-          retreatCost: carta.retreatCost || null,
-          debilidades: carta.weaknesses || null,
-          ataques: carta.attacks || null,
-          reglas: carta.rules || null,
-          rareza: carta.rarity || null,
-          ilustrador: carta.artist || null,
-          flavorText: carta.flavorText || null,
-          pokedexIds: carta.nationalPokedexNumbers || null,
-          imagenPequena: carta.images?.small || null,
-          imagenGrande: carta.images?.large || null,
-          precioNormal: carta.tcgplayer?.prices?.normal?.market || null,
-          precioHolofoil: carta.tcgplayer?.prices?.holofoil?.market || null,
-          printedTotal: carta.set?.printedTotal || null,
+          nombre: cartaAPI.name,
+          numero,
+          set,
+          setId: cartaAPI.set?.id || null,
+          serie: cartaAPI.set?.series || null,
+          fechaLanzamiento: cartaAPI.set?.releaseDate || null,
+          supertipo: cartaAPI.supertype || null,
+          subtipos: cartaAPI.subtypes || null,
+          nivel: cartaAPI.level || null,
+          hp: cartaAPI.hp || null,
+          tipos: cartaAPI.types || null,
+          evolucionaA: cartaAPI.evolvesTo || null,
+          retreatCost: cartaAPI.retreatCost || null,
+          debilidades: cartaAPI.weaknesses || null,
+          ataques: cartaAPI.attacks || null,
+          reglas: cartaAPI.rules || null,
+          rareza: cartaAPI.rarity || null,
+          ilustrador: cartaAPI.artist || null,
+          flavorText: cartaAPI.flavorText || null,
+          pokedexIds: cartaAPI.nationalPokedexNumbers || null,
+          imagenPequena: cartaAPI.images?.small || null,
+          imagenGrande: cartaAPI.images?.large || null,
+          precioNormal: cartaAPI.tcgplayer?.prices?.normal?.market || null,
+          precioHolofoil: cartaAPI.tcgplayer?.prices?.holofoil?.market || null,
+          printedTotal,
         });
+
         const guardada = await cartaRepo.save(nueva);
-        nuevasCartas.push(guardada);
-        mapaBD.set(key, guardada);
+        resultadosAPI.push({ ...guardada, origen: "API" });
       }
     }
 
-    let totalBD = cartasBD.length;
-    let totalAPI = cartasAPI.length;
-    let totalNuevas = nuevasCartas.length;
+    if (resultadosAPI.length > 0 && posiblesNombre.length > 0) {
+      await consultaRepo.save({
+        termino: posiblesNombre.toLowerCase(),
+        fechaConsulta: hoy
+      });
+    }
 
-    // Al final, antes de return:
-    console.log(`📊 Resultados - BD: ${totalBD}, API: ${totalAPI}, Nuevas agregadas: ${totalNuevas}`);
+    const resultadosTotales = [...cartasBD.map(c => ({ ...c, origen: "BD" })), ...resultadosAPI];
+    if (resultadosTotales.length > 0) {
+      console.log(`✅ Se devolvieron ${resultadosTotales.length} resultados (BD + API).`);
+      return resultadosTotales;
+    }
 
-    return [...mapaBD.values()];
+    console.log('❌ No se encontró ninguna carta.');
+    return [];
 
   } catch (error) {
     console.error('❌ Error al buscar carta:', error.message);
-    
     return [];
   }
 }

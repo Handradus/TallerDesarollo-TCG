@@ -1,0 +1,70 @@
+/* Contenedor general */
+.app-container {
+  padding: 2rem;
+  font-family: Arial, sans-serif;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* Contenedor para input + botón */
+.search-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Estilo input */
+.search-input {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #646cff;
+  box-shadow: 0 0 6px #646cff88;
+}
+
+/* Estilo botón */
+.search-button {
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  background-color: #646cff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.search-button:hover {
+  background-color: #4a51bf;
+}
+
+/* Grilla de cartas */
+.cartas-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+/* Cada carta */
+.carta-item {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #52b4e1;
+}
+
+.carta-img {
+  margin-bottom: 1rem;
+  object-fit: contain;
+  max-width: 100%;
+}
