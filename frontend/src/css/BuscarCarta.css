@@ -1,0 +1,441 @@
+/* Contenedor principal */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* Header con título y botón home */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+  border-bottom: 2px solid #e9ecef;
+}
+
+/* Título principal */
+.app-header h1 {
+  color: #646cff;
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Botón home */
+.home-button {
+  background: linear-gradient(135deg, #646cff 0%, #747bff 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(100, 108, 255, 0.2);
+}
+
+.home-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(100, 108, 255, 0.3);
+}
+
+/* Sección de búsqueda */
+.search-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(100, 108, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Sección de carousels */
+.carousels-section {
+  margin-bottom: 3rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(70, 130, 180, 0.1);
+  border: 1px solid rgba(70, 130, 180, 0.1);
+}
+
+/* Contenedor para input + botón */
+.search-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  max-width: 600px;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Estilo input */
+.search-input {
+  flex: 1;
+  padding: 0.8rem 1.2rem;
+  font-size: 1.1rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #646cff;
+  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.1);
+  background-color: white;
+}
+
+.search-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+/* Estilo botón */
+.search-button {
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #646cff 0%, #5a5fcf 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(100, 108, 255, 0.3);
+}
+
+.search-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4a51bf 0%, #424aa3 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
+}
+
+.search-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.search-button:disabled {
+  background: #a0a0a0;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Botón limpiar */
+.clear-button {
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.clear-button:hover {
+  background-color: #d32f2f;
+  transform: translateY(-1px);
+}
+
+/* Información de búsqueda */
+.search-info {
+  text-align: center;
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
+  border-radius: 12px;
+  border-left: 4px solid #28a745;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Grilla de cartas - FORZAR GRID LAYOUT COMPLETAMENTE */
+.cartas-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+  grid-gap: 2rem !important;
+  gap: 2rem !important;
+  margin: 2rem auto !important;
+  max-width: 1200px !important;
+  width: 100% !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  /* Anular cualquier flex o flow */
+  flex-direction: initial !important;
+  flex-wrap: initial !important;
+  align-items: initial !important;
+  justify-content: initial !important;
+}
+
+/* Forzar que cada carta ocupe una celda del grid */
+.cartas-grid > .carta-item {
+  display: flex !important;
+  flex-direction: column !important;
+  grid-column: span 1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  float: none !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+/* Mensajes de estado */
+.error-message {
+  background-color: #ffe6e6;
+  color: #d32f2f;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #d32f2f;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 500;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.loading-message {
+  text-align: center;
+  color: #646cff;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 1rem 0;
+}
+
+/* Mensajes específicos */
+.no-search-message {
+  text-align: center;
+  color: #666;
+  font-size: 1.1rem;
+  font-style: italic;
+  margin: 2rem 0;
+  grid-column: 1 / -1;
+}
+
+.no-results-message {
+  text-align: center;
+  color: #d32f2f;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 2rem 0;
+  grid-column: 1 / -1;
+  background-color: #ffe6e6;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+/* Cada carta */
+.carta-item {
+  border: 1px solid #e0e0e0;
+  padding: 1.5rem;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: auto;
+  min-height: 400px;
+}
+
+/* Específicamente para cartas dentro del grid */
+.cartas-grid .carta-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  height: auto !important;
+  min-height: 450px !important;
+}
+
+.carta-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #646cff, #5a5fcf, #4f46e5);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.carta-item:hover::before {
+  transform: translateX(0);
+}
+
+.carta-item:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-color: #646cff;
+}
+
+.carta-item h2 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.carta-imagen-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.carta-item img {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  max-width: 100%;
+  height: auto;
+  min-height: 300px;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.carta-item:hover img {
+  transform: scale(1.05);
+}
+
+.carta-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.carta-item p {
+  margin: 0.3rem 0;
+  color: #495057;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.carta-item p strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Estilos responsive */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 15px;
+  }
+  
+  .app-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .app-header h1 {
+    font-size: 2rem;
+  }
+  
+  .search-container {
+    flex-direction: column;
+    max-width: 100%;
+  }
+  
+  .search-button {
+    padding: 1rem;
+  }
+  
+  .cartas-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .carta-item {
+    padding: 1rem;
+  }
+  
+  .carta-item img {
+    min-height: 250px;
+    max-height: 350px;
+  }
+  
+  .home-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Media query para pantallas pequeñas */
+@media (max-width: 480px) {
+  .cartas-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+    gap: 1rem;
+  }
+  
+  .carta-item img {
+    min-height: 200px;
+    max-height: 300px;
+  }
+  
+  .search-section, .carousels-section {
+    padding: 1rem;
+  }
+}
+
+/* FORZAR GRID LAYOUT - Solución definitiva */
+.app-container .cartas-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+  grid-gap: 2rem !important;
+  gap: 2rem !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  margin: 2rem auto !important;
+  max-width: 1200px !important;
+  width: 100% !important;
+  padding: 1rem !important;
+  box-sizing: border-box !important;
+}
+
+.app-container .cartas-grid > .carta-item {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  margin: 0 !important;
+  float: none !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+  min-height: 450px !important;
+}
+
+
