@@ -1,0 +1,138 @@
+/* CSS para Carousel de Tiendas */
+.carousel-tiendas-container {
+  background: white;
+  margin: 1rem 0;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.carousel-tiendas-header h2 {
+  color: #1f2937;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.carousel-tiendas-wrapper {
+  overflow: hidden;
+  position: relative;
+  perspective: 1000px;
+  height: 120px;
+  mask: linear-gradient(90deg, transparent, white 5%, white 95%, transparent);
+  -webkit-mask: linear-gradient(90deg, transparent, white 5%, white 95%, transparent);
+}
+
+.carousel-tiendas-track {
+  display: flex;
+  gap: 1.5rem;
+  animation: scrollTiendas 40s linear infinite;
+  width: max-content;
+  will-change: transform;
+  align-items: center;
+}
+
+.carousel-tiendas-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scrollTiendas {
+  0% { 
+    transform: translateX(0%); 
+  }
+  100% { 
+    transform: translateX(-33.333%); 
+  }
+}
+
+.carousel-tienda-item {
+  flex: 0 0 auto;
+  min-width: 180px;
+  background: rgba(248, 250, 252, 0.9);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-tienda-item:hover {
+  border-color: #3b82f6;
+  transform: translateY(-3px) scale(1.05);
+  background: white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  position: relative;
+}
+
+.carousel-tienda-item h3 {
+  color: #1f2937;
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.carousel-tiendas-loading,
+.carousel-tiendas-empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+
+.carousel-tiendas-loading::after {
+  content: '🏪';
+  display: inline-block;
+  animation: pulse 1.5s ease-in-out infinite;
+  margin-left: 0.5rem;
+}
+
+.carousel-tiendas-empty::before {
+  content: '🏬';
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .carousel-tienda-item {
+    min-width: 160px;
+    padding: 0.8rem;
+  }
+  
+  .carousel-tiendas-track {
+    gap: 1rem;
+  }
+  
+  .carousel-tiendas-wrapper {
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .carousel-tienda-item {
+    min-width: 140px;
+    padding: 0.6rem;
+  }
+  
+  .carousel-tiendas-container {
+    padding: 1rem;
+  }
+  
+  .carousel-tienda-item h3 {
+    font-size: 0.9rem;
+  }
+}

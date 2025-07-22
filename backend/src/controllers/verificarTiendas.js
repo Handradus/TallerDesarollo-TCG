@@ -57,12 +57,14 @@ async function obtenerTiendas(req, res) {
       const link = links.find(l => l.tienda.id === tienda.id);
       resultado[tienda.nombre] = link
         ? {
+            id: tienda.id, // ← Añadir ID de la tienda
             url: link.url,
             verificada: link.verificada,
             precio: link.precio || null,
             tipo: link.tipoProducto || null
           }
         : {
+            id: tienda.id, // ← Añadir ID de la tienda
             url: null,
             verificada: false
           };

@@ -7,6 +7,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<BuscarCartas />} />
       <Route path="/carta/:id" element={<CartaDetalle />} />
+      <Route path="/sugerencia-promocional" element={<CartaDetalle />} />
     </Routes>
   );
 }

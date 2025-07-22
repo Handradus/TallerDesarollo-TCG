@@ -6,6 +6,7 @@ require('dotenv').config();
 
 
 const cartaRoutes = require('./routes/cartaRoutes');
+const historialRoutes = require('./routes/historialRoutes');
 const cors = require('cors');
 
 const app = express();
@@ -23,6 +24,7 @@ AppDataSource.initialize()
 
     // Rutas
     app.use('/api/cartas', cartaRoutes);
+    app.use('/api/historial', historialRoutes);
     
 
     app.listen(PORT, HOST, () => {

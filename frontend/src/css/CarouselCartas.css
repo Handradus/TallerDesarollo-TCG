@@ -1,0 +1,149 @@
+/* CSS para Carousel de Cartas Recientes */
+.carousel-cartas-container {
+  background: white;
+  margin: 1rem 0;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.carousel-cartas-header h2 {
+  color: #1f2937;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.carousel-cartas-wrapper {
+  overflow: hidden;
+  position: relative;
+  perspective: 1000px;
+  height: 350px;
+  mask: linear-gradient(90deg, transparent, white 5%, white 95%, transparent);
+  -webkit-mask: linear-gradient(90deg, transparent, white 5%, white 95%, transparent);
+}
+
+.carousel-cartas-track {
+  display: flex;
+  gap: 1.5rem;
+  animation: scrollCartas 40s linear infinite;
+  width: max-content;
+  will-change: transform;
+}
+
+.carousel-cartas-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scrollCartas {
+  0% { 
+    transform: translateX(0%); 
+  }
+  100% { 
+    transform: translateX(-33.333%); 
+  }
+}
+
+.carousel-carta-item {
+  flex: 0 0 auto;
+  width: 180px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0.5rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-carta-item:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  background: white;
+  z-index: 10;
+  position: relative;
+}
+
+.carousel-carta-item img {
+  width: 100%;
+  height: 250px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+}
+
+.carousel-carta-item:hover img {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: scale(1.02);
+}
+
+.carousel-carta-item h3 {
+  color: #1f2937;
+  font-size: 0.9rem;
+  margin: 0.8rem 0 0 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 0.5rem;
+}
+
+.carousel-cartas-loading,
+.carousel-cartas-empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 3rem;
+  font-size: 1.1rem;
+}
+
+.carousel-cartas-loading::after {
+  content: '⚡';
+  display: inline-block;
+  animation: pulse 1.5s ease-in-out infinite;
+  margin-left: 0.5rem;
+}
+
+.carousel-cartas-empty::before {
+  content: '📋';
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .carousel-carta-item {
+    width: 160px;
+  }
+  
+  .carousel-carta-item img {
+    height: 220px;
+  }
+  
+  .carousel-cartas-track {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .carousel-carta-item {
+    width: 140px;
+  }
+  
+  .carousel-carta-item img {
+    height: 200px;
+  }
+  
+  .carousel-cartas-container {
+    padding: 1rem;
+  }
+}

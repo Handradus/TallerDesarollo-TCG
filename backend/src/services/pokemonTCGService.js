@@ -3,9 +3,12 @@ const { AppDataSource } = require('../data-source');
 const Carta = require('../entities/Carta');
 const ConsultaAPI = require('../entities/ConsultaAPI');
 const { ILike, Brackets } = require('typeorm');
+const { esBusquedaPromocional } = require('../helpers/promoKeywords');
 require('dotenv').config();
 
 async function buscarCarta(input) {
+  console.log(`🚀 === INICIO DE BÚSQUEDA === Input recibido: "${input}"`);
+  
   const headers = {
     'X-Api-Key': process.env.POKEMONTCG_API_KEY,
   };
@@ -14,6 +17,7 @@ async function buscarCarta(input) {
     const cartaRepo = AppDataSource.getRepository(Carta);
     const consultaRepo = AppDataSource.getRepository('ConsultaAPI');
     const inputOriginal = input.trim();
+    
     const palabras = inputOriginal.split(/\s+/);
     const posiblesNumeros = palabras.filter(p => /^\d{1,3}(\/\d{1,3})?$/.test(p));
     const posiblesNombre = palabras.filter(p => !/^\d{1,3}(\/\d{1,3})?$/.test(p)).join(' ');
@@ -106,9 +110,100 @@ async function buscarCarta(input) {
         .getMany();
     }
 
+    // NUEVO: Nombre + Set (ejemplo: "pikachu emerald", "charizard base")
+    // PERO: Excluir nombres conocidos de cartas y cartas especiales
+    else if (palabras.length === 2 && posiblesNumeros.length === 0) {
+      const cartasConocidas = [
+        'poké ball', 'ultra ball', 'great ball', 'master ball', 'quick ball', 'timer ball',
+        'dusk ball', 'nest ball', 'dive ball', 'repeat ball', 'luxury ball', 'premier ball',
+        'heal ball', 'level ball', 'love ball', 'lure ball', 'moon ball', 'heavy ball',
+        'friend ball', 'fast ball', 'park ball', 'net ball', 'cherish ball'
+      ];
+
+      // Cartas especiales que deben buscarse como nombre completo
+      const tiposCartasEspeciales = ['ex', 'gx', 'v', 'vmax', 'vstar', 'tag', 'break', 'prime', 'legend', 'mega'];
+      
+      console.log(`🎯 Entrada en lógica Nombre+Set. Verificando "${posiblesNombre.toLowerCase()}"`);
+      
+      // Verificar si alguna palabra es un tipo de carta especial
+      const esCartaEspecial = palabras.some(palabra => 
+        tiposCartasEspeciales.includes(palabra.toLowerCase())
+      );
+      
+      console.log(`🎯 ¿Es carta especial (EX/GX/V/etc.)?: ${esCartaEspecial}`);
+      console.log(`🎯 ¿Es carta conocida?: ${cartasConocidas.includes(posiblesNombre.toLowerCase())}`);
+      
+      // Si es una carta conocida O una carta especial, buscar como nombre simple INMEDIATAMENTE
+      if (cartasConocidas.includes(posiblesNombre.toLowerCase()) || esCartaEspecial) {
+        console.log(`📝 Es carta conocida o especial! Ejecutando búsqueda de nombre simple con: "${posiblesNombre}"`);
+        const nombreConGuiones = posiblesNombre.replace(/ /g, '-');
+        console.log(`📝 También buscando variante con guiones: "${nombreConGuiones}"`);
+
+        cartasBD = await cartaRepo
+          .createQueryBuilder('carta')
+          .where(new Brackets(qb => {
+            qb.where('LOWER(carta.nombre) LIKE LOWER(:nombre1)', { nombre1: `%${posiblesNombre}%` })
+              .orWhere('LOWER(carta.nombre) LIKE LOWER(:nombre2)', { nombre2: `%${nombreConGuiones}%` });
+          }))
+          .getMany();
+          
+        console.log(`📊 Resultados de BD para carta conocida/especial: ${cartasBD.length} cartas encontradas`);
+      } else {
+        // Si NO es una carta conocida, aplicar lógica de Nombre + Set
+        const setsConocidos = [
+          'base', 'jungle', 'fossil', 'rocket', 'gym', 'neo', 'genesis', 'discovery', 'destiny', 'revelation',
+          'expedition', 'aquapolis', 'skyridge', 'ruby', 'sapphire', 'sandstorm', 'dragon', 'team', 'magma', 'aqua',
+          'emerald', 'deoxys', 'crystal', 'guardians', 'holon', 'phantoms', 'delta', 'species', 'legend', 'maker',
+          'diamond', 'pearl', 'mysterious', 'treasures', 'secret', 'wonders', 'great', 'encounters', 'majestic', 'dawn',
+          'legends', 'awakened', 'stormfront', 'platinum', 'rising', 'rivals', 'supreme', 'victors', 'arceus',
+          'heartgold', 'soulsilver', 'unleashed', 'undaunted', 'triumphant', 'black', 'white', 'emerging', 'powers',
+          'noble', 'victories', 'next', 'destinies', 'dark', 'explorers', 'boundaries', 'crossed', 'plasma', 'storm',
+          'freeze', 'blast', 'legendary', 'flashfire', 'furious', 'fists', 'phantom', 'forces', 'primal', 'clash',
+          'roaring', 'skies', 'ancient', 'origins', 'breakthrough', 'breakpoint', 'fates', 'collide', 'steam', 'siege',
+          'generations', 'evolutions', 'sun', 'moon', 'guardians', 'burning', 'shadows', 'shining', 'crimson', 'invasion',
+          'ultra', 'prism', 'forbidden', 'light', 'celestial', 'lost', 'thunder', 'detective', 'pikachu', 'team',
+          'unbroken', 'bonds', 'unified', 'minds', 'cosmic', 'eclipse', 'hidden', 'sword', 'shield', 'rebel', 'darkness',
+          'astral', 'radiance', 'battle', 'styles', 'brilliant', 'stars', 'fusion', 'strike', 'go', 'origin', 'paldea',
+          'evolved', 'scarlet', 'violet', '151', 'obsidian', 'flames', 'crown', 'zenith', 'silver', 'tempest', 'paradox', 'rift'
+        ];
+
+        // Detectar cuál palabra es el nombre y cuál es el set
+        let nombrePokemon = '';
+        let setName = '';
+        
+        // Verificar si alguna de las palabras coincide con un set conocido
+        if (setsConocidos.some(set => palabras[1].toLowerCase().includes(set) || set.includes(palabras[1].toLowerCase()))) {
+          nombrePokemon = palabras[0];
+          setName = palabras[1];
+        } else if (setsConocidos.some(set => palabras[0].toLowerCase().includes(set) || set.includes(palabras[0].toLowerCase()))) {
+          nombrePokemon = palabras[1];
+          setName = palabras[0];
+        }
+
+        if (nombrePokemon && setName) {
+          console.log(`🎮 Búsqueda nombre + set: "${nombrePokemon}" en set "${setName}"`);
+          
+          const nombreGuiones = nombrePokemon.replace(/ /g, '-');
+          
+          cartasBD = await cartaRepo
+            .createQueryBuilder("carta")
+            .where(new Brackets(qb => {
+              qb.where("LOWER(carta.nombre) LIKE LOWER(:nombre1)", { nombre1: `%${nombrePokemon}%` })
+                .orWhere("LOWER(carta.nombre) LIKE LOWER(:nombre2)", { nombre2: `%${nombreGuiones}%` });
+            }))
+            .andWhere("LOWER(carta.set) LIKE LOWER(:setName)", { setName: `%${setName}%` })
+            .getMany();
+
+          console.log(`✅ Encontradas ${cartasBD.length} cartas de "${nombrePokemon}" en sets que contienen "${setName}"`);
+        }
+      }
+    }
+
     // Nombre simple
     else if (posiblesNombre) {
+      console.log(`📝 Ejecutando búsqueda de nombre simple con: "${posiblesNombre}"`);
       const nombreConGuiones = posiblesNombre.replace(/ /g, '-');
+      console.log(`📝 También buscando variante con guiones: "${nombreConGuiones}"`);
 
       cartasBD = await cartaRepo
         .createQueryBuilder('carta')
@@ -117,12 +212,16 @@ async function buscarCarta(input) {
             .orWhere('LOWER(carta.nombre) LIKE LOWER(:nombre2)', { nombre2: `%${nombreConGuiones}%` });
         }))
         .getMany();
+        
+      console.log(`📊 Resultados de BD para nombre simple: ${cartasBD.length} cartas encontradas`);
     }
 
     if (cartasBD.length === 0 && posiblesNombre) {
       cartasBD = await cartaRepo.find({ where: { set: ILike(`%${posiblesNombre}%`) } });
     }
 
+    // Verificar si ya se consultó la API hoy para evitar consultas innecesarias
+    let saltarConsultaAPI = false;
     if (
       cartasBD.length > 0 &&
       (palabras.length === 1 || (palabras.length === 2 && posiblesNumeros.length === 0)) &&
@@ -137,7 +236,7 @@ async function buscarCarta(input) {
 
       if (yaConsultada) {
         console.log(`⛔ Consulta a API omitida: Ya se consultó "${posiblesNombre}" hoy`);
-        return cartasBD.map(c => ({ ...c, origen: "BD" }));
+        saltarConsultaAPI = true;
       }
     }
 
@@ -161,22 +260,64 @@ async function buscarCarta(input) {
       }
     } else if (posiblesNombre) {
       const nombreEscapado = posiblesNombre.replace(/"/g, '').trim();
-      queryAPI = `name:"${nombreEscapado}"`;
+      
+      // Detectar si es una búsqueda nombre + set
+      const palabrasNombre = posiblesNombre.split(/\s+/);
+      if (palabrasNombre.length === 2) {
+        const setsConocidos = [
+          'base', 'jungle', 'fossil', 'rocket', 'gym', 'neo', 'genesis', 'discovery', 'destiny', 'revelation',
+          'expedition', 'aquapolis', 'skyridge', 'ruby', 'sapphire', 'sandstorm', 'dragon', 'team', 'magma', 'aqua',
+          'emerald', 'deoxys', 'crystal', 'guardians', 'holon', 'phantoms', 'delta', 'species', 'legend', 'maker',
+          'diamond', 'pearl', 'mysterious', 'treasures', 'secret', 'wonders', 'great', 'encounters', 'majestic', 'dawn',
+          'legends', 'awakened', 'stormfront', 'platinum', 'rising', 'rivals', 'supreme', 'victors', 'arceus',
+          'heartgold', 'soulsilver', 'unleashed', 'undaunted', 'triumphant', 'black', 'white', 'emerging', 'powers',
+          'noble', 'victories', 'next', 'destinies', 'dark', 'explorers', 'boundaries', 'crossed', 'plasma', 'storm',
+          'freeze', 'blast', 'legendary', 'flashfire', 'furious', 'fists', 'phantom', 'forces', 'primal', 'clash',
+          'roaring', 'skies', 'ancient', 'origins', 'breakthrough', 'breakpoint', 'fates', 'collide', 'steam', 'siege',
+          'generations', 'evolutions', 'sun', 'moon', 'guardians', 'burning', 'shadows', 'shining', 'crimson', 'invasion',
+          'ultra', 'prism', 'forbidden', 'light', 'celestial', 'lost', 'thunder', 'detective', 'pikachu', 'team',
+          'unbroken', 'bonds', 'unified', 'minds', 'cosmic', 'eclipse', 'hidden', 'sword', 'shield', 'rebel', 'darkness',
+          'astral', 'radiance', 'battle', 'styles', 'brilliant', 'stars', 'fusion', 'strike', 'go', 'origin', 'paldea',
+          'evolved', 'scarlet', 'violet', '151', 'obsidian', 'flames', 'crown', 'zenith', 'silver', 'tempest', 'paradox', 'rift'
+        ];
+
+        let nombrePokemon = '';
+        let setName = '';
+        
+        if (setsConocidos.some(set => palabrasNombre[1].toLowerCase().includes(set) || set.includes(palabrasNombre[1].toLowerCase()))) {
+          nombrePokemon = palabrasNombre[0];
+          setName = palabrasNombre[1];
+        } else if (setsConocidos.some(set => palabrasNombre[0].toLowerCase().includes(set) || set.includes(palabrasNombre[0].toLowerCase()))) {
+          nombrePokemon = palabrasNombre[1];
+          setName = palabrasNombre[0];
+        }
+
+        if (nombrePokemon && setName) {
+          queryAPI = `name:"${nombrePokemon}" set.name:"*${setName}*"`;
+        } else {
+          queryAPI = `name:"${nombreEscapado}"`;
+        }
+      } else {
+        queryAPI = `name:"${nombreEscapado}"`;
+      }
     } else {
       queryAPI = inputOriginal;
     }
 
     console.log(`📡 Consultando API con query: ${queryAPI}`);
 
-    const resFull = await axios.get(
-      `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
-      { headers }
-    );
+    let resultadosAPI = [];
+    
+    // Solo consultar API si no se saltó la consulta
+    if (!saltarConsultaAPI) {
+      const resFull = await axios.get(
+        `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
+        { headers }
+      );
 
-    const cartasAPI = resFull.data.data || [];
-    const resultadosAPI = [];
+      const cartasAPI = resFull.data.data || [];
 
-    for (const cartaAPI of cartasAPI) {
+      for (const cartaAPI of cartasAPI) {
       const numero = cartaAPI.number?.toUpperCase();
       const set = cartaAPI.set?.name || null;
       const printedTotal = cartaAPI.set?.printedTotal || null;
@@ -236,11 +377,32 @@ async function buscarCarta(input) {
         fechaConsulta: hoy
       });
     }
+    } // Cerrar el bloque if (!saltarConsultaAPI)
 
     const resultadosTotales = [...cartasBD.map(c => ({ ...c, origen: "BD" })), ...resultadosAPI];
+    
     if (resultadosTotales.length > 0) {
       console.log(`✅ Se devolvieron ${resultadosTotales.length} resultados (BD + API).`);
+      console.log(`📊 Desglose: ${cartasBD.length} de BD, ${resultadosAPI.length} de API`);
+      
+      // Logging detallado de qué se buscó
+      console.log(`📋 RESUMEN DE BÚSQUEDA:`);
+      console.log(`   🔍 Input recibido: "${inputOriginal}"`);
+      console.log(`   💾 BD - Búsqueda en campo 'nombre' con término: "${posiblesNombre}"`);
+      console.log(`   🌐 API - Query utilizada: ${queryAPI}`);
+      
       return resultadosTotales;
+    }
+
+    // ⚠️ Si aún no hay resultados y la búsqueda parece promocional
+    if (esBusquedaPromocional(inputOriginal)) {
+      const urlSugerida = `https://pokumon.com/cards?search=${encodeURIComponent(inputOriginal)}`;
+      console.log(`🔔 Sugerencia: Redirigir a Pokumon: ${urlSugerida}`);
+      return [{
+        mensaje: 'Tu búsqueda parece ser una carta promocional exclusiva o de evento. Te recomendamos visitar Pokumon:',
+        sugerenciaUrl: urlSugerida,
+        origen: 'sugerencia-pokumon'
+      }];
     }
 
     console.log('❌ No se encontró ninguna carta.');
