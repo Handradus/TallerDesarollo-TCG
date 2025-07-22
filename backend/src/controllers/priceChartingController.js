@@ -48,8 +48,9 @@ async function obtenerPreciosPriceCharting(req, res) {
     const resultado = await priceChartingService.actualizarPreciosCarta(carta);
     
     // Actualizar la carta en la base de datos si se encontraron precios
-    if (resultado.actualizado) {
-      carta.precioPriceCharting = resultado.precioPriceCharting;
+    if (resultado && resultado.precio !== null) {
+      carta.precioPriceCharting = resultado.precio;
+      carta.urlPriceCharting = resultado.url;
       carta.fechaActualizacionPrecios = new Date();
       
       await cartaRepo.save(carta);
@@ -57,12 +58,12 @@ async function obtenerPreciosPriceCharting(req, res) {
     }
 
     const respuesta = {
-      actualizado: resultado.actualizado,
+      actualizado: resultado && resultado.precio !== null,
       desde_cache: false,
-      precioPriceCharting: resultado.precioPriceCharting,
+      precioPriceCharting: resultado ? resultado.precio : null,
       fechaActualizacion: carta.fechaActualizacionPrecios,
-      url: resultado.url,
-      mensaje: resultado.mensaje
+      url: resultado ? resultado.url : null,
+      mensaje: resultado ? "Precio encontrado en PriceCharting" : "No se encontró precio en PriceCharting"
     };
 
     console.log(`✅ [obtenerPreciosPriceCharting] Finalizado para carta id=${id}`);
