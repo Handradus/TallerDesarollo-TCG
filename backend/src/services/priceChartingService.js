@@ -32,7 +32,7 @@ class PriceChartingService {
       query += ` ${numero}`;
     }
     const encodedQuery = encodeURIComponent(query);
-    return `${this.baseURL}/search-products?type=prices&q=${encodedQuery}&console=pokemon-cards`;
+    return `${this.baseURL}/search-products?type=prices&q=${nombre}&console=pokemon-cards`;
   }
 
   verificarCoincidenciaCarta(resultadoHTML, carta) {
@@ -122,40 +122,53 @@ class PriceChartingService {
   }
 
   async buscarCarta(carta) {
-    try {
-      const searchURL = this.construirURLBusqueda(carta);
-      const response = await axios.get(searchURL, { headers: this.headers, timeout: 10000 });
-      const $ = cheerio.load(response.data);
+  try {
+    const searchURL = this.construirURLBusqueda(carta);
+    const response = await axios.get(searchURL, { headers: this.headers, timeout: 10000 });
+    const $ = cheerio.load(response.data);
 
-      let mejorCoincidencia = null;
-      let mejorPuntuacion = 0;
+    let mejorCoincidencia = null;
+    let mejorPuntuacion = 0;
 
-      $('#games_table tbody tr').each((i, fila) => {
-        const $fila = $(fila);
-        const enlaceCarta = $fila.find('td:first-child a').attr('href');
-        if (!enlaceCarta) return;
+    console.log(`🔍 Buscando coincidencias para: ${carta.nombre} #${carta.numero} (${carta.set})`);
 
-        const htmlFila = $fila.html();
-        const coincide = this.verificarCoincidenciaCarta(htmlFila, carta);
+    $('#games_table tbody tr').each((i, fila) => {
+      const $fila = $(fila);
+      const enlaceCarta = $fila.find('td:first-child a').attr('href');
+      if (!enlaceCarta) return;
 
-        if (coincide) {
-          const puntuacion = this.calcularPuntuacionCoincidencia($fila.text(), carta);
-          if (puntuacion > mejorPuntuacion) {
-            mejorPuntuacion = puntuacion;
-            mejorCoincidencia = enlaceCarta;
-          }
-        }
-      });
+      const textoFila = $fila.text().trim();
+      const htmlFila = $fila.html();
 
-      if (!mejorCoincidencia) return null;
-      const urlCompleta = mejorCoincidencia.startsWith('http') ? mejorCoincidencia : `${this.baseURL}${mejorCoincidencia}`;
-      return await this.obtenerPreciosDetallados(urlCompleta, carta);
+      // Mostrar información útil para debug
+      console.log(`🧪 Fila ${i + 1}:`);
+      console.log(`   📄 Texto fila: ${textoFila}`);
+      console.log(`   🔗 Enlace: ${enlaceCarta}`);
 
-    } catch (error) {
-      console.error(`❌ Error al buscar en PriceCharting para ${carta.nombre}:`, error.message);
+      // CALCULA PUNTUACIÓN INDEPENDIENTE DE VERIFICACIÓN
+      const puntuacion = this.calcularPuntuacionCoincidencia(textoFila, carta);
+      console.log(`   📊 Puntuación: ${puntuacion}`);
+
+      if (puntuacion > mejorPuntuacion) {
+        mejorPuntuacion = puntuacion;
+        mejorCoincidencia = enlaceCarta;
+      }
+    });
+
+    if (!mejorCoincidencia) {
+      console.log(`❌ No se encontró coincidencia razonable para ${carta.nombre}`);
       return null;
     }
+
+    const urlCompleta = mejorCoincidencia.startsWith('http') ? mejorCoincidencia : `${this.baseURL}${mejorCoincidencia}`;
+    return await this.obtenerPreciosDetallados(urlCompleta, carta);
+
+  } catch (error) {
+    console.error(`❌ Error al buscar en PriceCharting para ${carta.nombre}:`, error.message);
+    return null;
   }
+}
+
 
   async obtenerPreciosDetallados(url, carta) {
     try {
