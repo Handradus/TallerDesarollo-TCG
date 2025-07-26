@@ -24,6 +24,20 @@
   font-weight: 700;
 }
 
+/* Imagen del título web */
+.titulo-web-img {
+  max-height:200px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.titulo-web-img:hover {
+  transform: scale(1.05);
+}
+
 /* Botón home */
 .home-button {
   background: linear-gradient(135deg, #646cff 0%, #747bff 100%);
@@ -93,6 +107,22 @@
   border-color: #646cff;
   box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.1);
   background-color: white;
+}
+
+/* Estado de advertencia para el input */
+.search-input-warning {
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* Contador de caracteres */
+.character-counter {
+  transition: color 0.3s ease, font-weight 0.3s ease;
 }
 
 .search-input::placeholder {
@@ -365,6 +395,10 @@
     font-size: 2rem;
   }
   
+  .titulo-web-img {
+    max-height: 60px;
+  }
+  
   .search-container {
     flex-direction: column;
     max-width: 100%;
@@ -397,6 +431,10 @@
 
 /* Media query para pantallas pequeñas */
 @media (max-width: 480px) {
+  .titulo-web-img {
+    max-height: 50px;
+  }
+  
   .cartas-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
     gap: 1rem;
@@ -436,6 +474,62 @@
   position: relative !important;
   box-sizing: border-box !important;
   min-height: 450px !important;
+}
+
+/* Scroll to top button */
+.scroll-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: #e7e8ed ;
+  color: rgb(12, 12, 12);
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  opacity: 0.8;
+}
+
+.scroll-to-top:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  opacity: 1;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.scroll-to-top:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive adjustments for scroll button */
+@media (max-width: 768px) {
+  .scroll-to-top {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    bottom: 20px;
+    right: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .scroll-to-top {
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
+    bottom: 15px;
+    right: 15px;
+  }
 }
 
 

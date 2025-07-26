@@ -4,6 +4,7 @@ import './css/BuscarCarta.css';
 import { obtenerSugerencias, normalizarTexto } from './utils/sugerencias';
 import CarouselCartas from './CarouselCartas';
 import CarouselTiendas from './CarouselTiendas';
+import tituloWebImg from './assets/tituloWeb.jpg';
 
 export default function BuscarCartas() {
   const [nombre, setNombre] = useState('');
@@ -15,11 +16,15 @@ export default function BuscarCartas() {
   const [terminoNormalizado, setTerminoNormalizado] = useState('');
   const [sugerencias, setSugerencias] = useState([]);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const apiUrl = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
 
   // Cargar datos del sessionStorage al montar el componente
   useEffect(() => {
+    // Actualizar título del documento
+    document.title = "⚡ PokéDex TCG - Centro de Entrenadores";
+    
     const savedData = sessionStorage.getItem('pokemon-search-data');
     if (savedData) {
       const { cartas: savedCartas, hasSearched: savedHasSearched, lastSearchTerm: savedLastSearchTerm } = JSON.parse(savedData);
@@ -74,25 +79,103 @@ export default function BuscarCartas() {
     }
   }, [nombre]);
 
+  // Manejar el scroll para mostrar/ocultar el botón de volver arriba
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const buscarCartas = async () => {
-    // Verificar que haya texto antes de buscar
-    if (!nombre.trim()) {
+    const termino = nombre.trim();
+    
+    // 🛡️ VALIDACIONES DE ENTRADA PARA EVITAR BÚSQUEDAS BASURA
+    
+    // 1. Verificar que haya texto
+    if (!termino) {
       setError('Por favor, ingresa el nombre de una carta para buscar');
       setTimeout(() => setError(''), 3000);
       return;
     }
 
+    // 2. Límite de 300 caracteres
+    if (termino.length > 300) {
+      setError('El nombre de búsqueda no puede exceder 300 caracteres');
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
+
+    // 3. Mínimo 2 caracteres para texto, pero permitir números de 1 dígito
+    if (termino.length < 2 && !/^\d+$/.test(termino)) {
+      setError('Ingresa al menos 2 caracteres para buscar (excepto números)');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+
+    // 4. Validación inteligente de números
+    if (/^\d+$/.test(termino)) {
+      // Permitir números, pero con restricciones específicas para cartas TCG
+      if (termino.length > 5) {
+        setError('Los números de serie de cartas no superan los 5 dígitos (ej: 025, 150)');
+        setTimeout(() => setError(''), 4000);
+        return;
+      }
+      // Permitir números de 1-5 dígitos (números de cartas válidos)
+      console.log('🔢 Búsqueda por número de serie válida:', termino);
+    }
+
+    // 5. Evitar solo caracteres especiales o espacios (pero permitir números puros)
+    if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9]/.test(termino)) {
+      setError('Ingresa al menos una letra o número en el nombre de la carta');
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
+
+    // 6. Evitar repetición excesiva del mismo carácter (aaaaaaa, 1111111)
+    if (/(.)\1{4,}/.test(termino)) {
+      setError('Evita repetir el mismo carácter más de 4 veces seguidas');
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
+
+    // 7. Validación especial para números al inicio (máximo 5 dígitos seguidos)
+    const numeroAlInicio = termino.match(/^\d+/);
+    if (numeroAlInicio && numeroAlInicio[0].length > 5) {
+      setError('Máximo 5 números seguidos al inicio (ej: 025 Pikachu)');
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
+
+    // 8. Evitar demasiados caracteres especiales consecutivos
+    if (/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-'.]{3,}/.test(termino)) {
+      setError('Demasiados caracteres especiales consecutivos');
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
+
+    // 9. Filtrar palabras inapropiadas básicas
+    const palabrasProhibidas = ['test', 'admin', 'null', 'undefined', 'script', 'alert', 'hack'];
+    const terminoLower = termino.toLowerCase();
+    if (palabrasProhibidas.some(palabra => terminoLower.includes(palabra))) {
+      setError('Término de búsqueda no válido, intenta con el nombre de una carta Pokémon');
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
+
     // Usar el término normalizado para la búsqueda
-    const terminoParaBuscar = terminoNormalizado || nombre.trim();
+    const terminoParaBuscar = terminoNormalizado || termino;
 
     // Solo buscar si el término es diferente al último buscado
     if (terminoParaBuscar === lastSearchTerm && hasSearched) {
       return;
     }
 
-    console.log('🔍 Frontend: Buscando con término normalizado:', terminoParaBuscar);
-    if (nombre.trim() !== terminoParaBuscar) {
-      console.log('🔄 Frontend: Normalización aplicada:', nombre.trim(), '→', terminoParaBuscar);
+    console.log('🔍 Frontend: Buscando con término validado y normalizado:', terminoParaBuscar);
+    if (termino !== terminoParaBuscar) {
+      console.log('🔄 Frontend: Normalización aplicada:', termino, '→', terminoParaBuscar);
     }
 
     setLoading(true);
@@ -142,7 +225,7 @@ export default function BuscarCartas() {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       setMostrarSugerencias(false);
       buscarCartas();
@@ -156,6 +239,13 @@ export default function BuscarCartas() {
     setMostrarSugerencias(false);
     // Opcional: buscar automáticamente
     // buscarCartas();
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   const limpiarBusqueda = () => {
@@ -174,7 +264,11 @@ export default function BuscarCartas() {
     <div className="app-container">
       {/* Header con título y botón home */}
       <div className="app-header">
-        <h1>Buscar Carta Pokémon</h1>
+        <img 
+          src={tituloWebImg} 
+          alt="PokéDex TCG - Centro de Entrenadores" 
+          className="titulo-web-img"
+        />
         {(hasSearched || cartas.length > 0) && (
           <button 
             onClick={limpiarBusqueda} 
@@ -193,12 +287,30 @@ export default function BuscarCartas() {
             type="text"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             onFocus={() => setMostrarSugerencias(sugerencias.length > 0)}
             onBlur={() => setTimeout(() => setMostrarSugerencias(false), 200)} // Delay para permitir clicks
-            placeholder="Ej: Pikachu, poké ball, ultra ball, arven's"
-            className="search-input"
+            placeholder="Ej: Pikachu, 025, Charizard, 150 (máx. 300 caracteres)"
+            className={`search-input ${nombre.length > 280 ? 'search-input-warning' : ''}`}
+            maxLength={300}
+            minLength={2}
+            style={{
+              borderColor: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : undefined,
+              boxShadow: nombre.length > 280 ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined
+            }}
           />
+          
+          {/* Contador de caracteres */}
+          <div className="character-counter" style={{
+            position: 'absolute',
+            bottom: '-18px',
+            right: '0',
+            fontSize: '0.75rem',
+            color: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : '#6b7280',
+            fontWeight: nombre.length > 280 ? '600' : '400'
+          }}>
+            {nombre.length}/300
+          </div>
           
           {/* Lista de sugerencias */}
           {mostrarSugerencias && sugerencias.length > 0 && (
@@ -337,6 +449,17 @@ export default function BuscarCartas() {
           </div>
         ))}
       </div>
+
+      {/* Botón de volver arriba */}
+      {showScrollTop && (
+        <button 
+          className="scroll-to-top"
+          onClick={scrollToTop}
+          aria-label="Volver arriba"
+        >
+          ↑
+        </button>
+      )}
     </div>
   );
 }

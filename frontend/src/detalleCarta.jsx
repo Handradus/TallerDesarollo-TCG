@@ -108,6 +108,25 @@ export default function CartaDetalle() {
     };
   }, [carta.nombre]);
 
+  // Efecto para manejar el scroll y mostrar/ocultar el título en la navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const navbar = document.querySelector('.carta-navbar');
+      const scrolled = window.scrollY > 200; // Mostrar título después de 200px de scroll
+      
+      if (navbar) {
+        if (scrolled) {
+          navbar.classList.add('navbar-scrolled');
+        } else {
+          navbar.classList.remove('navbar-scrolled');
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Función para manejar clicks en tiendas y registrar visitas
   const handleTiendaClick = async (tienda) => {
     try {
@@ -209,46 +228,60 @@ export default function CartaDetalle() {
 
   return (
     <div className="detalle-container">
-      <div className="carta-detalle">
-        {/* Header con botones de navegación */}
-        <div className="detalle-header">
+      {/* Navbar fija */}
+      <nav className="carta-navbar">
+        <div className="navbar-content">
           <div className="nav-buttons">
             <button 
-              className="btn-volver" 
+              className="btn-nav btn-volver" 
               onClick={() => navigate(-1)}
+              title="Volver a la página anterior"
             >
               ← Volver
             </button>
             <button 
-              className="btn-home" 
+              className="btn-nav btn-home" 
               onClick={() => navigate('/')}
               title="Ir al inicio"
             >
               🏠 Inicio
             </button>
           </div>
-          <h1 style={{ color: tipoColor }}>
+          <div className="navbar-title">
+            <span style={{ background: `linear-gradient(135deg, ${tipoColor}, ${tipoColor}dd)` }}>
+              {getTipoIcon(carta.tipos)} {carta.nombre}
+            </span>
+          </div>
+        </div>
+      </nav>
+
+      <div className="carta-detalle">
+        {/* Título principal arriba de todo */}
+        <div className="carta-titulo-principal">
+          <h1 style={{ background: `linear-gradient(135deg, ${tipoColor}, ${tipoColor}dd)` }}>
             {getTipoIcon(carta.tipos)} {carta.nombre}
           </h1>
         </div>
 
-        {/* Contenido principal */}
+        {/* Contenido principal - grid de 2 columnas: Imagen y Precios */}
         <div className="carta-contenido">
-          {/* Imagen de la carta */}
-          <div className="carta-imagen">
-            <img 
-              src={carta.imagenGrande || carta.imagenPequena || '/placeholder-card.png'} 
-              alt={carta.nombre}
-              onClick={() => setMostrarModal(true)}
-              style={{ cursor: 'pointer' }}
-              title="Clic para ver en pantalla completa"
-              onError={(e) => {
-                e.target.src = '/placeholder-card.png';
-              }}
-            />
+          {/* Columna izquierda: Imagen */}
+          <div className="carta-imagen-seccion">
+            <div className="carta-imagen">
+              <img 
+                src={carta.imagenGrande || carta.imagenPequena || '/placeholder-card.png'} 
+                alt={carta.nombre}
+                onClick={() => setMostrarModal(true)}
+                style={{ cursor: 'pointer' }}
+                title="Clic para ver en pantalla completa"
+                onError={(e) => {
+                  e.target.src = '/placeholder-card.png';
+                }}
+              />
+            </div>
           </div>
 
-          {/* Precios - a la altura de la imagen */}
+          {/* Columna derecha: Precios - a la altura de la imagen */}
           <div className="carta-precios">
             {(carta.precioNormal || carta.precioHolofoil || preciosPriceCharting?.precioPriceCharting) && (
               <div className="precios">
@@ -364,10 +397,41 @@ export default function CartaDetalle() {
           </div>
         </div>
 
+        {/* Tiendas disponibles - sección independiente debajo de imagen y precios */}
+        <div className="tiendas-seccion-completa">
+          <div className="precios">
+            <h3>🏪 Disponibilidad en tiendas</h3>
+            {cargandoTiendas ? (
+              <p>Cargando tiendas...</p>
+            ) : carta.tiendasDisponibles && carta.tiendasDisponibles.length > 0 ? (
+              <div className="tiendas-grid">
+                {carta.tiendasDisponibles.map((tienda, index) => (
+                  <div key={index} className="tienda-item">
+                    <button 
+                      onClick={() => handleTiendaClick(tienda)}
+                      className="tienda-link"
+                    >
+                      🔗 {tienda.nombre}
+                    </button>
+                    {tienda.precio && (
+                      <span className="tienda-precio">${tienda.precio}</span>
+                    )}
+                    {tienda.verificada && (
+                      <span className="tienda-verificada">✅ Verificada</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="no-tiendas">No hay tiendas disponibles para esta carta.</p>
+            )}
+          </div>
+        </div>
+
         {/* Información adicional - debajo de imagen y precios */}
         <div className="carta-info-adicional">
-          <div className="info-basica">
-            <h2>Información básica</h2>
+          <div className="precios">
+            <h3>📋 Información básica</h3>
             <div className="info-grid">
               <div className="info-item">
                 <strong>Número:</strong> {carta.numero}
@@ -405,49 +469,22 @@ export default function CartaDetalle() {
 
           {/* Ataques */}
           {carta.ataques && carta.ataques.length > 0 && (
-            <div className="ataques">
-              <h3>Ataques</h3>
-              {carta.ataques.map((ataque, index) => (
-                <div key={index} className="ataque-item">
-                  <div className="ataque-nombre">
-                    <strong>{ataque.name}</strong>
-                    {ataque.damage && <span className="damage">• {ataque.damage}</span>}
+            <div className="precios">
+              <h3>⚔️ Ataques</h3>
+              <div className="ataques-lista">
+                {carta.ataques.map((ataque, index) => (
+                  <div key={index} className="ataque-item">
+                    <div className="ataque-nombre">
+                      <strong>{ataque.name}</strong>
+                      {ataque.damage && <span className="damage">• {ataque.damage}</span>}
+                    </div>
+                    {ataque.text && (
+                      <div className="ataque-descripcion">{ataque.text}</div>
+                    )}
                   </div>
-                  {ataque.text && (
-                    <div className="ataque-descripcion">{ataque.text}</div>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          )}
-        </div>
-
-        {/* Tiendas disponibles - sección completa abajo */}
-        <div className="tiendas-seccion">
-          <h3>🏪 Disponibilidad en tiendas</h3>
-          {cargandoTiendas ? (
-            <p>Cargando tiendas...</p>
-          ) : carta.tiendasDisponibles && carta.tiendasDisponibles.length > 0 ? (
-            <div className="tiendas-lista">
-              {carta.tiendasDisponibles.map((tienda, index) => (
-                <div key={index} className="tienda-item">
-                  <button 
-                    onClick={() => handleTiendaClick(tienda)}
-                    className="tienda-link"
-                  >
-                    🔗 {tienda.nombre}
-                  </button>
-                  {tienda.precio && (
-                    <span className="tienda-precio">${tienda.precio}</span>
-                  )}
-                  {tienda.verificada && (
-                    <span className="tienda-verificada">✅ Verificada</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="no-tiendas">No hay tiendas disponibles para esta carta.</p>
           )}
         </div>
       </div>
