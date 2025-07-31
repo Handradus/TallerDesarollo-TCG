@@ -307,33 +307,205 @@ async function buscarCarta(input) {
     console.log(`📡 Consultando API con query: ${queryAPI}`);
 
     let resultadosAPI = [];
+    let errorAPI = null;
     
     // Solo consultar API si no se saltó la consulta
     if (!saltarConsultaAPI) {
-      const resFull = await axios.get(
-        `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
-        { headers }
-      );
+      try {
+        const resFull = await axios.get(
+          `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
+          { headers }
+        );
 
-      const cartasAPI = resFull.data.data || [];
+        const cartasAPI = resFull.data.data || [];
 
-      for (const cartaAPI of cartasAPI) {
+        for (const cartaAPI of cartasAPI) {
+        const numero = cartaAPI.number?.toUpperCase();
+        const set = cartaAPI.set?.name || null;
+        const printedTotal = cartaAPI.set?.printedTotal || null;
+
+        if (matchFraccion) {
+          const esperadoNumero = matchFraccion[1].replace(/^0+/, '');
+          const esperadoTotal = parseInt(matchFraccion[2]);
+
+          if ((numero !== esperadoNumero && numero !== matchFraccion[1]) || parseInt(printedTotal) !== esperadoTotal) {
+            continue;
+          }
+
+          if (posiblesNombre && !cartaAPI.name.toLowerCase().includes(posiblesNombre.toLowerCase())) {
+            continue;
+          }
+        }
+
+        const existe = await cartaRepo.findOne({ where: { numero, set } });
+
+        if (!existe) {
+          const nueva = cartaRepo.create({
+            nombre: cartaAPI.name,
+            numero,
+            set,
+            setId: cartaAPI.set?.id || null,
+            serie: cartaAPI.set?.series || null,
+            fechaLanzamiento: cartaAPI.set?.releaseDate || null,
+            supertipo: cartaAPI.supertype || null,
+            subtipos: cartaAPI.subtypes || null,
+            nivel: cartaAPI.level || null,
+            hp: cartaAPI.hp || null,
+            tipos: cartaAPI.types || null,
+            evolucionaA: cartaAPI.evolvesTo || null,
+            retreatCost: cartaAPI.retreatCost || null,
+            debilidades: cartaAPI.weaknesses || null,
+            ataques: cartaAPI.attacks || null,
+            reglas: cartaAPI.rules || null,
+            rareza: cartaAPI.rarity || null,
+            ilustrador: cartaAPI.artist || null,
+            flavorText: cartaAPI.flavorText || null,
+            pokedexIds: cartaAPI.nationalPokedexNumbers || null,
+            imagenPequena: cartaAPI.images?.small || null,
+            imagenGrande: cartaAPI.images?.large || null,
+            precioNormal: cartaAPI.tcgplayer?.prices?.normal?.market || null,
+            precioHolofoil: cartaAPI.tcgplayer?.prices?.holofoil?.market || null,
+            printedTotal,
+          });
+
+          const guardada = await cartaRepo.save(nueva);
+          resultadosAPI.push({ ...guardada, origen: "API" });
+        }
+      }
+
+      if (resultadosAPI.length > 0 && posiblesNombre.length > 0) {
+        await consultaRepo.save({
+          termino: posiblesNombre.toLowerCase(),
+          fechaConsulta: hoy
+        });
+      }
+      } catch (error) {
+        console.error('⚠️ Error al consultar API de PokemonTCG:', error.message);
+        errorAPI = error.message;
+        // Continuar con los resultados de BD solamente
+        console.log(`📊 [ERROR API] Continuando solo con ${cartasBD.length} resultados de BD`);
+      }
+    } // Cerrar el bloque if (!saltarConsultaAPI)
+
+    const resultadosTotales = [...cartasBD.map(c => ({ ...c, origen: "BD" })), ...resultadosAPI];
+    
+    if (resultadosTotales.length > 0) {
+      console.log(`✅ Se devolvieron ${resultadosTotales.length} resultados (BD + API).`);
+      console.log(`📊 Desglose: ${cartasBD.length} de BD, ${resultadosAPI.length} de API`);
+      
+      // Logging detallado de qué se buscó
+      console.log(`📋 RESUMEN DE BÚSQUEDA:`);
+      console.log(`   🔍 Input recibido: "${inputOriginal}"`);
+      console.log(`   💾 BD - Búsqueda en campo 'nombre' con término: "${posiblesNombre}"`);
+      console.log(`   🌐 API - Query utilizada: ${queryAPI}`);
+      
+      // Si hubo error en API pero hay resultados de BD, agregar mensaje informativo al primer resultado
+      if (errorAPI && cartasBD.length > 0) {
+        console.log(`⚠️ Nota: Error en API, mostrando solo resultados de BD`);
+        // Agregar información del error API como metadata en el primer resultado
+        resultadosTotales[0] = {
+          ...resultadosTotales[0],
+          _metadata: {
+            mensaje: 'Mostrando resultados de base de datos. No se pudieron obtener cartas actualizadas de la API.',
+            errorAPI: errorAPI,
+            soloBaseDatos: true
+          }
+        };
+      }
+      
+      return resultadosTotales;
+    }
+
+    // ⚠️ Si aún no hay resultados y la búsqueda parece promocional
+    if (esBusquedaPromocional(inputOriginal)) {
+      const urlSugerida = `https://pokumon.com/cards?search=${encodeURIComponent(inputOriginal)}`;
+      console.log(`🔔 Sugerencia: Redirigir a Pokumon: ${urlSugerida}`);
+      return [{
+        mensaje: 'Tu búsqueda parece ser una carta promocional exclusiva o de evento. Te recomendamos visitar Pokumon:',
+        sugerenciaUrl: urlSugerida,
+        origen: 'sugerencia-pokumon'
+      }];
+    }
+
+    // Si hubo error de API y no hay resultados de BD
+    if (errorAPI) {
+      console.log('⚠️ No se encontraron cartas en BD y hubo error en API');
+      return [{
+        mensaje: 'No se encontraron cartas en la base de datos y no se pudo consultar la API externa. Intenta nuevamente más tarde.',
+        errorAPI: errorAPI,
+        origen: 'error-api'
+      }];
+    }
+
+    console.log('❌ No se encontró ninguna carta.');
+    return [];
+
+  } catch (error) {
+    console.error('❌ Error al buscar carta:', error.message);
+    return [];
+  }
+}
+
+// Función de administrador que SIEMPRE consulta la API
+async function buscarCartaAdmin(input) {
+  console.log(`🔧 === BÚSQUEDA ADMIN (FORZAR API) === Input: "${input}"`);
+  
+  const headers = {
+    'X-Api-Key': process.env.POKEMONTCG_API_KEY,
+  };
+
+  try {
+    const cartaRepo = AppDataSource.getRepository(Carta);
+    const consultaRepo = AppDataSource.getRepository('ConsultaAPI');
+    const inputOriginal = input.trim();
+    
+    const palabras = inputOriginal.split(/\s+/);
+    const posiblesNumeros = palabras.filter(p => /^\d{1,3}(\/\d{1,3})?$/.test(p));
+    const posiblesNombre = palabras.filter(p => !/^\d{1,3}(\/\d{1,3})?$/.test(p)).join(' ');
+
+    // Primero buscar en BD para comparar
+    let cartasBD = [];
+    console.log(`🔍 [ADMIN] Buscando en BD: "${inputOriginal}"`);
+
+    if (posiblesNombre) {
+      const nombreConGuiones = posiblesNombre.replace(/ /g, '-');
+      cartasBD = await cartaRepo
+        .createQueryBuilder('carta')
+        .where(new Brackets(qb => {
+          qb.where('LOWER(carta.nombre) LIKE LOWER(:nombre1)', { nombre1: `%${posiblesNombre}%` })
+            .orWhere('LOWER(carta.nombre) LIKE LOWER(:nombre2)', { nombre2: `%${nombreConGuiones}%` });
+        }))
+        .getMany();
+    }
+
+    console.log(`📊 [ADMIN] Cartas existentes en BD: ${cartasBD.length}`);
+
+    // SIEMPRE consultar API (sin verificar si ya se consultó hoy)
+    let queryAPI = "";
+    if (posiblesNombre) {
+      const nombreEscapado = posiblesNombre.replace(/"/g, '').trim();
+      queryAPI = `name:"${nombreEscapado}"`;
+    } else {
+      queryAPI = inputOriginal;
+    }
+
+    console.log(`📡 [ADMIN] FORZANDO consulta API con query: ${queryAPI}`);
+
+    const resFull = await axios.get(
+      `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
+      { headers }
+    );
+
+    const cartasAPI = resFull.data.data || [];
+    console.log(`📡 [ADMIN] API devolvió ${cartasAPI.length} cartas`);
+
+    let resultadosAPI = [];
+    let cartasActualizadas = 0;
+
+    for (const cartaAPI of cartasAPI) {
       const numero = cartaAPI.number?.toUpperCase();
       const set = cartaAPI.set?.name || null;
       const printedTotal = cartaAPI.set?.printedTotal || null;
-
-      if (matchFraccion) {
-        const esperadoNumero = matchFraccion[1].replace(/^0+/, '');
-        const esperadoTotal = parseInt(matchFraccion[2]);
-
-        if ((numero !== esperadoNumero && numero !== matchFraccion[1]) || parseInt(printedTotal) !== esperadoTotal) {
-          continue;
-        }
-
-        if (posiblesNombre && !cartaAPI.name.toLowerCase().includes(posiblesNombre.toLowerCase())) {
-          continue;
-        }
-      }
 
       const existe = await cartaRepo.findOne({ where: { numero, set } });
 
@@ -368,50 +540,31 @@ async function buscarCarta(input) {
 
         const guardada = await cartaRepo.save(nueva);
         resultadosAPI.push({ ...guardada, origen: "API" });
+        cartasActualizadas++;
+      } else {
+        // Marcar cartas existentes
+        resultadosAPI.push({ ...existe, origen: "BD" });
       }
     }
 
-    if (resultadosAPI.length > 0 && posiblesNombre.length > 0) {
+    // Registrar la consulta
+    const hoy = new Date().toISOString().split('T')[0];
+    if (posiblesNombre.length > 0) {
       await consultaRepo.save({
         termino: posiblesNombre.toLowerCase(),
         fechaConsulta: hoy
       });
     }
-    } // Cerrar el bloque if (!saltarConsultaAPI)
 
-    const resultadosTotales = [...cartasBD.map(c => ({ ...c, origen: "BD" })), ...resultadosAPI];
-    
-    if (resultadosTotales.length > 0) {
-      console.log(`✅ Se devolvieron ${resultadosTotales.length} resultados (BD + API).`);
-      console.log(`📊 Desglose: ${cartasBD.length} de BD, ${resultadosAPI.length} de API`);
-      
-      // Logging detallado de qué se buscó
-      console.log(`📋 RESUMEN DE BÚSQUEDA:`);
-      console.log(`   🔍 Input recibido: "${inputOriginal}"`);
-      console.log(`   💾 BD - Búsqueda en campo 'nombre' con término: "${posiblesNombre}"`);
-      console.log(`   🌐 API - Query utilizada: ${queryAPI}`);
-      
-      return resultadosTotales;
-    }
+    console.log(`✅ [ADMIN] Actualización completada: ${cartasActualizadas} cartas nuevas agregadas`);
+    console.log(`📊 [ADMIN] Total de resultados: ${resultadosAPI.length}`);
 
-    // ⚠️ Si aún no hay resultados y la búsqueda parece promocional
-    if (esBusquedaPromocional(inputOriginal)) {
-      const urlSugerida = `https://pokumon.com/cards?search=${encodeURIComponent(inputOriginal)}`;
-      console.log(`🔔 Sugerencia: Redirigir a Pokumon: ${urlSugerida}`);
-      return [{
-        mensaje: 'Tu búsqueda parece ser una carta promocional exclusiva o de evento. Te recomendamos visitar Pokumon:',
-        sugerenciaUrl: urlSugerida,
-        origen: 'sugerencia-pokumon'
-      }];
-    }
-
-    console.log('❌ No se encontró ninguna carta.');
-    return [];
+    return resultadosAPI;
 
   } catch (error) {
-    console.error('❌ Error al buscar carta:', error.message);
+    console.error('❌ [ADMIN] Error al actualizar BD:', error.message);
     return [];
   }
 }
 
-module.exports = { buscarCarta };
+module.exports = { buscarCarta, buscarCartaAdmin };

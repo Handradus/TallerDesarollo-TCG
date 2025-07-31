@@ -8,16 +8,26 @@ async function obtenerPreciosPriceCharting(req, res) {
   const { id } = req.params;
   const { forzar } = req.query; // ?forzar=true para forzar actualización
 
-  if (enProcesoPriceCharting.has(id)) {
+  // Validar que el ID sea un número válido
+  const cartaId = parseInt(id);
+  if (isNaN(cartaId) || cartaId <= 0) {
+    console.error(`❌ [obtenerPreciosPriceCharting] ID inválido recibido: "${id}"`);
+    return res.status(400).json({ 
+      error: "ID de carta inválido",
+      detalles: `El ID "${id}" no es un número válido` 
+    });
+  }
+
+  if (enProcesoPriceCharting.has(cartaId)) {
     return res.status(429).json({ error: "Consulta de precios en proceso para esta carta." });
   }
 
-  enProcesoPriceCharting.add(id);
-  console.log(`🟢 [obtenerPreciosPriceCharting] Ejecutando para carta id=${id}`);
+  enProcesoPriceCharting.add(cartaId);
+  console.log(`🟢 [obtenerPreciosPriceCharting] Ejecutando para carta id=${cartaId}`);
 
   try {
     const cartaRepo = AppDataSource.getRepository(Carta);
-    const carta = await cartaRepo.findOneBy({ id: parseInt(id) });
+    const carta = await cartaRepo.findOneBy({ id: cartaId });
     
     if (!carta) {
       return res.status(404).json({ error: "Carta no encontrada" });
@@ -66,7 +76,7 @@ async function obtenerPreciosPriceCharting(req, res) {
       mensaje: resultado ? "Precio encontrado en PriceCharting" : "No se encontró precio en PriceCharting"
     };
 
-    console.log(`✅ [obtenerPreciosPriceCharting] Finalizado para carta id=${id}`);
+    console.log(`✅ [obtenerPreciosPriceCharting] Finalizado para carta id=${cartaId}`);
     res.json(respuesta);
 
   } catch (error) {
@@ -76,7 +86,7 @@ async function obtenerPreciosPriceCharting(req, res) {
       mensaje: error.message 
     });
   } finally {
-    enProcesoPriceCharting.delete(id);
+    enProcesoPriceCharting.delete(cartaId);
   }
 }
 
