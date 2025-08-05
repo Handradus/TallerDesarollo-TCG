@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css/BuscarCarta.css';
-import { obtenerSugerencias, normalizarTexto } from './utils/sugerencias';
+import { obtenerSugerenciasHibridas } from './utils/sugerenciasBackend';
+import { normalizarTexto } from './utils/sugerencias';
 import CarouselCartas from './CarouselCartas';
 import CarouselTiendas from './CarouselTiendas';
 import tituloWebImg from './assets/tituloWeb.jpg';
@@ -70,9 +71,22 @@ export default function BuscarCartas() {
     
     // Obtener sugerencias si hay al menos 2 caracteres
     if (nombre.length >= 2) {
-      const nuevasSugerencias = obtenerSugerencias(nombre);
-      setSugerencias(nuevasSugerencias);
-      setMostrarSugerencias(nuevasSugerencias.length > 0);
+      // Usar función async para obtener sugerencias del backend
+      const fetchSugerencias = async () => {
+        try {
+          const nuevasSugerencias = await obtenerSugerenciasHibridas(nombre);
+          setSugerencias(nuevasSugerencias);
+          setMostrarSugerencias(nuevasSugerencias.length > 0);
+        } catch (error) {
+          console.warn('Error al obtener sugerencias:', error);
+          setSugerencias([]);
+          setMostrarSugerencias(false);
+        }
+      };
+      
+      // Debounce para evitar demasiadas consultas
+      const timeoutId = setTimeout(fetchSugerencias, 300);
+      return () => clearTimeout(timeoutId);
     } else {
       setSugerencias([]);
       setMostrarSugerencias(false);
@@ -292,71 +306,53 @@ export default function BuscarCartas() {
 
       {/* Sección de búsqueda - siempre visible */}
       <div className="search-section">
-        <div className="search-container" style={{ position: 'relative' }}>
-          <input
-            type="text"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setMostrarSugerencias(sugerencias.length > 0)}
-            onBlur={() => setTimeout(() => setMostrarSugerencias(false), 200)} // Delay para permitir clicks
-            placeholder="Ej: Pikachu, 025, Charizard, 150 (máx. 300 caracteres)"
-            className={`search-input ${nombre.length > 280 ? 'search-input-warning' : ''}`}
-            maxLength={300}
-            minLength={2}
-            style={{
-              borderColor: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : undefined,
-              boxShadow: nombre.length > 280 ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined
-            }}
-          />
-          
-          {/* Contador de caracteres */}
-          <div className="character-counter" style={{
-            position: 'absolute',
-            bottom: '-18px',
-            right: '0',
-            fontSize: '0.75rem',
-            color: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : '#6b7280',
-            fontWeight: nombre.length > 280 ? '600' : '400'
-          }}>
-            {nombre.length}/300
-          </div>
-          
-          {/* Lista de sugerencias */}
-          {mostrarSugerencias && sugerencias.length > 0 && (
-            <div className="suggestions-dropdown" style={{
+        <div className="search-container">
+          <div className="input-container" style={{ position: 'relative', width: '100%' }}>
+            <input
+              type="text"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setMostrarSugerencias(sugerencias.length > 0)}
+              onBlur={() => setTimeout(() => setMostrarSugerencias(false), 200)} // Delay para permitir clicks
+              placeholder="Ej: Pikachu, 025, Charizard, 150 (máx. 300 caracteres)"
+              className={`search-input ${nombre.length > 280 ? 'search-input-warning' : ''}`}
+              maxLength={300}
+              minLength={2}
+              style={{
+                width: '100%',
+                borderColor: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : undefined,
+                boxShadow: nombre.length > 280 ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined
+              }}
+            />
+            
+            {/* Contador de caracteres */}
+            <div className="character-counter" style={{
               position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              backgroundColor: 'white',
-              border: '1px solid #ddd',
-              borderTop: 'none',
-              borderRadius: '0 0 8px 8px',
-              maxHeight: '200px',
-              overflowY: 'auto',
-              zIndex: 1000,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              bottom: '-18px',
+              right: '0',
+              fontSize: '0.75rem',
+              color: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : '#6b7280',
+              fontWeight: nombre.length > 280 ? '600' : '400'
             }}>
-              {sugerencias.map((sugerencia, index) => (
-                <div
-                  key={index}
-                  className="suggestion-item"
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    borderBottom: index < sugerencias.length - 1 ? '1px solid #eee' : 'none',
-                    fontSize: '0.9em'
-                  }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
-                  onClick={() => seleccionarSugerencia(sugerencia)}
-                >
-                  {sugerencia}
-                </div>
-              ))}
+              {nombre.length}/300
             </div>
-          )}
+            
+            {/* Lista de sugerencias */}
+            {mostrarSugerencias && sugerencias.length > 0 && (
+              <div className="suggestions-dropdown">
+                {sugerencias.map((sugerencia, index) => (
+                  <div
+                    key={index}
+                    className="suggestion-item"
+                    onClick={() => seleccionarSugerencia(sugerencia)}
+                  >
+                    {sugerencia}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           
           <button 
             onClick={buscarCartas} 

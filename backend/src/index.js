@@ -10,6 +10,7 @@ const historialRoutes = require('./routes/historialRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const tiendaRoutes = require('./routes/tiendaRoutes');
 const tiendaPublicaRoutes = require('./routes/tiendaPublicaRoutes');
+const sugerenciasRoutes = require('./routes/sugerenciasRoutes');
 const cors = require('cors');
 
 const app = express();
@@ -31,6 +32,7 @@ AppDataSource.initialize()
     app.use('/api/admin', adminRoutes);
     app.use('/api/tiendas', tiendaRoutes);
     app.use('/api/tiendas-publicas', tiendaPublicaRoutes);
+    app.use('/api/sugerencias', sugerenciasRoutes);
     
 
     app.listen(PORT, HOST, () => {

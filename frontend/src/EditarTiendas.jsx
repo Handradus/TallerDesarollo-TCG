@@ -331,28 +331,40 @@ export default function EditarTiendas() {
     }
   };
 
-  const eliminarTienda = async (id, nombre) => {
-    if (!confirm(`¿Estás seguro de que quieres desactivar la tienda "${nombre}"?`)) {
+  const toggleActivarTienda = async (id, nombre, estadoActual) => {
+    const accion = estadoActual ? 'desactivar' : 'activar';
+    const mensaje = estadoActual 
+      ? `¿Estás seguro de que quieres desactivar la tienda "${nombre}"?`
+      : `¿Estás seguro de que quieres activar la tienda "${nombre}"?`;
+    
+    if (!confirm(mensaje)) {
       return;
     }
 
     try {
+      // Usar PUT para cambiar el estado activo/inactivo
       const response = await fetch(`${apiUrl}/api/tiendas/${id}`, {
-        method: 'DELETE'
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          activo: !estadoActual // Cambiar al estado contrario
+        })
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
-        mostrarMensaje('success', 'Tienda desactivada exitosamente');
+        mostrarMensaje('success', `Tienda ${accion === 'desactivar' ? 'desactivada' : 'activada'} exitosamente`);
         cargarTiendas(); // Recargar la lista
       } else {
-        mostrarMensaje('error', result.error || 'Error al desactivar tienda');
+        mostrarMensaje('error', result.error || `Error al ${accion} tienda`);
       }
 
     } catch (error) {
-      console.error('Error al eliminar:', error);
-      mostrarMensaje('error', 'Error de conexión al desactivar tienda');
+      console.error(`Error al ${accion}:`, error);
+      mostrarMensaje('error', `Error de conexión al ${accion} tienda`);
     }
   };
 
@@ -590,10 +602,10 @@ export default function EditarTiendas() {
                     ✏️ Editar
                   </button>
                   <button 
-                    className="btn-eliminar"
-                    onClick={() => eliminarTienda(tienda.id, tienda.nombre)}
+                    className={tienda.activo ? "btn-eliminar" : "btn-activar"}
+                    onClick={() => toggleActivarTienda(tienda.id, tienda.nombre, tienda.activo)}
                   >
-                    🗑️ Desactivar
+                    {tienda.activo ? "🗑️ Desactivar" : "✅ Activar"}
                   </button>
                 </div>
 
