@@ -85,6 +85,11 @@ export default function CartaDetalle() {
   };
 
   useEffect(() => {
+    // No ejecutar fetch si es una sugerencia promocional o no hay ID válido
+    if (sugerenciaUrl || !id || id === 'undefined') {
+      return;
+    }
+    
     fetch(`${apiUrl}/api/cartas/${id}`)
       .then(res => res.json())
       .then(data => {
@@ -94,7 +99,7 @@ export default function CartaDetalle() {
         obtenerPreciosPriceCharting();
       })
       .catch(err => console.error("❌ Error al obtener carta:", err));
-  }, [id]);
+  }, [id, sugerenciaUrl]);
 
   // Actualizar título del documento cuando se carga la carta
   useEffect(() => {
@@ -144,6 +149,11 @@ export default function CartaDetalle() {
   };
 
   const obtenerPreciosPriceCharting = async (forzar = false) => {
+    // No ejecutar si es una sugerencia promocional o no hay ID válido
+    if (sugerenciaUrl || !id || id === 'undefined') {
+      return;
+    }
+    
     setCargandoPreciosPriceCharting(true);
     try {
       const url = `${apiUrl}/api/cartas/${id}/precios-pricecharting${forzar ? '?forzar=true' : ''}`;
@@ -153,6 +163,8 @@ export default function CartaDetalle() {
       if (response.ok) {
         setPreciosPriceCharting(data);
         console.log('✅ Precios de PriceCharting obtenidos:', data);
+        console.log('🔗 URL de PriceCharting:', data?.url);
+        console.log('🔍 Tipo de URL:', typeof data?.url);
       } else {
         console.error('❌ Error al obtener precios de PriceCharting:', data.mensaje);
         setPreciosPriceCharting({ error: data.mensaje || 'Error al consultar precios' });
@@ -166,6 +178,11 @@ export default function CartaDetalle() {
   };
 
   useEffect(() => {
+    // No ejecutar si es una sugerencia promocional o no hay ID válido
+    if (sugerenciaUrl || !id || id === 'undefined') {
+      return;
+    }
+    
     if (!hasFetchedTiendas && carta && carta.id) {
       setCargandoTiendas(true);
       fetch(`${apiUrl}/api/cartas/${id}/tiendas`)
@@ -191,7 +208,7 @@ export default function CartaDetalle() {
         .catch(err => console.error("❌ Error al obtener tiendas:", err))
         .finally(() => setCargandoTiendas(false));
     }
-  }, [carta, hasFetchedTiendas, id]);
+  }, [carta, hasFetchedTiendas, id, sugerenciaUrl]);
 
   // Efecto para manejar la tecla ESC en el modal
   useEffect(() => {
@@ -311,7 +328,27 @@ export default function CartaDetalle() {
                 {/* Precios PriceCharting */}
                 <div className="precio-section">
                   <div className="precio-source">
-                    <span className="pricecharting-badge">📈 Precio de PriceCharting</span>
+                    {(() => {
+                      console.log('🔍 Debug PriceCharting:', {
+                        preciosPriceCharting,
+                        url: preciosPriceCharting?.url,
+                        hasUrl: !!preciosPriceCharting?.url
+                      });
+                      return null;
+                    })()}
+                    {preciosPriceCharting?.url ? (
+                      <a 
+                        href={preciosPriceCharting.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="pricecharting-badge pricecharting-link"
+                        title="Ver en PriceCharting (abre en nueva pestaña)"
+                      >
+                        📈 PriceCharting
+                      </a>
+                    ) : (
+                      <span className="pricecharting-badge">📈 PriceCharting</span>
+                    )}
                     {!cargandoPreciosPriceCharting && preciosPriceCharting && !preciosPriceCharting.error && (
                       <button 
                         className="btn-actualizar-precios"
@@ -407,18 +444,43 @@ export default function CartaDetalle() {
               <div className="tiendas-grid">
                 {carta.tiendasDisponibles.map((tienda, index) => (
                   <div key={index} className="tienda-item">
-                    <button 
-                      onClick={() => handleTiendaClick(tienda)}
-                      className="tienda-link"
-                    >
-                      🔗 {tienda.nombre}
-                    </button>
-                    {tienda.precio && (
-                      <span className="tienda-precio">${tienda.precio}</span>
-                    )}
-                    {tienda.verificada && (
-                      <span className="tienda-verificada">✅ Verificada</span>
-                    )}
+                    <div className="tienda-info">
+                      {tienda.logo ? (
+                        <div className="tienda-logo-section">
+                          <img 
+                            src={tienda.logo} 
+                            alt={`Logo ${tienda.nombre}`}
+                            className="tienda-logo-small"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextElementSibling.style.display = 'inline';
+                            }}
+                          />
+                          <span className="tienda-nombre-fallback" style={{ display: 'none' }}>
+                            🏪
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="tienda-icon">🏪</span>
+                      )}
+                      <button 
+                        onClick={() => handleTiendaClick(tienda)}
+                        className="tienda-link"
+                      >
+                        {tienda.nombre}
+                      </button>
+                    </div>
+                    <div className="tienda-details">
+                      {tienda.precio && (
+                        <span className="tienda-precio">${tienda.precio}</span>
+                      )}
+                      {tienda.verificada && (
+                        <span className="tienda-verificada">✅ Verificada</span>
+                      )}
+                      {tienda.valoracion && (
+                        <span className="tienda-valoracion">⭐ {tienda.valoracion}</span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

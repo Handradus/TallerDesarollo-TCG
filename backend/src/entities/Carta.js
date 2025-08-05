@@ -35,6 +35,7 @@ module.exports = new EntitySchema({
     precioNormal: { type: 'decimal', nullable: true },
     precioHolofoil: { type: 'decimal', nullable: true },
     precioPriceCharting: { type: 'decimal', nullable: true },
+    urlPriceCharting: { type: 'varchar', nullable: true },
     precioGradedPriceCharting: { type: 'decimal', nullable: true },
     fechaActualizacionPrecios: { type: 'timestamp', nullable: true },
     fechaCreacion: { type: 'timestamp', createDate: true },

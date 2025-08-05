@@ -6,40 +6,34 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
-/* Header con título y botón home */
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+/* Logo principal de la página */
+.logo-principal {
+  text-align: center;
+  margin-bottom: 0rem;
   padding: 1rem 0;
-  border-bottom: 2px solid #e9ecef;
 }
 
-/* Título principal */
-.app-header h1 {
-  color: #ff8d64;
-  margin: 0;
-  font-size: 2.5rem;
-  font-weight: 700;
-}
-
-/* Imagen del título web */
 .titulo-web-img {
-  max-height:200px;
+  max-height: 200px;
   height: auto;
+  width: auto;
   max-width: 100%;
-  object-fit: contain;
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+  border-radius: 8px;
 }
 
 .titulo-web-img:hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
-/* Botón home */
-.home-button {
+/* Botón para limpiar búsqueda */
+.search-actions {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.btn-limpiar-busqueda {
   background: linear-gradient(135deg, #646cff 0%, #747bff 100%);
   color: white;
   border: none;
@@ -52,7 +46,7 @@
   box-shadow: 0 2px 8px rgba(100, 108, 255, 0.2);
 }
 
-.home-button:hover {
+.btn-limpiar-busqueda:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(100, 108, 255, 0.3);
 }
@@ -83,23 +77,32 @@
 /* Contenedor para input + botón */
 .search-container {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  max-width: 600px;
+  flex-direction: row;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-width: 700px;
   width: 100%;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
 }
 
-/* Estilo input */
-.search-input {
+/* Contenedor del input con sugerencias */
+.input-container {
+  position: relative;
   flex: 1;
+  max-width: 500px;
+}
+
+
+.search-input {
+  width: 100%;
   padding: 0.8rem 1.2rem;
   font-size: 1.1rem;
   border: 2px solid #ddd;
   border-radius: 8px;
   transition: all 0.3s ease;
   background-color: #fafafa;
+  box-sizing: border-box;
 }
 
 .search-input:focus {
@@ -132,7 +135,7 @@
 
 /* Estilo botón */
 .search-button {
-  padding: 0.8rem 2rem;
+  padding: 0.8rem 1.5rem;
   font-size: 1.1rem;
   font-weight: 600;
   background: linear-gradient(135deg, #646cff 0%, #5a5fcf 100%);
@@ -141,10 +144,12 @@
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 140px;
+  min-width: 120px;
+  height: fit-content;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 2px 8px rgba(100, 108, 255, 0.3);
+  flex-shrink: 0;
 }
 
 .search-button:hover:not(:disabled) {
@@ -402,6 +407,11 @@
   .search-container {
     flex-direction: column;
     max-width: 100%;
+    gap: 1rem;
+  }
+  
+  .input-container {
+    max-width: 100%;
   }
   
   .search-button {
@@ -529,6 +539,78 @@
     font-size: 18px;
     bottom: 15px;
     right: 15px;
+  }
+}
+
+/*ESTILOS PARA SUGERENCIAS*/
+
+.suggestions-dropdown {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  background-color: white !important;
+  border: 2px solid #646cff !important;
+  border-top: none !important;
+  border-radius: 0 0 8px 8px !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  z-index: 1000 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;  
+  animation: slideDownSuggestions 0.2s ease-out !important;
+}
+
+/* Animación de entrada para sugerencias */
+@keyframes slideDownSuggestions {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Items de sugerencias */
+.suggestion-item {
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+  border-bottom: 1px solid #eee !important;
+  font-size: 14px !important;
+  transition: background-color 0.15s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  background-color: white !important;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none !important;
+}
+
+.suggestion-item:hover {
+  background-color: #f8f9fa !important;
+}
+
+.suggestion-item:active {
+  background-color: #e9ecef !important;
+}
+
+/* Cuando las sugerencias están activas, cambiar bordes del input */
+.input-container:has(.suggestions-dropdown) .search-input {
+  border-radius: 8px 8px 0 0 !important;
+  border-bottom: 1px solid #646cff !important;
+}
+
+/* Responsive para sugerencias */
+@media (max-width: 768px) {
+  /* Ya no necesitamos padding bottom extra para sugerencias */
+}
+
+@media (max-width: 480px) {
+  .suggestion-item {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
   }
 }
 

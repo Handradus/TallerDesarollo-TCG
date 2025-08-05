@@ -12,8 +12,8 @@ module.exports = new EntitySchema({
     nombre: { type: 'varchar' },
     descripcion: { type: 'text', nullable: true },
     valoracion: { type: 'decimal', precision: 2, scale: 1, nullable: true },
-    urlBusqueda: { type: 'varchar' }, // e.g., con placeholder BUSQUEDA
-    tipoBusqueda: { type: 'varchar' }, // e.g., "shopify", "levelup", etc.
+    urlBusqueda: { type: 'varchar' },
+    tipoBusqueda: { type: 'varchar' },
     urlBase: { type: 'varchar' },
     direccion: { type: 'varchar', nullable: true },
     telefono: { type: 'varchar', nullable: true },

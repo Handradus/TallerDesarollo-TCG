@@ -114,10 +114,59 @@ async function buscarCarta(input) {
     // PERO: Excluir nombres conocidos de cartas y cartas especiales
     else if (palabras.length === 2 && posiblesNumeros.length === 0) {
       const cartasConocidas = [
+        // === POKÉMON BALLS ===
         'poké ball', 'ultra ball', 'great ball', 'master ball', 'quick ball', 'timer ball',
         'dusk ball', 'nest ball', 'dive ball', 'repeat ball', 'luxury ball', 'premier ball',
         'heal ball', 'level ball', 'love ball', 'lure ball', 'moon ball', 'heavy ball',
-        'friend ball', 'fast ball', 'park ball', 'net ball', 'cherish ball'
+        'friend ball', 'fast ball', 'park ball', 'net ball', 'cherish ball',
+        
+        // === CARTAS TRAINER ===
+        'professor oak', 'bill', 'energy removal', 'super energy removal', 'energy retrieval',
+        'switch', 'gust of wind', 'computer search', 'item finder', 'pokédex', 'pluspower',
+        'defender', 'potion', 'super potion', 'full heal', 'revive', 'maintenance',
+        'pokemon trader', 'energy search', 'scoop up', 'recycle', 'gambler',
+        "professor's research", "professor's letter", "marnie", "hop", "sonia",
+        "leon", "raihan", "piers", "nessa", "bea", "allister", "gordie", "melony",
+        "ordinary rod", "quick ball", "evolution incense", "twin energy", "capture energy",
+        "professor elm", "professor birch", "cynthia", "lillie", "gladion", "guzma",
+        "team rocket handiwork", "team flare grunt", "team plasma grunt",
+        
+        // === ENERGIAS ===
+        'double colorless energy', 'rainbow energy', 'full heal energy', 'potion energy',
+        'recycle energy', 'miracle energy', 'metal energy', 'darkness energy',
+        'special metal energy', 'special darkness energy', 'double dragon energy',
+        'strong energy', 'herbal energy', 'mystery energy', 'shield energy',
+        'wonder energy', 'double turbo energy', 'twin energy', 'capture energy',
+        'aurora energy', 'rapid strike energy', 'single strike energy',
+        
+        // === CARTAS CON PREFIJOS (NOMBRES COMPUESTOS) ===
+        'dark charizard', 'dark blastoise', 'dark venomoth', 'dark gyarados', 'dark machamp',
+        'dark magneton', 'dark slowbro', 'dark hypno', 'dark golbat', 'dark arbok',
+        'dark weezing', 'dark rapidash', 'dark alakazam', 'dark dugtrio', 'dark crobat',
+        'dark ampharos', 'dark donphan', 'dark espeon', 'dark forretress', 'dark houndoom',
+        'dark octillery', 'dark scizor', 'dark skarmory', 'dark slowking', 'dark tyranitar',
+        'dark celebi', 'dark dragonite', 'dark electrode', 'dark gengar', 'dark houndour',
+        'dark magcargo', 'dark muk', 'dark omastar', 'dark porygon2', 'dark quilava',
+        'dark ursaring', 'dark vaporeon',
+        
+        'light azumarill', 'light dragonite', 'light togetic', 'light pichu', 'light arcanine',
+        'light flareon', 'light golduck', 'light jolteon', 'light lanturn', 'light machamp',
+        'light vaporeon', 'light venomoth',
+        
+        'rocket mewtwo', 'rocket zapdos', 'rocket moltres', 'rocket articuno', 'rocket scyther',
+        'rocket snorlax', 'rocket hitmonchan', 'rocket magikarp',
+        
+        'shining gyarados', 'shining magikarp', 'shining mewtwo',
+        
+        'ancient mew', 'ancient celebi', 'ancient kyogre', 'ancient groudon',
+        
+        'delta species', 'crystal kingdra', 'crystal lugia', 'crystal noctowl', 'crystal charizard',
+        
+        'shadow lugia', 'shadow storm', 'shadow force',
+        
+        // === CARTAS CON APÓSTROFES ===
+        "team rocket's handiwork", "team aqua's great ball",
+        "team magma's groudon", "team plasma grunt", "rocket's zapdos ex"
       ];
 
       // Cartas especiales que deben buscarse como nombre completo
@@ -220,7 +269,7 @@ async function buscarCarta(input) {
       cartasBD = await cartaRepo.find({ where: { set: ILike(`%${posiblesNombre}%`) } });
     }
 
-    // Verificar si ya se consultó la API hoy para evitar consultas innecesarias
+    // 🔍 PASO 1: Verificar si ya se consultó antes en tabla ConsultaAPI
     let saltarConsultaAPI = false;
     if (
       cartasBD.length > 0 &&
@@ -229,14 +278,18 @@ async function buscarCarta(input) {
     ) {
       const yaConsultada = await consultaRepo.findOne({
         where: {
-          termino: posiblesNombre.toLowerCase(),
-          fechaConsulta: hoy
+          termino: posiblesNombre.toLowerCase()
+          // Las consultas de cartas no vencen - datos permanentes
         }
       });
 
       if (yaConsultada) {
-        console.log(`⛔ Consulta a API omitida: Ya se consultó "${posiblesNombre}" hoy`);
+        console.log(`✅ PASO 1: Búsqueda "${posiblesNombre}" encontrada en tabla ConsultaAPI`);
+        console.log(`⚡ PASO 2: Ir directo a BD - Omitiendo consulta a API Pokémon TCG`);
         saltarConsultaAPI = true;
+      } else {
+        console.log(`❌ PASO 1: Búsqueda "${posiblesNombre}" NO encontrada en tabla ConsultaAPI`);
+        console.log(`🔍 PASO 2: Proceder a consultar API Pokémon TCG`);
       }
     }
 
@@ -261,41 +314,107 @@ async function buscarCarta(input) {
     } else if (posiblesNombre) {
       const nombreEscapado = posiblesNombre.replace(/"/g, '').trim();
       
-      // Detectar si es una búsqueda nombre + set
+      // Detectar si es una búsqueda nombre + set SOLO si NO es una carta conocida
       const palabrasNombre = posiblesNombre.split(/\s+/);
       if (palabrasNombre.length === 2) {
-        const setsConocidos = [
-          'base', 'jungle', 'fossil', 'rocket', 'gym', 'neo', 'genesis', 'discovery', 'destiny', 'revelation',
-          'expedition', 'aquapolis', 'skyridge', 'ruby', 'sapphire', 'sandstorm', 'dragon', 'team', 'magma', 'aqua',
-          'emerald', 'deoxys', 'crystal', 'guardians', 'holon', 'phantoms', 'delta', 'species', 'legend', 'maker',
-          'diamond', 'pearl', 'mysterious', 'treasures', 'secret', 'wonders', 'great', 'encounters', 'majestic', 'dawn',
-          'legends', 'awakened', 'stormfront', 'platinum', 'rising', 'rivals', 'supreme', 'victors', 'arceus',
-          'heartgold', 'soulsilver', 'unleashed', 'undaunted', 'triumphant', 'black', 'white', 'emerging', 'powers',
-          'noble', 'victories', 'next', 'destinies', 'dark', 'explorers', 'boundaries', 'crossed', 'plasma', 'storm',
-          'freeze', 'blast', 'legendary', 'flashfire', 'furious', 'fists', 'phantom', 'forces', 'primal', 'clash',
-          'roaring', 'skies', 'ancient', 'origins', 'breakthrough', 'breakpoint', 'fates', 'collide', 'steam', 'siege',
-          'generations', 'evolutions', 'sun', 'moon', 'guardians', 'burning', 'shadows', 'shining', 'crimson', 'invasion',
-          'ultra', 'prism', 'forbidden', 'light', 'celestial', 'lost', 'thunder', 'detective', 'pikachu', 'team',
-          'unbroken', 'bonds', 'unified', 'minds', 'cosmic', 'eclipse', 'hidden', 'sword', 'shield', 'rebel', 'darkness',
-          'astral', 'radiance', 'battle', 'styles', 'brilliant', 'stars', 'fusion', 'strike', 'go', 'origin', 'paldea',
-          'evolved', 'scarlet', 'violet', '151', 'obsidian', 'flames', 'crown', 'zenith', 'silver', 'tempest', 'paradox', 'rift'
+        // Lista de cartas conocidas (misma que arriba)
+        const cartasConocidas = [
+          // === POKÉMON BALLS ===
+          'poké ball', 'ultra ball', 'great ball', 'master ball', 'quick ball', 'timer ball',
+          'dusk ball', 'nest ball', 'dive ball', 'repeat ball', 'luxury ball', 'premier ball',
+          'heal ball', 'level ball', 'love ball', 'lure ball', 'moon ball', 'heavy ball',
+          'friend ball', 'fast ball', 'park ball', 'net ball', 'cherish ball',
+          
+          // === CARTAS TRAINER ===
+          'professor oak', 'bill', 'energy removal', 'super energy removal', 'energy retrieval',
+          'switch', 'gust of wind', 'computer search', 'item finder', 'pokédex', 'pluspower',
+          'defender', 'potion', 'super potion', 'full heal', 'revive', 'maintenance',
+          'pokemon trader', 'energy search', 'scoop up', 'recycle', 'gambler',
+          "professor's research", "professor's letter", "marnie", "hop", "sonia",
+          "leon", "raihan", "piers", "nessa", "bea", "allister", "gordie", "melony",
+          "ordinary rod", "quick ball", "evolution incense", "twin energy", "capture energy",
+          "professor elm", "professor birch", "cynthia", "lillie", "gladion", "guzma",
+          "team rocket handiwork", "team flare grunt", "team plasma grunt",
+          
+          // === ENERGIAS ===
+          'double colorless energy', 'rainbow energy', 'full heal energy', 'potion energy',
+          'recycle energy', 'miracle energy', 'metal energy', 'darkness energy',
+          'special metal energy', 'special darkness energy', 'double dragon energy',
+          'strong energy', 'herbal energy', 'mystery energy', 'shield energy',
+          'wonder energy', 'double turbo energy', 'twin energy', 'capture energy',
+          'aurora energy', 'rapid strike energy', 'single strike energy',
+          
+          // === CARTAS CON PREFIJOS (NOMBRES COMPUESTOS) ===
+          'dark charizard', 'dark blastoise', 'dark venomoth', 'dark gyarados', 'dark machamp',
+          'dark magneton', 'dark slowbro', 'dark hypno', 'dark golbat', 'dark arbok',
+          'dark weezing', 'dark rapidash', 'dark alakazam', 'dark dugtrio', 'dark crobat',
+          'dark ampharos', 'dark donphan', 'dark espeon', 'dark forretress', 'dark houndoom',
+          'dark octillery', 'dark scizor', 'dark skarmory', 'dark slowking', 'dark tyranitar',
+          'dark celebi', 'dark dragonite', 'dark electrode', 'dark gengar', 'dark houndour',
+          'dark magcargo', 'dark muk', 'dark omastar', 'dark porygon2', 'dark quilava',
+          'dark ursaring', 'dark vaporeon',
+          
+          'light azumarill', 'light dragonite', 'light togetic', 'light pichu', 'light arcanine',
+          'light flareon', 'light golduck', 'light jolteon', 'light lanturn', 'light machamp',
+          'light vaporeon', 'light venomoth',
+          
+          'rocket mewtwo', 'rocket zapdos', 'rocket moltres', 'rocket articuno', 'rocket scyther',
+          'rocket snorlax', 'rocket hitmonchan', 'rocket magikarp',
+          
+          'shining gyarados', 'shining magikarp', 'shining mewtwo',
+          
+          'ancient mew', 'ancient celebi', 'ancient kyogre', 'ancient groudon',
+          
+          'delta species', 'crystal kingdra', 'crystal lugia', 'crystal noctowl', 'crystal charizard',
+          
+          'shadow lugia', 'shadow storm', 'shadow force',
+          
+          // === CARTAS CON APÓSTROFES ===
+          "arven's vitality", "team rocket's handiwork", "team aqua's great ball",
+          "team magma's groudon", "team plasma grunt", "rocket's zapdos ex"
         ];
-
-        let nombrePokemon = '';
-        let setName = '';
         
-        if (setsConocidos.some(set => palabrasNombre[1].toLowerCase().includes(set) || set.includes(palabrasNombre[1].toLowerCase()))) {
-          nombrePokemon = palabrasNombre[0];
-          setName = palabrasNombre[1];
-        } else if (setsConocidos.some(set => palabrasNombre[0].toLowerCase().includes(set) || set.includes(palabrasNombre[0].toLowerCase()))) {
-          nombrePokemon = palabrasNombre[1];
-          setName = palabrasNombre[0];
-        }
-
-        if (nombrePokemon && setName) {
-          queryAPI = `name:"${nombrePokemon}" set.name:"*${setName}*"`;
-        } else {
+        // Si es una carta conocida, buscar como nombre completo
+        if (cartasConocidas.includes(posiblesNombre.toLowerCase())) {
+          console.log(`📝 [API] Es carta conocida! Buscando nombre completo: "${nombreEscapado}"`);
           queryAPI = `name:"${nombreEscapado}"`;
+        } else {
+          // Si NO es carta conocida, aplicar lógica nombre + set
+          const setsConocidos = [
+            'base', 'jungle', 'fossil', 'rocket', 'gym', 'neo', 'genesis', 'discovery', 'destiny', 'revelation',
+            'expedition', 'aquapolis', 'skyridge', 'ruby', 'sapphire', 'sandstorm', 'dragon', 'team', 'magma', 'aqua',
+            'emerald', 'deoxys', 'crystal', 'guardians', 'holon', 'phantoms', 'delta', 'species', 'legend', 'maker',
+            'diamond', 'pearl', 'mysterious', 'treasures', 'secret', 'wonders', 'great', 'encounters', 'majestic', 'dawn',
+            'legends', 'awakened', 'stormfront', 'platinum', 'rising', 'rivals', 'supreme', 'victors', 'arceus',
+            'heartgold', 'soulsilver', 'unleashed', 'undaunted', 'triumphant', 'black', 'white', 'emerging', 'powers',
+            'noble', 'victories', 'next', 'destinies', 'dark', 'explorers', 'boundaries', 'crossed', 'plasma', 'storm',
+            'freeze', 'blast', 'legendary', 'flashfire', 'furious', 'fists', 'phantom', 'forces', 'primal', 'clash',
+            'roaring', 'skies', 'ancient', 'origins', 'breakthrough', 'breakpoint', 'fates', 'collide', 'steam', 'siege',
+            'generations', 'evolutions', 'sun', 'moon', 'guardians', 'burning', 'shadows', 'shining', 'crimson', 'invasion',
+            'ultra', 'prism', 'forbidden', 'light', 'celestial', 'lost', 'thunder', 'detective', 'pikachu', 'team',
+            'unbroken', 'bonds', 'unified', 'minds', 'cosmic', 'eclipse', 'hidden', 'sword', 'shield', 'rebel', 'darkness',
+            'astral', 'radiance', 'battle', 'styles', 'brilliant', 'stars', 'fusion', 'strike', 'go', 'origin', 'paldea',
+            'evolved', 'scarlet', 'violet', '151', 'obsidian', 'flames', 'crown', 'zenith', 'silver', 'tempest', 'paradox', 'rift'
+          ];
+
+          let nombrePokemon = '';
+          let setName = '';
+          
+          if (setsConocidos.some(set => palabrasNombre[1].toLowerCase().includes(set) || set.includes(palabrasNombre[1].toLowerCase()))) {
+            nombrePokemon = palabrasNombre[0];
+            setName = palabrasNombre[1];
+          } else if (setsConocidos.some(set => palabrasNombre[0].toLowerCase().includes(set) || set.includes(palabrasNombre[0].toLowerCase()))) {
+            nombrePokemon = palabrasNombre[1];
+            setName = palabrasNombre[0];
+          }
+
+          if (nombrePokemon && setName) {
+            console.log(`📝 [API] Detectado nombre + set: "${nombrePokemon}" en "${setName}"`);
+            queryAPI = `name:"${nombrePokemon}" set.name:"*${setName}*"`;
+          } else {
+            console.log(`📝 [API] No es nombre + set, buscando nombre completo: "${nombreEscapado}"`);
+            queryAPI = `name:"${nombreEscapado}"`;
+          }
         }
       } else {
         queryAPI = `name:"${nombreEscapado}"`;
@@ -307,33 +426,213 @@ async function buscarCarta(input) {
     console.log(`📡 Consultando API con query: ${queryAPI}`);
 
     let resultadosAPI = [];
+    let errorAPI = null;
     
     // Solo consultar API si no se saltó la consulta
     if (!saltarConsultaAPI) {
-      const resFull = await axios.get(
-        `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
-        { headers }
-      );
+      try {
+        const resFull = await axios.get(
+          `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
+          { headers }
+        );
 
-      const cartasAPI = resFull.data.data || [];
+        const cartasAPI = resFull.data.data || [];
 
-      for (const cartaAPI of cartasAPI) {
+        for (const cartaAPI of cartasAPI) {
+        const numero = cartaAPI.number?.toUpperCase();
+        const set = cartaAPI.set?.name || null;
+        const printedTotal = cartaAPI.set?.printedTotal || null;
+
+        if (matchFraccion) {
+          const esperadoNumero = matchFraccion[1].replace(/^0+/, '');
+          const esperadoTotal = parseInt(matchFraccion[2]);
+
+          if ((numero !== esperadoNumero && numero !== matchFraccion[1]) || parseInt(printedTotal) !== esperadoTotal) {
+            continue;
+          }
+
+          if (posiblesNombre && !cartaAPI.name.toLowerCase().includes(posiblesNombre.toLowerCase())) {
+            continue;
+          }
+        }
+
+        const existe = await cartaRepo.findOne({ where: { numero, set } });
+
+        if (!existe) {
+          const nueva = cartaRepo.create({
+            nombre: cartaAPI.name,
+            numero,
+            set,
+            setId: cartaAPI.set?.id || null,
+            serie: cartaAPI.set?.series || null,
+            fechaLanzamiento: cartaAPI.set?.releaseDate || null,
+            supertipo: cartaAPI.supertype || null,
+            subtipos: cartaAPI.subtypes || null,
+            nivel: cartaAPI.level || null,
+            hp: cartaAPI.hp || null,
+            tipos: cartaAPI.types || null,
+            evolucionaA: cartaAPI.evolvesTo || null,
+            retreatCost: cartaAPI.retreatCost || null,
+            debilidades: cartaAPI.weaknesses || null,
+            ataques: cartaAPI.attacks || null,
+            reglas: cartaAPI.rules || null,
+            rareza: cartaAPI.rarity || null,
+            ilustrador: cartaAPI.artist || null,
+            flavorText: cartaAPI.flavorText || null,
+            pokedexIds: cartaAPI.nationalPokedexNumbers || null,
+            imagenPequena: cartaAPI.images?.small || null,
+            imagenGrande: cartaAPI.images?.large || null,
+            precioNormal: cartaAPI.tcgplayer?.prices?.normal?.market || null,
+            precioHolofoil: cartaAPI.tcgplayer?.prices?.holofoil?.market || null,
+            printedTotal,
+          });
+
+          const guardada = await cartaRepo.save(nueva);
+          resultadosAPI.push({ ...guardada, origen: "API" });
+        }
+      }
+
+      if (resultadosAPI.length > 0 && posiblesNombre.length > 0) {
+        await consultaRepo.save({
+          termino: posiblesNombre.toLowerCase(),
+          fechaConsulta: hoy
+        });
+        console.log(`💾 PASO 3: Búsqueda "${posiblesNombre}" registrada en tabla ConsultaAPI (próximas búsquedas serán directas a BD)`);
+      }
+      } catch (error) {
+        console.error('⚠️ Error al consultar API de PokemonTCG:', error.message);
+        errorAPI = error.message;
+        // Continuar con los resultados de BD solamente
+        console.log(`📊 [ERROR API] Continuando solo con ${cartasBD.length} resultados de BD`);
+      }
+    } // Cerrar el bloque if (!saltarConsultaAPI)
+
+    const resultadosTotales = [...cartasBD.map(c => ({ ...c, origen: "BD" })), ...resultadosAPI];
+    
+    if (resultadosTotales.length > 0) {
+      console.log(`✅ Se devolvieron ${resultadosTotales.length} resultados (BD + API).`);
+      console.log(`📊 Desglose: ${cartasBD.length} de BD, ${resultadosAPI.length} de API`);
+      
+      // Logging detallado de qué se buscó
+      console.log(`📋 RESUMEN DE BÚSQUEDA:`);
+      console.log(`   🔍 Input recibido: "${inputOriginal}"`);
+      console.log(`   💾 BD - Búsqueda en campo 'nombre' con término: "${posiblesNombre}"`);
+      console.log(`   🌐 API - Query utilizada: ${queryAPI}`);
+      
+      // Resumen del flujo de búsqueda
+      if (saltarConsultaAPI) {
+        console.log(`🎯 FLUJO COMPLETADO: [ConsultaAPI ✅] → [BD ✅] → [API ❌ Omitida] = ${resultadosTotales.length} cartas`);
+      } else {
+        console.log(`🎯 FLUJO COMPLETADO: [ConsultaAPI ❌] → [BD ✅] → [API ✅] → [ConsultaAPI 💾] = ${resultadosTotales.length} cartas`);
+      }
+      
+      // Si hubo error en API pero hay resultados de BD, agregar mensaje informativo al primer resultado
+      if (errorAPI && cartasBD.length > 0) {
+        console.log(`⚠️ Nota: Error en API, mostrando solo resultados de BD`);
+        // Agregar información del error API como metadata en el primer resultado
+        resultadosTotales[0] = {
+          ...resultadosTotales[0],
+          _metadata: {
+            mensaje: 'Mostrando resultados de base de datos. No se pudieron obtener cartas actualizadas de la API.',
+            errorAPI: errorAPI,
+            soloBaseDatos: true
+          }
+        };
+      }
+      
+      return resultadosTotales;
+    }
+
+    // ⚠️ Si aún no hay resultados y la búsqueda parece promocional
+    if (esBusquedaPromocional(inputOriginal)) {
+      const urlSugerida = `https://pokumon.com/cards?search=${encodeURIComponent(inputOriginal)}`;
+      console.log(`🔔 Sugerencia: Redirigir a Pokumon: ${urlSugerida}`);
+      return [{
+        mensaje: 'Tu búsqueda parece ser una carta promocional exclusiva o de evento. Te recomendamos visitar Pokumon:',
+        sugerenciaUrl: urlSugerida,
+        origen: 'sugerencia-pokumon'
+      }];
+    }
+
+    // Si hubo error de API y no hay resultados de BD
+    if (errorAPI) {
+      console.log('⚠️ No se encontraron cartas en BD y hubo error en API');
+      return [{
+        mensaje: 'No se encontraron cartas en la base de datos y no se pudo consultar la API externa. Intenta nuevamente más tarde.',
+        errorAPI: errorAPI,
+        origen: 'error-api'
+      }];
+    }
+
+    console.log('❌ No se encontró ninguna carta.');
+    return [];
+
+  } catch (error) {
+    console.error('❌ Error al buscar carta:', error.message);
+    return [];
+  }
+}
+
+// Función de administrador que SIEMPRE consulta la API
+async function buscarCartaAdmin(input) {
+  console.log(`🔧 === BÚSQUEDA ADMIN (FORZAR API) === Input: "${input}"`);
+  
+  const headers = {
+    'X-Api-Key': process.env.POKEMONTCG_API_KEY,
+  };
+
+  try {
+    const cartaRepo = AppDataSource.getRepository(Carta);
+    const consultaRepo = AppDataSource.getRepository('ConsultaAPI');
+    const inputOriginal = input.trim();
+    
+    const palabras = inputOriginal.split(/\s+/);
+    const posiblesNumeros = palabras.filter(p => /^\d{1,3}(\/\d{1,3})?$/.test(p));
+    const posiblesNombre = palabras.filter(p => !/^\d{1,3}(\/\d{1,3})?$/.test(p)).join(' ');
+
+    // Primero buscar en BD para comparar
+    let cartasBD = [];
+    console.log(`🔍 [ADMIN] Buscando en BD: "${inputOriginal}"`);
+
+    if (posiblesNombre) {
+      const nombreConGuiones = posiblesNombre.replace(/ /g, '-');
+      cartasBD = await cartaRepo
+        .createQueryBuilder('carta')
+        .where(new Brackets(qb => {
+          qb.where('LOWER(carta.nombre) LIKE LOWER(:nombre1)', { nombre1: `%${posiblesNombre}%` })
+            .orWhere('LOWER(carta.nombre) LIKE LOWER(:nombre2)', { nombre2: `%${nombreConGuiones}%` });
+        }))
+        .getMany();
+    }
+
+    console.log(`📊 [ADMIN] Cartas existentes en BD: ${cartasBD.length}`);
+
+    // SIEMPRE consultar API (sin verificar si ya se consultó hoy)
+    let queryAPI = "";
+    if (posiblesNombre) {
+      const nombreEscapado = posiblesNombre.replace(/"/g, '').trim();
+      queryAPI = `name:"${nombreEscapado}"`;
+    } else {
+      queryAPI = inputOriginal;
+    }
+
+    console.log(`📡 [ADMIN] FORZANDO consulta API con query: ${queryAPI}`);
+
+    const resFull = await axios.get(
+      `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
+      { headers }
+    );
+
+    const cartasAPI = resFull.data.data || [];
+    console.log(`📡 [ADMIN] API devolvió ${cartasAPI.length} cartas`);
+
+    let resultadosAPI = [];
+    let cartasActualizadas = 0;
+
+    for (const cartaAPI of cartasAPI) {
       const numero = cartaAPI.number?.toUpperCase();
       const set = cartaAPI.set?.name || null;
       const printedTotal = cartaAPI.set?.printedTotal || null;
-
-      if (matchFraccion) {
-        const esperadoNumero = matchFraccion[1].replace(/^0+/, '');
-        const esperadoTotal = parseInt(matchFraccion[2]);
-
-        if ((numero !== esperadoNumero && numero !== matchFraccion[1]) || parseInt(printedTotal) !== esperadoTotal) {
-          continue;
-        }
-
-        if (posiblesNombre && !cartaAPI.name.toLowerCase().includes(posiblesNombre.toLowerCase())) {
-          continue;
-        }
-      }
 
       const existe = await cartaRepo.findOne({ where: { numero, set } });
 
@@ -368,50 +667,34 @@ async function buscarCarta(input) {
 
         const guardada = await cartaRepo.save(nueva);
         resultadosAPI.push({ ...guardada, origen: "API" });
+        cartasActualizadas++;
+      } else {
+        // Marcar cartas existentes
+        resultadosAPI.push({ ...existe, origen: "BD" });
       }
     }
 
-    if (resultadosAPI.length > 0 && posiblesNombre.length > 0) {
+    // Registrar la consulta SOLO si hubo resultados
+    const hoy = new Date().toISOString().split('T')[0];
+    if (posiblesNombre.length > 0 && resultadosAPI.length > 0) {
       await consultaRepo.save({
         termino: posiblesNombre.toLowerCase(),
         fechaConsulta: hoy
       });
-    }
-    } // Cerrar el bloque if (!saltarConsultaAPI)
-
-    const resultadosTotales = [...cartasBD.map(c => ({ ...c, origen: "BD" })), ...resultadosAPI];
-    
-    if (resultadosTotales.length > 0) {
-      console.log(`✅ Se devolvieron ${resultadosTotales.length} resultados (BD + API).`);
-      console.log(`📊 Desglose: ${cartasBD.length} de BD, ${resultadosAPI.length} de API`);
-      
-      // Logging detallado de qué se buscó
-      console.log(`📋 RESUMEN DE BÚSQUEDA:`);
-      console.log(`   🔍 Input recibido: "${inputOriginal}"`);
-      console.log(`   💾 BD - Búsqueda en campo 'nombre' con término: "${posiblesNombre}"`);
-      console.log(`   🌐 API - Query utilizada: ${queryAPI}`);
-      
-      return resultadosTotales;
+      console.log(`💾 [ADMIN] Término "${posiblesNombre}" registrado en ConsultaAPI (${resultadosAPI.length} resultados)`);
+    } else if (posiblesNombre.length > 0 && resultadosAPI.length === 0) {
+      console.log(`❌ [ADMIN] Término "${posiblesNombre}" NO registrado (sin resultados)`);
     }
 
-    // ⚠️ Si aún no hay resultados y la búsqueda parece promocional
-    if (esBusquedaPromocional(inputOriginal)) {
-      const urlSugerida = `https://pokumon.com/cards?search=${encodeURIComponent(inputOriginal)}`;
-      console.log(`🔔 Sugerencia: Redirigir a Pokumon: ${urlSugerida}`);
-      return [{
-        mensaje: 'Tu búsqueda parece ser una carta promocional exclusiva o de evento. Te recomendamos visitar Pokumon:',
-        sugerenciaUrl: urlSugerida,
-        origen: 'sugerencia-pokumon'
-      }];
-    }
+    console.log(`✅ [ADMIN] Actualización completada: ${cartasActualizadas} cartas nuevas agregadas`);
+    console.log(`📊 [ADMIN] Total de resultados: ${resultadosAPI.length}`);
 
-    console.log('❌ No se encontró ninguna carta.');
-    return [];
+    return resultadosAPI;
 
   } catch (error) {
-    console.error('❌ Error al buscar carta:', error.message);
+    console.error('❌ [ADMIN] Error al actualizar BD:', error.message);
     return [];
   }
 }
 
-module.exports = { buscarCarta };
+module.exports = { buscarCarta, buscarCartaAdmin };

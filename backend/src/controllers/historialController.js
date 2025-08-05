@@ -10,7 +10,7 @@ class HistorialController {
       
       const historialRepo = AppDataSource.getRepository('HistorialCarta');
       
-      // Crear nuevo registro de acceso
+      
       const nuevoRegistro = historialRepo.create({
         cartaId: parseInt(cartaId),
         ipUsuario: ipUsuario
@@ -48,15 +48,14 @@ class HistorialController {
     }
   }
 
-  // Obtener las últimas cartas accedidas
+  // Obtener las ultimas cartas accedidas
   static async obtenerUltimasCartas(req, res) {
     try {
       const limit = parseInt(req.query.limit) || 10;
       
       const historialRepo = AppDataSource.getRepository('HistorialCarta');
       
-      // Obtener las últimas cartas accedidas con datos de la carta
-      // Usamos un subquery para obtener solo las entradas más recientes por carta
+      
       const ultimasCartas = await historialRepo
         .createQueryBuilder('historial')
         .leftJoinAndSelect('historial.carta', 'carta')
@@ -65,7 +64,7 @@ class HistorialController {
         .limit(limit)
         .getMany();
 
-      // Formatear respuesta para incluir solo datos necesarios
+      
       const cartasFormateadas = ultimasCartas.map(registro => ({
         id: registro.carta.id,
         nombre: registro.carta.nombre,
@@ -87,9 +86,7 @@ class HistorialController {
       const limit = parseInt(req.query.limit) || 10;
       
       const historialRepo = AppDataSource.getRepository('HistorialTienda');
-      
-      // Obtener las últimas tiendas visitadas con datos de la tienda
-      // Usamos un subquery para obtener solo las entradas más recientes por tienda
+     
       const ultimasTiendas = await historialRepo
         .createQueryBuilder('historial')
         .leftJoinAndSelect('historial.tienda', 'tienda')
@@ -98,7 +95,7 @@ class HistorialController {
         .limit(limit)
         .getMany();
 
-      // Formatear respuesta para incluir solo datos necesarios
+      
       const tiendasFormateadas = ultimasTiendas.map(registro => ({
         id: registro.tienda.id,
         nombre: registro.tienda.nombre,
@@ -114,7 +111,7 @@ class HistorialController {
     }
   }
 
-  // Limpiar historial antiguo (para mantenimiento)
+  
   static async limpiarHistorialAntiguo(req, res) {
     try {
       const diasAtras = parseInt(req.query.dias) || 30;
@@ -124,7 +121,7 @@ class HistorialController {
       const historialCartasRepo = AppDataSource.getRepository('HistorialCarta');
       const historialTiendasRepo = AppDataSource.getRepository('HistorialTienda');
 
-      // Eliminar registros antiguos
+      
       const cartasEliminadas = await historialCartasRepo
         .createQueryBuilder()
         .delete()

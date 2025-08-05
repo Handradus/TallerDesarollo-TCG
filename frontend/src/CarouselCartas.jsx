@@ -22,25 +22,23 @@ export default function CarouselCartas() {
         setCartas(data);
       } else {
         console.error('Error al cargar últimas cartas:', response.status);
-        setCartas([]); // Mostrar carousel vacío en lugar de error
+        setCartas([]); 
       }
     } catch (err) {
       console.error('Error al conectar con el servidor:', err);
-      setCartas([]); // Mostrar carousel vacío en lugar de error
+      setCartas([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCartaClick = async (carta) => {
-    // Registrar el acceso antes de navegar
+  const handleCartaClick = async (carta) => {    
     try {
       await fetch(`${apiUrl}/api/historial/cartas/${carta.id}/acceso`, {
         method: 'POST'
       });
     } catch (err) {
-      console.error('Error al registrar acceso:', err);
-      // No bloquear la navegación si falla el registro
+      console.error('Error al registrar acceso:', err);      
     }
     
     navigate(`/carta/${carta.id}`);

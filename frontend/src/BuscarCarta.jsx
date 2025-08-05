@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css/BuscarCarta.css';
-import { obtenerSugerencias, normalizarTexto } from './utils/sugerencias';
+import { obtenerSugerenciasHibridas } from './utils/sugerenciasBackend';
+import { normalizarTexto } from './utils/sugerencias';
 import CarouselCartas from './CarouselCartas';
 import CarouselTiendas from './CarouselTiendas';
 import tituloWebImg from './assets/tituloWeb.jpg';
@@ -70,9 +71,22 @@ export default function BuscarCartas() {
     
     // Obtener sugerencias si hay al menos 2 caracteres
     if (nombre.length >= 2) {
-      const nuevasSugerencias = obtenerSugerencias(nombre);
-      setSugerencias(nuevasSugerencias);
-      setMostrarSugerencias(nuevasSugerencias.length > 0);
+      // Usar función async para obtener sugerencias del backend
+      const fetchSugerencias = async () => {
+        try {
+          const nuevasSugerencias = await obtenerSugerenciasHibridas(nombre);
+          setSugerencias(nuevasSugerencias);
+          setMostrarSugerencias(nuevasSugerencias.length > 0);
+        } catch (error) {
+          console.warn('Error al obtener sugerencias:', error);
+          setSugerencias([]);
+          setMostrarSugerencias(false);
+        }
+      };
+      
+      // Debounce para evitar demasiadas consultas
+      const timeoutId = setTimeout(fetchSugerencias, 300);
+      return () => clearTimeout(timeoutId);
     } else {
       setSugerencias([]);
       setMostrarSugerencias(false);
@@ -91,57 +105,58 @@ export default function BuscarCartas() {
 
   const buscarCartas = async () => {
     const termino = nombre.trim();
+    return buscarCartasConTermino(termino);
+  };
+
+  const buscarCartasConTermino = async (termino) => {
     
-    // 🛡️ VALIDACIONES DE ENTRADA PARA EVITAR BÚSQUEDAS BASURA
-    
-    // 1. Verificar que haya texto
+    // Ocultar sugerencias al iniciar búsqueda
+    setMostrarSugerencias(false);
+        
     if (!termino) {
       setError('Por favor, ingresa el nombre de una carta para buscar');
       setTimeout(() => setError(''), 3000);
       return;
     }
 
-    // 2. Límite de 300 caracteres
     if (termino.length > 300) {
       setError('El nombre de búsqueda no puede exceder 300 caracteres');
       setTimeout(() => setError(''), 4000);
       return;
     }
-
-    // 3. Mínimo 2 caracteres para texto, pero permitir números de 1 dígito
+    
     if (termino.length < 2 && !/^\d+$/.test(termino)) {
       setError('Ingresa al menos 2 caracteres para buscar (excepto números)');
       setTimeout(() => setError(''), 3000);
       return;
     }
 
-    // 4. Validación inteligente de números
+    
     if (/^\d+$/.test(termino)) {
-      // Permitir números, pero con restricciones específicas para cartas TCG
+      
       if (termino.length > 5) {
         setError('Los números de serie de cartas no superan los 5 dígitos (ej: 025, 150)');
         setTimeout(() => setError(''), 4000);
         return;
       }
-      // Permitir números de 1-5 dígitos (números de cartas válidos)
+      
       console.log('🔢 Búsqueda por número de serie válida:', termino);
     }
 
-    // 5. Evitar solo caracteres especiales o espacios (pero permitir números puros)
+    
     if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9]/.test(termino)) {
       setError('Ingresa al menos una letra o número en el nombre de la carta');
       setTimeout(() => setError(''), 4000);
       return;
     }
 
-    // 6. Evitar repetición excesiva del mismo carácter (aaaaaaa, 1111111)
     if (/(.)\1{4,}/.test(termino)) {
       setError('Evita repetir el mismo carácter más de 4 veces seguidas');
       setTimeout(() => setError(''), 4000);
       return;
     }
 
-    // 7. Validación especial para números al inicio (máximo 5 dígitos seguidos)
+    
     const numeroAlInicio = termino.match(/^\d+/);
     if (numeroAlInicio && numeroAlInicio[0].length > 5) {
       setError('Máximo 5 números seguidos al inicio (ej: 025 Pikachu)');
@@ -149,14 +164,14 @@ export default function BuscarCartas() {
       return;
     }
 
-    // 8. Evitar demasiados caracteres especiales consecutivos
+    
     if (/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-'.]{3,}/.test(termino)) {
       setError('Demasiados caracteres especiales consecutivos');
       setTimeout(() => setError(''), 4000);
       return;
     }
 
-    // 9. Filtrar palabras inapropiadas básicas
+   
     const palabrasProhibidas = ['test', 'admin', 'null', 'undefined', 'script', 'alert', 'hack'];
     const terminoLower = termino.toLowerCase();
     if (palabrasProhibidas.some(palabra => terminoLower.includes(palabra))) {
@@ -165,10 +180,10 @@ export default function BuscarCartas() {
       return;
     }
 
-    // Usar el término normalizado para la búsqueda
-    const terminoParaBuscar = terminoNormalizado || termino;
+    
+    const terminoParaBuscar = normalizarTexto(termino);
 
-    // Solo buscar si el término es diferente al último buscado
+    
     if (terminoParaBuscar === lastSearchTerm && hasSearched) {
       return;
     }
@@ -184,11 +199,10 @@ export default function BuscarCartas() {
     try {
       const res = await fetch(`${apiUrl}/api/cartas?nombre=${encodeURIComponent(terminoParaBuscar)}`);
       const data = await res.json();
-
-      // 🔍 Verificar si es una sugerencia promocional
+      
       if (data.length === 1 && data[0].sugerenciaUrl) {
         console.log('🎯 Frontend: Detectada sugerencia promocional:', data[0]);
-        // Navegar a página de detalle con sugerencia
+        
         navigate(`/sugerencia-promocional`, {
           state: {
             sugerenciaUrl: data[0].sugerenciaUrl,
@@ -200,7 +214,7 @@ export default function BuscarCartas() {
       }
 
       if (data.length === 1) {
-        // Guardar el estado antes de navegar
+        
         setCartas(data);
         setHasSearched(true);
         setLastSearchTerm(terminoParaBuscar);
@@ -209,8 +223,61 @@ export default function BuscarCartas() {
         setCartas(data);
         setHasSearched(true);
         setLastSearchTerm(terminoParaBuscar);
+                
+        if (data.length === 0) {
+          console.log('⚠️ Frontend: Búsqueda sin resultados guardada:', terminoParaBuscar);
+        } else {
+          console.log('✅ Frontend: Búsqueda exitosa:', data.length, 'resultado(s) para:', terminoParaBuscar);
+        }
+      }
+    } catch (err) {
+      console.error('Error al buscar cartas:', err);
+      setError('Error al conectar con el servidor. Verifica tu conexión.');
+    } finally {
+      setLoading(false);
+    }
+
+    
+    if (terminoParaBuscar === lastSearchTerm && hasSearched) {
+      return;
+    }
+
+    console.log('🔍 Frontend: Buscando con término validado y normalizado:', terminoParaBuscar);
+    if (termino !== terminoParaBuscar) {
+      console.log('🔄 Frontend: Normalización aplicada:', termino, '→', terminoParaBuscar);
+    }
+
+    setLoading(true);
+    setCartas([]);
+    setError('');
+    try {
+      const res = await fetch(`${apiUrl}/api/cartas?nombre=${encodeURIComponent(terminoParaBuscar)}`);
+      const data = await res.json();
+      
+      if (data.length === 1 && data[0].sugerenciaUrl) {
+        console.log('🎯 Frontend: Detectada sugerencia promocional:', data[0]);
         
-        // Log específico para búsquedas sin resultados
+        navigate(`/sugerencia-promocional`, {
+          state: {
+            sugerenciaUrl: data[0].sugerenciaUrl,
+            mensaje: data[0].mensaje,
+            terminoBuscado: terminoParaBuscar
+          }
+        });
+        return;
+      }
+
+      if (data.length === 1) {
+        
+        setCartas(data);
+        setHasSearched(true);
+        setLastSearchTerm(terminoParaBuscar);
+        navigate(`/carta/${data[0].id}`);
+      } else {
+        setCartas(data);
+        setHasSearched(true);
+        setLastSearchTerm(terminoParaBuscar);
+                
         if (data.length === 0) {
           console.log('⚠️ Frontend: Búsqueda sin resultados guardada:', terminoParaBuscar);
         } else {
@@ -237,8 +304,8 @@ export default function BuscarCartas() {
   const seleccionarSugerencia = (sugerencia) => {
     setNombre(sugerencia);
     setMostrarSugerencias(false);
-    // Opcional: buscar automáticamente
-    // buscarCartas();
+    // Buscar inmediatamente usando la sugerencia directamente
+    buscarCartasConTermino(sugerencia);
   };
 
   const scrollToTop = () => {
@@ -262,91 +329,83 @@ export default function BuscarCartas() {
 
   return (
     <div className="app-container">
-      {/* Header con título y botón home */}
-      <div className="app-header">
+      {/* Logo principal de la página */}
+      <div className="logo-principal">
         <img 
           src={tituloWebImg} 
           alt="PokéDex TCG - Centro de Entrenadores" 
           className="titulo-web-img"
+          onClick={() => {
+            limpiarBusqueda();
+            window.scrollTo(0, 0);
+          }}
+          style={{ cursor: 'pointer' }}
+          title="Volver al inicio"
         />
-        {(hasSearched || cartas.length > 0) && (
+      </div>
+
+      {/* Botón de limpiar búsqueda cuando sea necesario */}
+      {(hasSearched || cartas.length > 0) && (
+        <div className="search-actions">
           <button 
             onClick={limpiarBusqueda} 
-            className="home-button"
+            className="btn-limpiar-busqueda"
             title="Volver al inicio"
           >
-            🏠 Inicio
+            🏠 Limpiar Búsqueda
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Sección de búsqueda - siempre visible */}
       <div className="search-section">
-        <div className="search-container" style={{ position: 'relative' }}>
-          <input
-            type="text"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setMostrarSugerencias(sugerencias.length > 0)}
-            onBlur={() => setTimeout(() => setMostrarSugerencias(false), 200)} // Delay para permitir clicks
-            placeholder="Ej: Pikachu, 025, Charizard, 150 (máx. 300 caracteres)"
-            className={`search-input ${nombre.length > 280 ? 'search-input-warning' : ''}`}
-            maxLength={300}
-            minLength={2}
-            style={{
-              borderColor: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : undefined,
-              boxShadow: nombre.length > 280 ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined
-            }}
-          />
-          
-          {/* Contador de caracteres */}
-          <div className="character-counter" style={{
-            position: 'absolute',
-            bottom: '-18px',
-            right: '0',
-            fontSize: '0.75rem',
-            color: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : '#6b7280',
-            fontWeight: nombre.length > 280 ? '600' : '400'
-          }}>
-            {nombre.length}/300
-          </div>
-          
-          {/* Lista de sugerencias */}
-          {mostrarSugerencias && sugerencias.length > 0 && (
-            <div className="suggestions-dropdown" style={{
+        <div className="search-container">
+          <div className="input-container" style={{ position: 'relative', width: '100%' }}>
+            <input
+              type="text"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setMostrarSugerencias(sugerencias.length > 0)}
+              onBlur={() => setTimeout(() => setMostrarSugerencias(false), 200)} // Delay para permitir clicks
+              placeholder="Ej: Pikachu, 025, Charizard, 150 (máx. 300 caracteres)"
+              className={`search-input ${nombre.length > 280 ? 'search-input-warning' : ''}`}
+              maxLength={300}
+              minLength={2}
+              style={{
+                width: '100%',
+                borderColor: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : undefined,
+                boxShadow: nombre.length > 280 ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : undefined
+              }}
+            />
+            
+            {/* Contador de caracteres */}
+            <div className="character-counter" style={{
               position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              backgroundColor: 'white',
-              border: '1px solid #ddd',
-              borderTop: 'none',
-              borderRadius: '0 0 8px 8px',
-              maxHeight: '200px',
-              overflowY: 'auto',
-              zIndex: 1000,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              bottom: '-18px',
+              right: '0',
+              fontSize: '0.75rem',
+              color: nombre.length > 280 ? '#ef4444' : nombre.length > 250 ? '#f59e0b' : '#6b7280',
+              fontWeight: nombre.length > 280 ? '600' : '400'
             }}>
-              {sugerencias.map((sugerencia, index) => (
-                <div
-                  key={index}
-                  className="suggestion-item"
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    borderBottom: index < sugerencias.length - 1 ? '1px solid #eee' : 'none',
-                    fontSize: '0.9em'
-                  }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
-                  onClick={() => seleccionarSugerencia(sugerencia)}
-                >
-                  {sugerencia}
-                </div>
-              ))}
+              {nombre.length}/300
             </div>
-          )}
+            
+            {/* Lista de sugerencias */}
+            {mostrarSugerencias && sugerencias.length > 0 && (
+              <div className="suggestions-dropdown">
+                {sugerencias.map((sugerencia, index) => (
+                  <div
+                    key={index}
+                    className="suggestion-item"
+                    onClick={() => seleccionarSugerencia(sugerencia)}
+                  >
+                    {sugerencia}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           
           <button 
             onClick={buscarCartas} 
