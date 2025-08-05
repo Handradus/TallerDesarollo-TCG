@@ -18,8 +18,8 @@ async function urlExiste(url) {
         'User-Agent': 'Mozilla/5.0',
         'Accept': 'text/html',
       },
-      timeout: 5000,
-      maxRedirects: 5,
+      timeout: 3000, // Reducir de 5000 a 3000ms
+      maxRedirects: 3, // Reducir de 5 a 3
       validateStatus: () => true
     });
 
@@ -67,7 +67,13 @@ async function buscarEnTiendaShopify(tienda, carta) {
         const existe = await urlExiste(urlCompleta);
         console.log(`🔗 Verificando existencia: ${urlCompleta} → ${existe}`);
         if (href && existe) {
-          return { url: urlCompleta, verificada: true };
+          // Scrapear el precio de la página del producto
+          const precio = await scrapearPrecioShopify(urlCompleta, tienda.nombre);
+          return { 
+            url: urlCompleta, 
+            verificada: true,
+            precio: precio
+          };
         }
       }
     }
@@ -134,7 +140,14 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
           }
 
           console.log(`✅ Coincidencia encontrada: ${urlCompleta}`);
-          return { url: urlCompleta, verificada: true };
+          
+          // Scrapear el precio de la página del producto
+          const precio = await scrapearPrecioLevelUp(urlCompleta);
+          return { 
+            url: urlCompleta, 
+            verificada: true,
+            precio: precio
+          };
         }
       }
     }
@@ -147,9 +160,126 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
   return null;
 }
 
+// Función para scrapear precios en tiendas Shopify (optimizada)
+async function scrapearPrecioShopify(url, nombreTienda) {
+  try {
+    console.log(`💰 Scrapeando precio Shopify en: ${url}`);
+    
+    const res = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'text/html',
+      },
+      timeout: 4000 // Timeout agresivo para velocidad
+    });
+
+    const $ = cheerio.load(res.data);
+    
+    // Selectores más específicos y ordenados por probabilidad
+    const selectoresPrecio = [
+      '.price .money',
+      '.product-price .money', 
+      '.price-current .money',
+      '.product__price .money',
+      '.money',
+      '.price',
+      '.product-price'
+    ];
+
+    for (const selector of selectoresPrecio) {
+      const elementoPrecio = $(selector).first();
+      if (elementoPrecio.length > 0) {
+        let textoPrecio = elementoPrecio.text().trim();
+        const precioLimpio = limpiarPrecio(textoPrecio);
+        
+        if (precioLimpio) {
+          console.log(`💰 Precio encontrado en ${nombreTienda}: ${precioLimpio}`);
+          return precioLimpio;
+        }
+      }
+    }
+
+    console.log(`⚠️ No se pudo encontrar precio en ${nombreTienda}`);
+    return null;
+    
+  } catch (error) {
+    console.error(`❌ Error scrapeando precio Shopify en ${nombreTienda}:`, error.message);
+    return null;
+  }
+}
+
+// Función para scrapear precios en LevelUp (optimizada)
+async function scrapearPrecioLevelUp(url) {
+  try {
+    console.log(`💰 Scrapeando precio LevelUp en: ${url}`);
+    
+    const res = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'text/html',
+      },
+      timeout: 4000 // Timeout agresivo para velocidad
+    });
+
+    const $ = cheerio.load(res.data);
+    
+    // Selectores más específicos para LevelUp
+    const selectoresPrecio = [
+      '.woocommerce-Price-amount',
+      '.price .woocommerce-Price-amount',
+      'ins .woocommerce-Price-amount', // precio con descuento
+      '.price',
+      '.amount'
+    ];
+
+    for (const selector of selectoresPrecio) {
+      const elementoPrecio = $(selector).first();
+      if (elementoPrecio.length > 0) {
+        let textoPrecio = elementoPrecio.text().trim();
+        const precioLimpio = limpiarPrecio(textoPrecio);
+        
+        if (precioLimpio) {
+          console.log(`💰 Precio encontrado en LevelUp: ${precioLimpio}`);
+          return precioLimpio;
+        }
+      }
+    }
+
+    console.log(`⚠️ No se pudo encontrar precio en LevelUp`);
+    return null;
+    
+  } catch (error) {
+    console.error(`❌ Error scrapeando precio LevelUp:`, error.message);
+    return null;
+  }
+}
+
+// Función auxiliar para limpiar precios (optimizada)
+function limpiarPrecio(textoPrecio) {
+  if (!textoPrecio) return null;
+  
+  // Buscar patrones de precio más específicos
+  const patronesPrecio = [
+    /\$\s*(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/,  // $1,234.56
+    /(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)\s*\$/,  // 1,234.56$
+    /(\d+(?:[.,]\d{1,2})?)/,                       // 1234.56
+  ];
+
+  for (const patron of patronesPrecio) {
+    const match = textoPrecio.match(patron);
+    if (match) {
+      return `$${match[1]}`;
+    }
+  }
+  
+  return null;
+}
 
 
 module.exports = {
   buscarEnTiendaShopify,
-  buscarEnTiendaLevelUp
+  buscarEnTiendaLevelUp,
+  scrapearPrecioShopify,
+  scrapearPrecioLevelUp,
+  limpiarPrecio
 };

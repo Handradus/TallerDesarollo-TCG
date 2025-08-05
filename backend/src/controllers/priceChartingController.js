@@ -49,6 +49,7 @@ async function obtenerPreciosPriceCharting(req, res) {
         desde_cache: true,
         precioPriceCharting: carta.precioPriceCharting,
         fechaActualizacion: carta.fechaActualizacionPrecios,
+        url: carta.urlPriceCharting, // Incluir la URL desde caché
         mensaje: "Precio obtenido desde caché (menos de 24 horas)"
       });
     }

@@ -153,6 +153,8 @@ export default function CartaDetalle() {
       if (response.ok) {
         setPreciosPriceCharting(data);
         console.log('✅ Precios de PriceCharting obtenidos:', data);
+        console.log('🔗 URL de PriceCharting:', data?.url);
+        console.log('🔍 Tipo de URL:', typeof data?.url);
       } else {
         console.error('❌ Error al obtener precios de PriceCharting:', data.mensaje);
         setPreciosPriceCharting({ error: data.mensaje || 'Error al consultar precios' });
@@ -311,7 +313,27 @@ export default function CartaDetalle() {
                 {/* Precios PriceCharting */}
                 <div className="precio-section">
                   <div className="precio-source">
-                    <span className="pricecharting-badge">📈 Precio de PriceCharting</span>
+                    {(() => {
+                      console.log('🔍 Debug PriceCharting:', {
+                        preciosPriceCharting,
+                        url: preciosPriceCharting?.url,
+                        hasUrl: !!preciosPriceCharting?.url
+                      });
+                      return null;
+                    })()}
+                    {preciosPriceCharting?.url ? (
+                      <a 
+                        href={preciosPriceCharting.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="pricecharting-badge pricecharting-link"
+                        title="Ver en PriceCharting (abre en nueva pestaña)"
+                      >
+                        📈 PriceCharting
+                      </a>
+                    ) : (
+                      <span className="pricecharting-badge">📈 PriceCharting</span>
+                    )}
                     {!cargandoPreciosPriceCharting && preciosPriceCharting && !preciosPriceCharting.error && (
                       <button 
                         className="btn-actualizar-precios"

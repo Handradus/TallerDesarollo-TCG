@@ -220,7 +220,7 @@ async function buscarCarta(input) {
       cartasBD = await cartaRepo.find({ where: { set: ILike(`%${posiblesNombre}%`) } });
     }
 
-    // Verificar si ya se consultó la API hoy para evitar consultas innecesarias
+    // 🔍 PASO 1: Verificar si ya se consultó antes en tabla ConsultaAPI
     let saltarConsultaAPI = false;
     if (
       cartasBD.length > 0 &&
@@ -229,14 +229,18 @@ async function buscarCarta(input) {
     ) {
       const yaConsultada = await consultaRepo.findOne({
         where: {
-          termino: posiblesNombre.toLowerCase(),
-          fechaConsulta: hoy
+          termino: posiblesNombre.toLowerCase()
+          // Las consultas de cartas no vencen - datos permanentes
         }
       });
 
       if (yaConsultada) {
-        console.log(`⛔ Consulta a API omitida: Ya se consultó "${posiblesNombre}" hoy`);
+        console.log(`✅ PASO 1: Búsqueda "${posiblesNombre}" encontrada en tabla ConsultaAPI`);
+        console.log(`⚡ PASO 2: Ir directo a BD - Omitiendo consulta a API Pokémon TCG`);
         saltarConsultaAPI = true;
+      } else {
+        console.log(`❌ PASO 1: Búsqueda "${posiblesNombre}" NO encontrada en tabla ConsultaAPI`);
+        console.log(`🔍 PASO 2: Proceder a consultar API Pokémon TCG`);
       }
     }
 
@@ -378,6 +382,7 @@ async function buscarCarta(input) {
           termino: posiblesNombre.toLowerCase(),
           fechaConsulta: hoy
         });
+        console.log(`💾 PASO 3: Búsqueda "${posiblesNombre}" registrada en tabla ConsultaAPI (próximas búsquedas serán directas a BD)`);
       }
       } catch (error) {
         console.error('⚠️ Error al consultar API de PokemonTCG:', error.message);
@@ -398,6 +403,13 @@ async function buscarCarta(input) {
       console.log(`   🔍 Input recibido: "${inputOriginal}"`);
       console.log(`   💾 BD - Búsqueda en campo 'nombre' con término: "${posiblesNombre}"`);
       console.log(`   🌐 API - Query utilizada: ${queryAPI}`);
+      
+      // Resumen del flujo de búsqueda
+      if (saltarConsultaAPI) {
+        console.log(`🎯 FLUJO COMPLETADO: [ConsultaAPI ✅] → [BD ✅] → [API ❌ Omitida] = ${resultadosTotales.length} cartas`);
+      } else {
+        console.log(`🎯 FLUJO COMPLETADO: [ConsultaAPI ❌] → [BD ✅] → [API ✅] → [ConsultaAPI 💾] = ${resultadosTotales.length} cartas`);
+      }
       
       // Si hubo error en API pero hay resultados de BD, agregar mensaje informativo al primer resultado
       if (errorAPI && cartasBD.length > 0) {
