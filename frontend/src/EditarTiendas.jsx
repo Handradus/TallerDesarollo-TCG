@@ -8,6 +8,7 @@ export default function EditarTiendas() {
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState(null);
   const [formData, setFormData] = useState({});
+  const [datosOriginales, setDatosOriginales] = useState({}); // Datos originales para comparar
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState({ tipo: '', texto: '' });
 
@@ -53,7 +54,7 @@ export default function EditarTiendas() {
 
   const iniciarEdicion = (tienda) => {
     setEditando(tienda.id);
-    setFormData({
+    const datosIniciales = {
       nombre: tienda.nombre || '',
       descripcion: tienda.descripcion || '',
       valoracion: tienda.valoracion || '',
@@ -64,12 +65,16 @@ export default function EditarTiendas() {
       telefono: tienda.telefono || '',
       logo: tienda.logo || '',
       activo: tienda.activo
-    });
+    };
+    
+    setFormData(datosIniciales);
+    setDatosOriginales(datosIniciales); // Guardar datos originales para comparar
   };
 
   const cancelarEdicion = () => {
     setEditando(null);
     setFormData({});
+    setDatosOriginales({});
   };
 
   const handleInputChange = (e) => {
@@ -80,8 +85,63 @@ export default function EditarTiendas() {
     }));
   };
 
-  // Función para validar URLs con www
-  const esUrlValidaConWww = (url) => {
+  // Función para detectar si hay cambios en el formulario
+  const hayCambios = () => {
+    if (!datosOriginales || Object.keys(datosOriginales).length === 0) {
+      return false;
+    }
+
+    // Comparar cada campo
+    for (const campo in datosOriginales) {
+      const valorOriginal = datosOriginales[campo];
+      const valorActual = formData[campo];
+      
+      // Normalizar valores para comparación (null, undefined, '' se consideran iguales)
+      const normalizar = (valor) => {
+        if (valor === null || valor === undefined || valor === '') {
+          return '';
+        }
+        return String(valor);
+      };
+
+      if (normalizar(valorOriginal) !== normalizar(valorActual)) {
+        console.log(`🔄 Campo modificado: ${campo} | Original: "${valorOriginal}" | Actual: "${valorActual}"`);
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  // Función para obtener solo los campos que han cambiado
+  const obtenerCambios = () => {
+    const cambios = {};
+    
+    for (const campo in datosOriginales) {
+      const valorOriginal = datosOriginales[campo];
+      const valorActual = formData[campo];
+      
+      // Normalizar valores para comparación
+      const normalizar = (valor) => {
+        if (valor === null || valor === undefined || valor === '') {
+          return null; // Usar null como valor estándar para campos vacíos
+        }
+        return valor;
+      };
+
+      const valorOriginalNorm = normalizar(valorOriginal);
+      const valorActualNorm = normalizar(valorActual);
+
+      if (valorOriginalNorm !== valorActualNorm) {
+        cambios[campo] = valorActualNorm;
+      }
+    }
+
+    return cambios;
+  };
+
+  // Función para validar URLs (más flexible)
+  const esUrlValida = (url) => {
     try {
       // Si no tiene protocolo, agregar https://
       let urlCompleta = url;
@@ -92,8 +152,8 @@ export default function EditarTiendas() {
       // Validar que sea una URL válida
       const urlObj = new URL(urlCompleta);
       
-      // Verificar que contenga www.
-      return urlObj.hostname.includes('www.');
+      // Verificar que tenga un dominio válido (al menos un punto)
+      return urlObj.hostname.includes('.');
     } catch {
       return false;
     }
@@ -158,8 +218,8 @@ export default function EditarTiendas() {
       if (datos[field] && datos[field].trim()) {
         if (datos[field].length > 500) {
           errores.push(`${name} no puede exceder 500 caracteres`);
-        } else if (!esUrlValidaConWww(datos[field])) {
-          errores.push(`${name} debe ser una URL válida que contenga "www."`);
+        } else if (!esUrlValida(datos[field])) {
+          errores.push(`${name} debe ser una URL válida`);
         }
       }
     });
@@ -172,31 +232,56 @@ export default function EditarTiendas() {
   };
 
   const guardarCambios = async (id) => {
+    console.log('🔄 [guardarCambios] Iniciando proceso de guardado para tienda ID:', id);
+    console.log('🔄 [guardarCambios] Datos actuales del formulario:', formData);
+    console.log('🔄 [guardarCambios] Datos originales:', datosOriginales);
+    
     try {
       setGuardando(true);
       
-      // Validar datos antes de enviar
+      // Verificar si hay cambios antes de proceder
+      if (!hayCambios()) {
+        console.log('❌ [guardarCambios] No se detectaron cambios');
+        mostrarMensaje('error', 'No se detectaron cambios para guardar');
+        setGuardando(false);
+        return;
+      }
+
+      // Obtener solo los campos que han cambiado
+      const cambios = obtenerCambios();
+      console.log('🔄 [guardarCambios] Cambios detectados:', cambios);
+      
+      // Validar datos antes de enviar (validar formData completo)
+      console.log('🔄 [guardarCambios] Validando formulario...');
       const erroresValidacion = validarFormulario(formData);
       if (erroresValidacion.length > 0) {
+        console.log('❌ [guardarCambios] Errores de validación:', erroresValidacion);
         mostrarMensaje('error', erroresValidacion.join(', '));
         return;
       }
+      console.log('✅ [guardarCambios] Validación exitosa');
       
-      const dataToSend = { ...formData };
+      // Preparar datos para enviar (solo los cambios)
+      const dataToSend = { ...cambios };
       
-      // Convertir valoración a número si está presente
-      if (dataToSend.valoracion) {
-        dataToSend.valoracion = parseFloat(dataToSend.valoracion);
-      } else {
-        dataToSend.valoracion = null;
+      // Convertir valoración a número si está presente en los cambios
+      if (dataToSend.valoracion !== undefined) {
+        if (dataToSend.valoracion) {
+          dataToSend.valoracion = parseFloat(dataToSend.valoracion);
+        } else {
+          dataToSend.valoracion = null;
+        }
       }
 
-      // Limpiar campos vacíos
+      // Limpiar campos vacíos (convertir strings vacíos a null)
       Object.keys(dataToSend).forEach(key => {
         if (dataToSend[key] === '') {
           dataToSend[key] = null;
         }
       });
+
+      console.log('🔄 [guardarCambios] Datos finales a enviar:', dataToSend);
+      console.log('🔄 [guardarCambios] Enviando PUT a:', `${apiUrl}/api/tiendas/${id}`);
 
       const response = await fetch(`${apiUrl}/api/tiendas/${id}`, {
         method: 'PUT',
@@ -206,21 +291,42 @@ export default function EditarTiendas() {
         body: JSON.stringify(dataToSend)
       });
 
-      const result = await response.json();
+      console.log('🔄 [guardarCambios] Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
 
-      if (response.ok && result.success) {
-        mostrarMensaje('success', 'Tienda actualizada exitosamente');
+      let result;
+      try {
+        result = await response.json();
+        console.log('🔄 [guardarCambios] Datos de respuesta:', result);
+      } catch (parseError) {
+        console.error('❌ [guardarCambios] Error al parsear respuesta JSON:', parseError);
+        const textResponse = await response.text();
+        console.log('🔄 [guardarCambios] Respuesta como texto:', textResponse);
+      }
+
+      if (response.ok && result && result.success) {
+        console.log('✅ [guardarCambios] Guardado exitoso');
+        mostrarMensaje('success', `Tienda actualizada exitosamente (${Object.keys(dataToSend).length} campos modificados)`);
         setEditando(null);
         setFormData({});
+        setDatosOriginales({});
         cargarTiendas(); // Recargar la lista
       } else {
-        mostrarMensaje('error', result.error || 'Error al actualizar tienda');
+        console.error('❌ [guardarCambios] Error en la respuesta del servidor:', {
+          status: response.status,
+          result: result
+        });
+        mostrarMensaje('error', result?.error || 'Error al actualizar tienda');
       }
 
     } catch (error) {
-      console.error('Error al guardar:', error);
+      console.error('❌ [guardarCambios] Error de red o servidor:', error);
       mostrarMensaje('error', 'Error de conexión al guardar');
     } finally {
+      console.log('🔄 [guardarCambios] Finalizando proceso de guardado');
       setGuardando(false);
     }
   };
@@ -446,9 +552,10 @@ export default function EditarTiendas() {
                   <button 
                     className="btn-guardar"
                     onClick={() => guardarCambios(tienda.id)}
-                    disabled={guardando}
+                    disabled={guardando || !hayCambios()}
+                    title={!hayCambios() ? 'No hay cambios para guardar' : 'Guardar cambios'}
                   >
-                    {guardando ? 'Guardando...' : 'Guardar'}
+                    {guardando ? 'Guardando...' : hayCambios() ? `Guardar cambios` : 'Sin cambios'}
                   </button>
                 </div>
               </div>
