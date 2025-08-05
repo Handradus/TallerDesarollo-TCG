@@ -16,15 +16,23 @@ function analizarCoincidenciasCarta(carta, href, textoElemento, tienda) {
   const nombreCarta = carta.nombre.toLowerCase();
   const numero = String(carta.numero).padStart(3, '0');
   const numeroSinCeros = String(carta.numero);
-  const nombreNormalizado = carta.nombre.toLowerCase().replace(/[^a-z0-9]/g, '');
   
-  // Análisis del texto visible del enlace
-  const incluyeNombreTexto = textoElemento.includes(nombreCarta);
+  // Múltiples variaciones del nombre para mayor flexibilidad
+  const nombreNormalizado = carta.nombre.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const nombreConGuiones = carta.nombre.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+  const nombreSinApostrofes = carta.nombre.toLowerCase().replace(/'/g, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+  
+  // Análisis del texto visible del enlace (más flexible)
+  const textoLower = textoElemento.toLowerCase();
+  const incluyeNombreTexto = textoLower.includes(nombreCarta) || 
+                             textoLower.includes(nombreCarta.replace(/'/g, ''));
   const incluyeNumeroTexto = textoElemento.includes(numeroSinCeros) || textoElemento.includes(numero);
 
-  // Análisis de la URL del producto
+  // Análisis de la URL del producto (más variaciones)
   const hrefLower = href.toLowerCase();
-  const incluyeNombreUrl = hrefLower.includes(nombreNormalizado);
+  const incluyeNombreUrl = hrefLower.includes(nombreNormalizado) || 
+                           hrefLower.includes(nombreConGuiones) ||
+                           hrefLower.includes(nombreSinApostrofes);
   const incluyeNumeroUrl = hrefLower.includes(numeroSinCeros) || hrefLower.includes(numero);
   
   // Verificar el set en la URL si está disponible
@@ -46,6 +54,8 @@ function analizarCoincidenciasCarta(carta, href, textoElemento, tienda) {
     detalles: {
       nombreCarta,
       nombreNormalizado,
+      nombreConGuiones,
+      nombreSinApostrofes,
       numero,
       numeroSinCeros,
       incluyeNombreTexto,
@@ -80,7 +90,8 @@ async function urlExiste(url) {
 async function buscarEnTiendaShopify(tienda, carta) {
   const termino = `${carta.nombre} ${carta.numero}`;
   const urlBusqueda = tienda.urlBusqueda.replace('BUSQUEDA', encodeURIComponent(termino));
-  console.log(`🔍 [${tienda.nombre}] URL de búsqueda: ${urlBusqueda}`);
+  console.log(`� [${tienda.nombre}] Iniciando búsqueda Shopify para carta: "${carta.nombre}"`);
+  console.log(`�🔍 [${tienda.nombre}] URL de búsqueda: ${urlBusqueda}`);
 
   try {
     const res = await axios.get(urlBusqueda);
@@ -98,34 +109,50 @@ async function buscarEnTiendaShopify(tienda, carta) {
       
       const analisis = analizarCoincidenciasCarta(carta, href, texto, tienda);
 
-      console.log(`🔍 Comparando [${tienda.nombre}]:\n   ↪ texto = "${texto}"\n   ↪ href = "${href}"\n   ↪ coincideTexto = ${analisis.coincideTexto}\n   ↪ coincideUrl = ${analisis.coincideUrl}`);
+      console.log(`🔍 Comparando [${tienda.nombre}]:`);
+      console.log(`   ↪ texto = "${texto}"`);
+      console.log(`   ↪ href = "${href}"`);
+      console.log(`   🎯 nombreCarta = "${analisis.detalles.nombreCarta}"`);
+      console.log(`   🎯 nombreNormalizado = "${analisis.detalles.nombreNormalizado}"`);
+      console.log(`   🎯 nombreConGuiones = "${analisis.detalles.nombreConGuiones}"`);
+      console.log(`   🎯 nombreSinApostrofes = "${analisis.detalles.nombreSinApostrofes}"`);
+      console.log(`   ↪ coincideTexto = ${analisis.coincideTexto}`);
+      console.log(`   ↪ coincideUrl = ${analisis.coincideUrl}`);
 
       if (analisis.coincideAlguno) {
+        console.log(`✅ [${tienda.nombre}] Coincidencia encontrada! Verificando URL...`);
         const existe = await urlExiste(urlCompleta);
         console.log(`🔗 Verificando existencia: ${urlCompleta} → ${existe}`);
         if (href && existe) {
-          
+          console.log(`🛒 [${tienda.nombre}] URL existe, iniciando scraping de precio...`);
           const precio = await scrapearPrecioShopify(urlCompleta, tienda.nombre);
+          console.log(`🛒 [${tienda.nombre}] Scraping completado, precio obtenido: ${precio}`);
           return { 
             url: urlCompleta, 
             verificada: true,
             precio: precio
           };
+        } else {
+          console.log(`❌ [${tienda.nombre}] URL no existe o href vacío: href=${!!href}, existe=${existe}`);
         }
+      } else {
+        console.log(`❌ [${tienda.nombre}] Sin coincidencia: coincideTexto=${analisis.coincideTexto}, coincideUrl=${analisis.coincideUrl}`);
       }
     }
 
     console.log(`⛔ [${tienda.nombre}] No coincidencia exacta encontrada`);
+    return null;
   } catch (error) {
     console.log(`❌ [${tienda.nombre}] Error en búsqueda: ${error.message}`);
+    return null;
   }
-
-  return null;
 }
 
 async function buscarEnTiendaLevelUp(tienda, carta) {
   const termino = `${carta.nombre} ${carta.numero}`;
   const urlBusqueda = tienda.urlBusqueda.replace('BUSQUEDA', encodeURIComponent(termino));
+  console.log(`🎮 [LevelUp] Iniciando búsqueda LevelUp para carta: "${carta.nombre}"`);
+  console.log(`🔍 [LevelUp] URL de búsqueda: ${urlBusqueda}`);
 
   try {
     const res = await axios.get(urlBusqueda, {
@@ -174,8 +201,9 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
 
           console.log(`✅ Coincidencia encontrada: ${urlCompleta}`);
           
-          
+          console.log(`🎮 [LevelUp] Iniciando scraping de precio...`);
           const precio = await scrapearPrecioLevelUp(urlCompleta);
+          console.log(`🎮 [LevelUp] Scraping completado, precio obtenido: ${precio}`);
           return { 
             url: urlCompleta, 
             verificada: true,
@@ -208,6 +236,8 @@ async function scrapearPrecioShopify(url, nombreTienda) {
 
     const $ = cheerio.load(res.data);
     
+    // 🐛 DEBUGGING: Verificar que la página se cargó
+    console.log(`🐛 [${nombreTienda}] Página cargada, tamaño HTML: ${res.data.length} chars`);
     
     const selectoresPrecio = [
       '.price .money',
@@ -219,20 +249,30 @@ async function scrapearPrecioShopify(url, nombreTienda) {
       '.product-price'
     ];
 
+    // 🐛 DEBUGGING: Probar todos los selectores
+    console.log(`🐛 [${nombreTienda}] Probando ${selectoresPrecio.length} selectores de precio...`);
+    
     for (const selector of selectoresPrecio) {
-      const elementoPrecio = $(selector).first();
+      const elementos = $(selector);
+      console.log(`🐛 [${nombreTienda}] Selector "${selector}": ${elementos.length} elementos encontrados`);
+      
+      const elementoPrecio = elementos.first();
       if (elementoPrecio.length > 0) {
         let textoPrecio = elementoPrecio.text().trim();
+        console.log(`🐛 [${nombreTienda}] Texto del precio: "${textoPrecio}"`);
         const precioLimpio = limpiarPrecio(textoPrecio);
         
         if (precioLimpio) {
           console.log(`💰 Precio encontrado en ${nombreTienda}: ${precioLimpio}`);
           return precioLimpio;
+        } else {
+          console.log(`🐛 [${nombreTienda}] limpiarPrecio devolvió null para: "${textoPrecio}"`);
         }
       }
     }
 
     console.log(`⚠️ No se pudo encontrar precio en ${nombreTienda}`);
+    console.log(`🐛 [${nombreTienda}] Muestra del HTML: ${res.data.substring(0, 500)}...`);
     return null;
     
   } catch (error) {
@@ -256,6 +296,8 @@ async function scrapearPrecioLevelUp(url) {
 
     const $ = cheerio.load(res.data);
     
+    // 🐛 DEBUGGING: Verificar que la página se cargó
+    console.log(`🐛 [LevelUp] Página cargada, tamaño HTML: ${res.data.length} chars`);
     
     const selectoresPrecio = [
       '.woocommerce-Price-amount',
@@ -265,20 +307,30 @@ async function scrapearPrecioLevelUp(url) {
       '.amount'
     ];
 
+    // 🐛 DEBUGGING: Probar todos los selectores
+    console.log(`🐛 [LevelUp] Probando ${selectoresPrecio.length} selectores de precio...`);
+    
     for (const selector of selectoresPrecio) {
-      const elementoPrecio = $(selector).first();
+      const elementos = $(selector);
+      console.log(`🐛 [LevelUp] Selector "${selector}": ${elementos.length} elementos encontrados`);
+      
+      const elementoPrecio = elementos.first();
       if (elementoPrecio.length > 0) {
         let textoPrecio = elementoPrecio.text().trim();
+        console.log(`🐛 [LevelUp] Texto del precio: "${textoPrecio}"`);
         const precioLimpio = limpiarPrecio(textoPrecio);
         
         if (precioLimpio) {
           console.log(`💰 Precio encontrado en LevelUp: ${precioLimpio}`);
           return precioLimpio;
+        } else {
+          console.log(`🐛 [LevelUp] limpiarPrecio devolvió null para: "${textoPrecio}"`);
         }
       }
     }
 
     console.log(`⚠️ No se pudo encontrar precio en LevelUp`);
+    console.log(`🐛 [LevelUp] Muestra del HTML: ${res.data.substring(0, 500)}...`);
     return null;
     
   } catch (error) {
@@ -291,7 +343,12 @@ async function scrapearPrecioLevelUp(url) {
 function limpiarPrecio(textoPrecio) {
   if (!textoPrecio) return null;
   
- 
+  // 🐛 DEBUGGING: Log del texto original
+  console.log(`🐛 limpiarPrecio recibió: "${textoPrecio}"`);
+  
+  // Limpiar espacios y caracteres extraños
+  textoPrecio = textoPrecio.replace(/\s+/g, ' ').trim();
+  
   const patronesPrecio = [
     /\$\s*(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/,  // $1,234.56
     /(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)\s*\$/,  // 1,234.56$
@@ -301,10 +358,21 @@ function limpiarPrecio(textoPrecio) {
   for (const patron of patronesPrecio) {
     const match = textoPrecio.match(patron);
     if (match) {
-      return `$${match[1]}`;
+      // Limpiar el número: convertir puntos de miles a nada y comas decimales a puntos
+      let numeroLimpio = match[1]
+        .replace(/\./g, '')  // Remover puntos de miles (15.990 → 15990)
+        .replace(/,/g, '.'); // Convertir comas decimales a puntos (15,99 → 15.99)
+      
+      // Convertir a número y luego a string para validar que es numérico
+      const numeroValidado = parseFloat(numeroLimpio);
+      if (!isNaN(numeroValidado)) {
+        console.log(`🐛 limpiarPrecio devuelve: "${numeroValidado}"`);
+        return numeroValidado.toString();
+      }
     }
   }
   
+  console.log(`🐛 limpiarPrecio no encontró patrón válido en: "${textoPrecio}"`);
   return null;
 }
 

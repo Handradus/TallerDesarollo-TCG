@@ -32,7 +32,7 @@ async function obtenerTiendas(req, res) {
     const tiendas = await tiendaRepo.findBy({ activo: true });
 
     
-    const CACHE_PRECIOS_DURACION = 2 * 60 * 60 * 1000; 
+    const CACHE_PRECIOS_DURACION = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
     const ahora = new Date();
     const linksRecientes = links.filter(link => {
       const tiempoTranscurrido = ahora - new Date(link.fechaGuardado);
@@ -69,7 +69,7 @@ async function obtenerTiendas(req, res) {
         relations: ['tienda']
       });
 
-      console.log(`💾 Scraping de precios completado para carta "${carta.nombre}" - ${links.length} links guardados (válidos por 2 horas)`);
+      console.log(`💾 Scraping de precios completado para carta "${carta.nombre}" - ${links.length} links guardados (válidos por 24 horas)`);
     } else {
       console.log(`⚡ Usando cache de precios para carta "${carta.nombre}" - ${linksRecientes.length} links recientes`);
       links = linksRecientes;
