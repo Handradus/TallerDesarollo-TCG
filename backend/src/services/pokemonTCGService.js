@@ -559,13 +559,16 @@ async function buscarCartaAdmin(input) {
       }
     }
 
-    // Registrar la consulta
+    // Registrar la consulta SOLO si hubo resultados
     const hoy = new Date().toISOString().split('T')[0];
-    if (posiblesNombre.length > 0) {
+    if (posiblesNombre.length > 0 && resultadosAPI.length > 0) {
       await consultaRepo.save({
         termino: posiblesNombre.toLowerCase(),
         fechaConsulta: hoy
       });
+      console.log(`💾 [ADMIN] Término "${posiblesNombre}" registrado en ConsultaAPI (${resultadosAPI.length} resultados)`);
+    } else if (posiblesNombre.length > 0 && resultadosAPI.length === 0) {
+      console.log(`❌ [ADMIN] Término "${posiblesNombre}" NO registrado (sin resultados)`);
     }
 
     console.log(`✅ [ADMIN] Actualización completada: ${cartasActualizadas} cartas nuevas agregadas`);
