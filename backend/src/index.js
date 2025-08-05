@@ -8,6 +8,8 @@ require('dotenv').config();
 const cartaRoutes = require('./routes/cartaRoutes');
 const historialRoutes = require('./routes/historialRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const tiendaRoutes = require('./routes/tiendaRoutes');
+const tiendaPublicaRoutes = require('./routes/tiendaPublicaRoutes');
 const cors = require('cors');
 
 const app = express();
@@ -27,6 +29,8 @@ AppDataSource.initialize()
     app.use('/api/cartas', cartaRoutes);
     app.use('/api/historial', historialRoutes);
     app.use('/api/admin', adminRoutes);
+    app.use('/api/tiendas', tiendaRoutes);
+    app.use('/api/tiendas-publicas', tiendaPublicaRoutes);
     
 
     app.listen(PORT, HOST, () => {

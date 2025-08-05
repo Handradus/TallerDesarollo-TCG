@@ -11,6 +11,52 @@ function normalizarParaUrl(texto) {
     .replace(/\s+/g, "-");
 }
 
+// Función auxiliar para analizar coincidencias de carta en URLs y texto
+function analizarCoincidenciasCarta(carta, href, textoElemento, tienda) {
+  const nombreCarta = carta.nombre.toLowerCase();
+  const numero = String(carta.numero).padStart(3, '0');
+  const numeroSinCeros = String(carta.numero);
+  const nombreNormalizado = carta.nombre.toLowerCase().replace(/[^a-z0-9]/g, '');
+  
+  // Análisis del texto visible del enlace
+  const incluyeNombreTexto = textoElemento.includes(nombreCarta);
+  const incluyeNumeroTexto = textoElemento.includes(numeroSinCeros) || textoElemento.includes(numero);
+
+  // Análisis de la URL del producto
+  const hrefLower = href.toLowerCase();
+  const incluyeNombreUrl = hrefLower.includes(nombreNormalizado);
+  const incluyeNumeroUrl = hrefLower.includes(numeroSinCeros) || hrefLower.includes(numero);
+  
+  // Verificar el set en la URL si está disponible
+  let incluyeSetUrl = true;
+  if (carta.set) {
+    const setNormalizado = carta.set.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '') // Eliminar caracteres especiales
+      .replace(/\s+/g, '-'); // Reemplazar espacios con guiones
+    incluyeSetUrl = hrefLower.includes(setNormalizado);
+  }
+
+  const coincideTexto = incluyeNombreTexto && incluyeNumeroTexto;
+  const coincideUrl = incluyeNombreUrl && incluyeNumeroUrl && incluyeSetUrl;
+
+  return {
+    coincideTexto,
+    coincideUrl,
+    coincideAlguno: coincideTexto || coincideUrl,
+    detalles: {
+      nombreCarta,
+      nombreNormalizado,
+      numero,
+      numeroSinCeros,
+      incluyeNombreTexto,
+      incluyeNumeroTexto,
+      incluyeNombreUrl,
+      incluyeNumeroUrl,
+      incluyeSetUrl
+    }
+  };
+}
+
 async function urlExiste(url) {
   try {
     const res = await axios.get(url, {
@@ -32,12 +78,6 @@ async function urlExiste(url) {
 }
 
 async function buscarEnTiendaShopify(tienda, carta) {
-  const nombreCarta = carta.nombre.toLowerCase();
-  const numero = String(carta.numero).padStart(3, '0');
-  const total = carta.printedTotal ? String(carta.printedTotal).padStart(3, '0') : "000";
-  const numeroFraccion = `${numero}/${total}`;
-  const numeroFraccionAlt = `${numero}-${total}`;
-
   const termino = `${carta.nombre} ${carta.numero}`;
   const urlBusqueda = tienda.urlBusqueda.replace('BUSQUEDA', encodeURIComponent(termino));
   console.log(`🔍 [${tienda.nombre}] URL de búsqueda: ${urlBusqueda}`);
@@ -55,15 +95,12 @@ async function buscarEnTiendaShopify(tienda, carta) {
       const href = link.attr('href');
       const urlCompleta = `${tienda.urlBase}${href}`;
 
-      const incluyeNombre = texto.includes(nombreCarta);
-      const incluyeFraccion =
-        texto.includes(numero.toLowerCase()) ||
-        texto.includes(numeroFraccion.toLowerCase()) ||
-        texto.includes(numeroFraccionAlt.toLowerCase());
+      // Usar la función auxiliar para análisis mejorado
+      const analisis = analizarCoincidenciasCarta(carta, href, texto, tienda);
 
-      console.log(`🔍 Comparando:\n   ↪ texto = "${texto}"\n   ↪ nombreCarta = "${nombreCarta}"\n   ↪ incluyeNombre = ${incluyeNombre}\n   ↪ incluyeFraccion = ${incluyeFraccion}`);
+      console.log(`🔍 Comparando [${tienda.nombre}]:\n   ↪ texto = "${texto}"\n   ↪ href = "${href}"\n   ↪ coincideTexto = ${analisis.coincideTexto}\n   ↪ coincideUrl = ${analisis.coincideUrl}`);
 
-      if (incluyeNombre && incluyeFraccion) {
+      if (analisis.coincideAlguno) {
         const existe = await urlExiste(urlCompleta);
         console.log(`🔗 Verificando existencia: ${urlCompleta} → ${existe}`);
         if (href && existe) {
@@ -101,24 +138,20 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
     const $ = cheerio.load(res.data);
     const enlaces = $('a.woocommerce-LoopProduct-link');
 
-    const nombreNormalizado = normalizarParaUrl(carta.nombre);
-    const numeroCartaRaw = String(carta.numero).toLowerCase(); // como "swsh020"
-    const regexNumero = new RegExp(`${numeroCartaRaw}`, 'i');
-
     console.log(`🔗 [${tienda.nombre}] Enlaces encontrados: ${enlaces.length}`);
 
     for (let i = 0; i < enlaces.length; i++) {
       const link = $(enlaces[i]);
       const href = link.attr('href') || "";
-      const textoHref = href.toLowerCase();
+      const textoElemento = link.text().toLowerCase();
       const urlCompleta = href.startsWith("http") ? href : `${tienda.urlBase}${href}`;
 
-      const nombreCoincide = textoHref.includes(nombreNormalizado);
-      const numeroCoincide = regexNumero.test(textoHref);
+      // Usar la función auxiliar para análisis mejorado
+      const analisis = analizarCoincidenciasCarta(carta, href, textoElemento, tienda);
 
-      console.log(`🔍 Comparando:\n   ↪ href = "${textoHref}"\n   ↪ nombreNormalizado = "${nombreNormalizado}"\n   ↪ numeroRegex = ${regexNumero}\n   ↪ nombreCoincide = ${nombreCoincide}\n   ↪ numeroCoincide = ${numeroCoincide}`);
+      console.log(`🔍 Comparando [${tienda.nombre}]:\n   ↪ texto = "${textoElemento}"\n   ↪ href = "${href}"\n   ↪ coincideTexto = ${analisis.coincideTexto}\n   ↪ coincideUrl = ${analisis.coincideUrl}`);
 
-      if (nombreCoincide && numeroCoincide) {
+      if (analisis.coincideAlguno) {
         const existe = await urlExiste(urlCompleta);
         console.log(`🔗 Verificando existencia: ${urlCompleta} → ${existe}`);
         if (existe) {

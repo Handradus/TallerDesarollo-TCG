@@ -1,0 +1,259 @@
+.not-found-container {
+  min-height: calc(100vh - 80px); /* Altura completa menos navbar */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.not-found-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('../assets/patron_poke.jpg') repeat;
+  opacity: 0.1;
+  z-index: 0;
+}
+
+.not-found-content {
+  text-align: center;
+  z-index: 1;
+  position: relative;
+  max-width: 600px;
+  padding: 2rem;
+}
+
+/* Número 404 estilizado */
+.error-code {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.error-number {
+  font-size: 8rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.5),
+    0 0 20px rgba(255, 255, 255, 0.3),
+    0 0 30px rgba(255, 255, 255, 0.2);
+  animation: glitch 2s infinite;
+  display: inline-block;
+}
+
+.error-number:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.error-number:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.error-number:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Animación de glitch */
+@keyframes glitch {
+  0%, 90%, 100% {
+    transform: translate(0);
+    filter: hue-rotate(0deg);
+  }
+  10% {
+    transform: translate(-2px, 2px);
+    filter: hue-rotate(90deg);
+  }
+  20% {
+    transform: translate(2px, -2px);
+    filter: hue-rotate(180deg);
+  }
+  30% {
+    transform: translate(-2px, -2px);
+    filter: hue-rotate(270deg);
+  }
+  40% {
+    transform: translate(2px, 2px);
+    filter: hue-rotate(360deg);
+  }
+}
+
+/* Contenedor de Missingno */
+.missingno-container {
+  margin: 2rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.missingno-image {
+  max-width: 200px;
+  height: auto;
+  image-rendering: pixelated; /* Mantener estilo pixelado */
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Animación flotante */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Mensaje de error */
+.error-message {
+  color: rgb(13, 9, 9);
+  margin: 2rem 0;
+}
+
+.error-message h2 {
+  font-size: 2.5rem;
+  margin: 0 0 1rem 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.error-message p {
+  font-size: 1.1rem;
+  margin: 0.5rem 0;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+/* Botones de acción */
+.error-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+
+.btn-home,
+.btn-back {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.btn-home:hover,
+.btn-back:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-home {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.btn-home:hover {
+  background: rgba(76, 175, 80, 0.5);
+}
+
+/* Texto con efecto glitch */
+.error-flavor {
+  margin-top: 2rem;
+}
+
+.glitch-text {
+  color: #fff;
+  font-size: 1rem;
+  opacity: 0.8;
+  animation: textGlitch 3s infinite;
+}
+
+@keyframes textGlitch {
+  0%, 95%, 100% {
+    opacity: 0.8;
+    transform: translate(0);
+  }
+  96% {
+    opacity: 0.5;
+    transform: translate(1px, 0);
+  }
+  97% {
+    opacity: 0.7;
+    transform: translate(-1px, 0);
+  }
+  98% {
+    opacity: 0.9;
+    transform: translate(1px, 0);
+  }
+  99% {
+    opacity: 0.6;
+    transform: translate(0, 1px);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .not-found-content {
+    padding: 1rem;
+  }
+  
+  .error-number {
+    font-size: 6rem;
+  }
+  
+  .error-message h2 {
+    font-size: 2rem;
+  }
+  
+  .error-message p {
+    font-size: 1rem;
+  }
+  
+  .missingno-image {
+    max-width: 150px;
+  }
+  
+  .error-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn-home,
+  .btn-back {
+    width: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .error-number {
+    font-size: 4rem;
+  }
+  
+  .error-code {
+    gap: 0.5rem;
+  }
+  
+  .error-message h2 {
+    font-size: 1.8rem;
+  }
+  
+  .missingno-image {
+    max-width: 120px;
+  }
+}

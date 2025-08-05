@@ -76,7 +76,29 @@ export default function CarouselTiendas() {
                 className="carousel-tienda-item"
                 onClick={() => handleTiendaClick(tienda)}
               >
-                <h3>{tienda.nombre}</h3>
+                {tienda.logo ? (
+                  <div className="tienda-logo-container">
+                    <img 
+                      src={tienda.logo} 
+                      alt={`Logo ${tienda.nombre}`}
+                      className="tienda-logo"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextElementSibling.style.display = 'block';
+                      }}
+                    />
+                    <h3 className="tienda-nombre-fallback" style={{ display: 'none' }}>
+                      {tienda.nombre}
+                    </h3>
+                  </div>
+                ) : (
+                  <h3>{tienda.nombre}</h3>
+                )}
+                {!tienda.logo && tienda.valoracion && (
+                  <div className="tienda-rating">
+                    ⭐ {tienda.valoracion}
+                  </div>
+                )}
               </div>
             ))}
           </div>

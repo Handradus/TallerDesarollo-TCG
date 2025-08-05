@@ -58,6 +58,11 @@
   border: 2px solid transparent;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
 }
 
 .carousel-tienda-item:hover {
@@ -69,14 +74,46 @@
   position: relative;
 }
 
-.carousel-tienda-item h3 {
+.tienda-logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.tienda-logo {
+  max-width: 100%;
+  max-height: 50px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.carousel-tienda-item:hover .tienda-logo {
+  transform: scale(1.1);
+}
+
+.carousel-tienda-item h3,
+.tienda-nombre-fallback {
   color: #1f2937;
-  font-size: 1rem;
+  font-size: 0.9rem;
   margin: 0;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  width: 100%;
+}
+
+.tienda-rating {
+  font-size: 0.8rem;
+  color: #f59e0b;
+  margin-top: 0.25rem;
+  font-weight: 500;
 }
 
 .carousel-tiendas-loading,
@@ -99,6 +136,57 @@
   display: block;
   font-size: 2rem;
   margin-bottom: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .carousel-tienda-item {
+    min-width: 150px;
+    padding: 0.8rem;
+    min-height: 90px;
+  }
+
+  .tienda-logo {
+    max-height: 40px;
+  }
+
+  .carousel-tienda-item h3,
+  .tienda-nombre-fallback {
+    font-size: 0.8rem;
+  }
+
+  .tienda-rating {
+    font-size: 0.7rem;
+  }
+
+  .carousel-tiendas-wrapper {
+    height: 110px;
+  }
+}
+
+@media (max-width: 480px) {
+  .carousel-tienda-item {
+    min-width: 130px;
+    padding: 0.6rem;
+    min-height: 80px;
+  }
+
+  .tienda-logo {
+    max-height: 35px;
+  }
+
+  .carousel-tienda-item h3,
+  .tienda-nombre-fallback {
+    font-size: 0.75rem;
+  }
+
+  .carousel-tiendas-wrapper {
+    height: 100px;
+  }
+
+  .carousel-tiendas-track {
+    gap: 1rem;
+  }
 }
 
 @keyframes pulse {

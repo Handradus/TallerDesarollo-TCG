@@ -262,23 +262,33 @@ export default function BuscarCartas() {
 
   return (
     <div className="app-container">
-      {/* Header con título y botón home */}
-      <div className="app-header">
+      {/* Logo principal de la página */}
+      <div className="logo-principal">
         <img 
           src={tituloWebImg} 
           alt="PokéDex TCG - Centro de Entrenadores" 
           className="titulo-web-img"
+          onClick={() => {
+            limpiarBusqueda();
+            window.scrollTo(0, 0);
+          }}
+          style={{ cursor: 'pointer' }}
+          title="Volver al inicio"
         />
-        {(hasSearched || cartas.length > 0) && (
+      </div>
+
+      {/* Botón de limpiar búsqueda cuando sea necesario */}
+      {(hasSearched || cartas.length > 0) && (
+        <div className="search-actions">
           <button 
             onClick={limpiarBusqueda} 
-            className="home-button"
+            className="btn-limpiar-busqueda"
             title="Volver al inicio"
           >
-            🏠 Inicio
+            🏠 Limpiar Búsqueda
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Sección de búsqueda - siempre visible */}
       <div className="search-section">
