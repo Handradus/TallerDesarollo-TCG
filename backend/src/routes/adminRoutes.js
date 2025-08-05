@@ -2,7 +2,7 @@ const express = require('express');
 const { buscarCartaAdmin } = require('../services/pokemonTCGService');
 const router = express.Router();
 
-// Ruta de administrador para forzar actualización de BD
+
 router.post('/actualizarbd', async (req, res) => {
   try {
     const { termino } = req.body;

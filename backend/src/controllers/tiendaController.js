@@ -1,8 +1,6 @@
 const tiendaService = require('../services/tiendaService');
 
-/**
- * Crear una nueva tienda
- */
+
 async function crearTienda(req, res) {
   try {
     console.log('🏪 [crearTienda] Datos recibidos:', req.body);
@@ -33,12 +31,10 @@ async function crearTienda(req, res) {
   }
 }
 
-/**
- * Obtener todas las tiendas
- */
+
 async function obtenerTiendas(req, res) {
   try {
-    const { activas } = req.query; // ?activas=true para solo activas
+    const { activas } = req.query; 
     const soloActivas = activas === 'true';
     
     console.log(`📋 [obtenerTiendas] Consultando tiendas${soloActivas ? ' activas' : ''}`);
@@ -60,9 +56,7 @@ async function obtenerTiendas(req, res) {
   }
 }
 
-/**
- * Obtener una tienda por ID
- */
+
 async function obtenerTiendaPorId(req, res) {
   try {
     const { id } = req.params;
@@ -93,9 +87,7 @@ async function obtenerTiendaPorId(req, res) {
   }
 }
 
-/**
- * Actualizar una tienda existente
- */
+
 async function actualizarTienda(req, res) {
   try {
     const { id } = req.params;
@@ -128,9 +120,7 @@ async function actualizarTienda(req, res) {
   }
 }
 
-/**
- * Eliminar (desactivar) una tienda
- */
+
 async function eliminarTienda(req, res) {
   try {
     const { id } = req.params;
@@ -162,9 +152,7 @@ async function eliminarTienda(req, res) {
   }
 }
 
-/**
- * Obtener tipos de búsqueda disponibles
- */
+
 async function obtenerTiposBusqueda(req, res) {
   try {
     console.log('📝 [obtenerTiposBusqueda] Consultando tipos disponibles');
@@ -185,9 +173,7 @@ async function obtenerTiposBusqueda(req, res) {
   }
 }
 
-/**
- * Obtener tiendas para administración (incluye inactivas)
- */
+
 async function obtenerTiendasAdmin(req, res) {
   try {
     console.log('👑 [obtenerTiendasAdmin] Consultando tiendas para administración');
@@ -209,14 +195,12 @@ async function obtenerTiendasAdmin(req, res) {
   }
 }
 
-/**
- * Validar datos de tienda sin crearla (para formularios)
- */
+
 async function validarTienda(req, res) {
   try {
     console.log('✅ [validarTienda] Validando datos:', req.body);
     
-    // Usar el método de validación del servicio
+    
     tiendaService.validarDatosTienda(req.body);
     
     res.json({

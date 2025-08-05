@@ -114,10 +114,59 @@ async function buscarCarta(input) {
     // PERO: Excluir nombres conocidos de cartas y cartas especiales
     else if (palabras.length === 2 && posiblesNumeros.length === 0) {
       const cartasConocidas = [
+        // === POKÉMON BALLS ===
         'poké ball', 'ultra ball', 'great ball', 'master ball', 'quick ball', 'timer ball',
         'dusk ball', 'nest ball', 'dive ball', 'repeat ball', 'luxury ball', 'premier ball',
         'heal ball', 'level ball', 'love ball', 'lure ball', 'moon ball', 'heavy ball',
-        'friend ball', 'fast ball', 'park ball', 'net ball', 'cherish ball'
+        'friend ball', 'fast ball', 'park ball', 'net ball', 'cherish ball',
+        
+        // === CARTAS TRAINER ===
+        'professor oak', 'bill', 'energy removal', 'super energy removal', 'energy retrieval',
+        'switch', 'gust of wind', 'computer search', 'item finder', 'pokédex', 'pluspower',
+        'defender', 'potion', 'super potion', 'full heal', 'revive', 'maintenance',
+        'pokemon trader', 'energy search', 'scoop up', 'recycle', 'gambler',
+        "professor's research", "professor's letter", "marnie", "hop", "sonia",
+        "leon", "raihan", "piers", "nessa", "bea", "allister", "gordie", "melony",
+        "ordinary rod", "quick ball", "evolution incense", "twin energy", "capture energy",
+        "professor elm", "professor birch", "cynthia", "lillie", "gladion", "guzma",
+        "team rocket handiwork", "team flare grunt", "team plasma grunt",
+        
+        // === ENERGIAS ===
+        'double colorless energy', 'rainbow energy', 'full heal energy', 'potion energy',
+        'recycle energy', 'miracle energy', 'metal energy', 'darkness energy',
+        'special metal energy', 'special darkness energy', 'double dragon energy',
+        'strong energy', 'herbal energy', 'mystery energy', 'shield energy',
+        'wonder energy', 'double turbo energy', 'twin energy', 'capture energy',
+        'aurora energy', 'rapid strike energy', 'single strike energy',
+        
+        // === CARTAS CON PREFIJOS (NOMBRES COMPUESTOS) ===
+        'dark charizard', 'dark blastoise', 'dark venomoth', 'dark gyarados', 'dark machamp',
+        'dark magneton', 'dark slowbro', 'dark hypno', 'dark golbat', 'dark arbok',
+        'dark weezing', 'dark rapidash', 'dark alakazam', 'dark dugtrio', 'dark crobat',
+        'dark ampharos', 'dark donphan', 'dark espeon', 'dark forretress', 'dark houndoom',
+        'dark octillery', 'dark scizor', 'dark skarmory', 'dark slowking', 'dark tyranitar',
+        'dark celebi', 'dark dragonite', 'dark electrode', 'dark gengar', 'dark houndour',
+        'dark magcargo', 'dark muk', 'dark omastar', 'dark porygon2', 'dark quilava',
+        'dark ursaring', 'dark vaporeon',
+        
+        'light azumarill', 'light dragonite', 'light togetic', 'light pichu', 'light arcanine',
+        'light flareon', 'light golduck', 'light jolteon', 'light lanturn', 'light machamp',
+        'light vaporeon', 'light venomoth',
+        
+        'rocket mewtwo', 'rocket zapdos', 'rocket moltres', 'rocket articuno', 'rocket scyther',
+        'rocket snorlax', 'rocket hitmonchan', 'rocket magikarp',
+        
+        'shining gyarados', 'shining magikarp', 'shining mewtwo',
+        
+        'ancient mew', 'ancient celebi', 'ancient kyogre', 'ancient groudon',
+        
+        'delta species', 'crystal kingdra', 'crystal lugia', 'crystal noctowl', 'crystal charizard',
+        
+        'shadow lugia', 'shadow storm', 'shadow force',
+        
+        // === CARTAS CON APÓSTROFES ===
+        "team rocket's handiwork", "team aqua's great ball",
+        "team magma's groudon", "team plasma grunt", "rocket's zapdos ex"
       ];
 
       // Cartas especiales que deben buscarse como nombre completo
@@ -265,41 +314,107 @@ async function buscarCarta(input) {
     } else if (posiblesNombre) {
       const nombreEscapado = posiblesNombre.replace(/"/g, '').trim();
       
-      // Detectar si es una búsqueda nombre + set
+      // Detectar si es una búsqueda nombre + set SOLO si NO es una carta conocida
       const palabrasNombre = posiblesNombre.split(/\s+/);
       if (palabrasNombre.length === 2) {
-        const setsConocidos = [
-          'base', 'jungle', 'fossil', 'rocket', 'gym', 'neo', 'genesis', 'discovery', 'destiny', 'revelation',
-          'expedition', 'aquapolis', 'skyridge', 'ruby', 'sapphire', 'sandstorm', 'dragon', 'team', 'magma', 'aqua',
-          'emerald', 'deoxys', 'crystal', 'guardians', 'holon', 'phantoms', 'delta', 'species', 'legend', 'maker',
-          'diamond', 'pearl', 'mysterious', 'treasures', 'secret', 'wonders', 'great', 'encounters', 'majestic', 'dawn',
-          'legends', 'awakened', 'stormfront', 'platinum', 'rising', 'rivals', 'supreme', 'victors', 'arceus',
-          'heartgold', 'soulsilver', 'unleashed', 'undaunted', 'triumphant', 'black', 'white', 'emerging', 'powers',
-          'noble', 'victories', 'next', 'destinies', 'dark', 'explorers', 'boundaries', 'crossed', 'plasma', 'storm',
-          'freeze', 'blast', 'legendary', 'flashfire', 'furious', 'fists', 'phantom', 'forces', 'primal', 'clash',
-          'roaring', 'skies', 'ancient', 'origins', 'breakthrough', 'breakpoint', 'fates', 'collide', 'steam', 'siege',
-          'generations', 'evolutions', 'sun', 'moon', 'guardians', 'burning', 'shadows', 'shining', 'crimson', 'invasion',
-          'ultra', 'prism', 'forbidden', 'light', 'celestial', 'lost', 'thunder', 'detective', 'pikachu', 'team',
-          'unbroken', 'bonds', 'unified', 'minds', 'cosmic', 'eclipse', 'hidden', 'sword', 'shield', 'rebel', 'darkness',
-          'astral', 'radiance', 'battle', 'styles', 'brilliant', 'stars', 'fusion', 'strike', 'go', 'origin', 'paldea',
-          'evolved', 'scarlet', 'violet', '151', 'obsidian', 'flames', 'crown', 'zenith', 'silver', 'tempest', 'paradox', 'rift'
+        // Lista de cartas conocidas (misma que arriba)
+        const cartasConocidas = [
+          // === POKÉMON BALLS ===
+          'poké ball', 'ultra ball', 'great ball', 'master ball', 'quick ball', 'timer ball',
+          'dusk ball', 'nest ball', 'dive ball', 'repeat ball', 'luxury ball', 'premier ball',
+          'heal ball', 'level ball', 'love ball', 'lure ball', 'moon ball', 'heavy ball',
+          'friend ball', 'fast ball', 'park ball', 'net ball', 'cherish ball',
+          
+          // === CARTAS TRAINER ===
+          'professor oak', 'bill', 'energy removal', 'super energy removal', 'energy retrieval',
+          'switch', 'gust of wind', 'computer search', 'item finder', 'pokédex', 'pluspower',
+          'defender', 'potion', 'super potion', 'full heal', 'revive', 'maintenance',
+          'pokemon trader', 'energy search', 'scoop up', 'recycle', 'gambler',
+          "professor's research", "professor's letter", "marnie", "hop", "sonia",
+          "leon", "raihan", "piers", "nessa", "bea", "allister", "gordie", "melony",
+          "ordinary rod", "quick ball", "evolution incense", "twin energy", "capture energy",
+          "professor elm", "professor birch", "cynthia", "lillie", "gladion", "guzma",
+          "team rocket handiwork", "team flare grunt", "team plasma grunt",
+          
+          // === ENERGIAS ===
+          'double colorless energy', 'rainbow energy', 'full heal energy', 'potion energy',
+          'recycle energy', 'miracle energy', 'metal energy', 'darkness energy',
+          'special metal energy', 'special darkness energy', 'double dragon energy',
+          'strong energy', 'herbal energy', 'mystery energy', 'shield energy',
+          'wonder energy', 'double turbo energy', 'twin energy', 'capture energy',
+          'aurora energy', 'rapid strike energy', 'single strike energy',
+          
+          // === CARTAS CON PREFIJOS (NOMBRES COMPUESTOS) ===
+          'dark charizard', 'dark blastoise', 'dark venomoth', 'dark gyarados', 'dark machamp',
+          'dark magneton', 'dark slowbro', 'dark hypno', 'dark golbat', 'dark arbok',
+          'dark weezing', 'dark rapidash', 'dark alakazam', 'dark dugtrio', 'dark crobat',
+          'dark ampharos', 'dark donphan', 'dark espeon', 'dark forretress', 'dark houndoom',
+          'dark octillery', 'dark scizor', 'dark skarmory', 'dark slowking', 'dark tyranitar',
+          'dark celebi', 'dark dragonite', 'dark electrode', 'dark gengar', 'dark houndour',
+          'dark magcargo', 'dark muk', 'dark omastar', 'dark porygon2', 'dark quilava',
+          'dark ursaring', 'dark vaporeon',
+          
+          'light azumarill', 'light dragonite', 'light togetic', 'light pichu', 'light arcanine',
+          'light flareon', 'light golduck', 'light jolteon', 'light lanturn', 'light machamp',
+          'light vaporeon', 'light venomoth',
+          
+          'rocket mewtwo', 'rocket zapdos', 'rocket moltres', 'rocket articuno', 'rocket scyther',
+          'rocket snorlax', 'rocket hitmonchan', 'rocket magikarp',
+          
+          'shining gyarados', 'shining magikarp', 'shining mewtwo',
+          
+          'ancient mew', 'ancient celebi', 'ancient kyogre', 'ancient groudon',
+          
+          'delta species', 'crystal kingdra', 'crystal lugia', 'crystal noctowl', 'crystal charizard',
+          
+          'shadow lugia', 'shadow storm', 'shadow force',
+          
+          // === CARTAS CON APÓSTROFES ===
+          "arven's vitality", "team rocket's handiwork", "team aqua's great ball",
+          "team magma's groudon", "team plasma grunt", "rocket's zapdos ex"
         ];
-
-        let nombrePokemon = '';
-        let setName = '';
         
-        if (setsConocidos.some(set => palabrasNombre[1].toLowerCase().includes(set) || set.includes(palabrasNombre[1].toLowerCase()))) {
-          nombrePokemon = palabrasNombre[0];
-          setName = palabrasNombre[1];
-        } else if (setsConocidos.some(set => palabrasNombre[0].toLowerCase().includes(set) || set.includes(palabrasNombre[0].toLowerCase()))) {
-          nombrePokemon = palabrasNombre[1];
-          setName = palabrasNombre[0];
-        }
-
-        if (nombrePokemon && setName) {
-          queryAPI = `name:"${nombrePokemon}" set.name:"*${setName}*"`;
-        } else {
+        // Si es una carta conocida, buscar como nombre completo
+        if (cartasConocidas.includes(posiblesNombre.toLowerCase())) {
+          console.log(`📝 [API] Es carta conocida! Buscando nombre completo: "${nombreEscapado}"`);
           queryAPI = `name:"${nombreEscapado}"`;
+        } else {
+          // Si NO es carta conocida, aplicar lógica nombre + set
+          const setsConocidos = [
+            'base', 'jungle', 'fossil', 'rocket', 'gym', 'neo', 'genesis', 'discovery', 'destiny', 'revelation',
+            'expedition', 'aquapolis', 'skyridge', 'ruby', 'sapphire', 'sandstorm', 'dragon', 'team', 'magma', 'aqua',
+            'emerald', 'deoxys', 'crystal', 'guardians', 'holon', 'phantoms', 'delta', 'species', 'legend', 'maker',
+            'diamond', 'pearl', 'mysterious', 'treasures', 'secret', 'wonders', 'great', 'encounters', 'majestic', 'dawn',
+            'legends', 'awakened', 'stormfront', 'platinum', 'rising', 'rivals', 'supreme', 'victors', 'arceus',
+            'heartgold', 'soulsilver', 'unleashed', 'undaunted', 'triumphant', 'black', 'white', 'emerging', 'powers',
+            'noble', 'victories', 'next', 'destinies', 'dark', 'explorers', 'boundaries', 'crossed', 'plasma', 'storm',
+            'freeze', 'blast', 'legendary', 'flashfire', 'furious', 'fists', 'phantom', 'forces', 'primal', 'clash',
+            'roaring', 'skies', 'ancient', 'origins', 'breakthrough', 'breakpoint', 'fates', 'collide', 'steam', 'siege',
+            'generations', 'evolutions', 'sun', 'moon', 'guardians', 'burning', 'shadows', 'shining', 'crimson', 'invasion',
+            'ultra', 'prism', 'forbidden', 'light', 'celestial', 'lost', 'thunder', 'detective', 'pikachu', 'team',
+            'unbroken', 'bonds', 'unified', 'minds', 'cosmic', 'eclipse', 'hidden', 'sword', 'shield', 'rebel', 'darkness',
+            'astral', 'radiance', 'battle', 'styles', 'brilliant', 'stars', 'fusion', 'strike', 'go', 'origin', 'paldea',
+            'evolved', 'scarlet', 'violet', '151', 'obsidian', 'flames', 'crown', 'zenith', 'silver', 'tempest', 'paradox', 'rift'
+          ];
+
+          let nombrePokemon = '';
+          let setName = '';
+          
+          if (setsConocidos.some(set => palabrasNombre[1].toLowerCase().includes(set) || set.includes(palabrasNombre[1].toLowerCase()))) {
+            nombrePokemon = palabrasNombre[0];
+            setName = palabrasNombre[1];
+          } else if (setsConocidos.some(set => palabrasNombre[0].toLowerCase().includes(set) || set.includes(palabrasNombre[0].toLowerCase()))) {
+            nombrePokemon = palabrasNombre[1];
+            setName = palabrasNombre[0];
+          }
+
+          if (nombrePokemon && setName) {
+            console.log(`📝 [API] Detectado nombre + set: "${nombrePokemon}" en "${setName}"`);
+            queryAPI = `name:"${nombrePokemon}" set.name:"*${setName}*"`;
+          } else {
+            console.log(`📝 [API] No es nombre + set, buscando nombre completo: "${nombreEscapado}"`);
+            queryAPI = `name:"${nombreEscapado}"`;
+          }
         }
       } else {
         queryAPI = `name:"${nombreEscapado}"`;

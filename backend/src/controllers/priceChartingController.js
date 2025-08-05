@@ -6,9 +6,8 @@ const enProcesoPriceCharting = new Set(); // Para evitar consultas simultáneas
 
 async function obtenerPreciosPriceCharting(req, res) {
   const { id } = req.params;
-  const { forzar } = req.query; // ?forzar=true para forzar actualización
+  const { forzar } = req.query; 
 
-  // Validar que el ID sea un número válido
   const cartaId = parseInt(id);
   if (isNaN(cartaId) || cartaId <= 0) {
     console.error(`❌ [obtenerPreciosPriceCharting] ID inválido recibido: "${id}"`);
@@ -33,7 +32,7 @@ async function obtenerPreciosPriceCharting(req, res) {
       return res.status(404).json({ error: "Carta no encontrada" });
     }
 
-    // Verificar si ya tenemos precios recientes (menos de 24 horas)
+    
     const ahora = new Date();
     const hace24Horas = new Date(ahora.getTime() - 24 * 60 * 60 * 1000);
     
@@ -41,7 +40,7 @@ async function obtenerPreciosPriceCharting(req, res) {
     const preciosRecientes = carta.fechaActualizacionPrecios && 
                            new Date(carta.fechaActualizacionPrecios) > hace24Horas;
 
-    // Si tenemos precios recientes y no se fuerza la actualización, devolver los existentes
+    
     if (tienePrecios && preciosRecientes && !forzar) {
       console.log(`✅ Devolviendo precios existentes para carta id=${id}`);
       return res.json({
@@ -49,16 +48,16 @@ async function obtenerPreciosPriceCharting(req, res) {
         desde_cache: true,
         precioPriceCharting: carta.precioPriceCharting,
         fechaActualizacion: carta.fechaActualizacionPrecios,
-        url: carta.urlPriceCharting, // Incluir la URL desde caché
+        url: carta.urlPriceCharting, 
         mensaje: "Precio obtenido desde caché (menos de 24 horas)"
       });
     }
 
-    // Consultar precios en PriceCharting
+    
     console.log(`🔍 Consultando precios en PriceCharting para: ${carta.nombre}`);
     const resultado = await priceChartingService.actualizarPreciosCarta(carta);
     
-    // Actualizar la carta en la base de datos si se encontraron precios
+   
     if (resultado && resultado.precio !== null) {
       carta.precioPriceCharting = resultado.precio;
       carta.urlPriceCharting = resultado.url;

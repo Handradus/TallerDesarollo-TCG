@@ -8,10 +8,10 @@ router.post('/cartas/:cartaId/acceso', HistorialController.registrarAccesoCarta)
 // Registrar visita a tienda
 router.post('/tiendas/:tiendaId/visita', HistorialController.registrarVisitaTienda);
 
-// Obtener últimas cartas accedidas (para carousel)
+// Obtener últimas cartas accedidas 
 router.get('/cartas/ultimas', HistorialController.obtenerUltimasCartas);
 
-// Obtener últimas tiendas visitadas (para carousel)
+// Obtener últimas tiendas visitadas
 router.get('/tiendas/ultimas', HistorialController.obtenerUltimasTiendas);
 
 // Limpiar historial antiguo (para mantenimiento)

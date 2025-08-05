@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', obtenerCartaDetalle);
 router.get('/:id/tiendas', obtenerTiendas);
-router.post('/:id/tiendas/refresh', refrescarTiendas); // Ruta para refrescar datos cuando sea necesario
+router.post('/:id/tiendas/refresh', refrescarTiendas); 
 router.get('/:id/precios-pricecharting', obtenerPreciosPriceCharting);
 
 

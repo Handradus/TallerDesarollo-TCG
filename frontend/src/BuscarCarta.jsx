@@ -105,57 +105,58 @@ export default function BuscarCartas() {
 
   const buscarCartas = async () => {
     const termino = nombre.trim();
+    return buscarCartasConTermino(termino);
+  };
+
+  const buscarCartasConTermino = async (termino) => {
     
-    // 🛡️ VALIDACIONES DE ENTRADA PARA EVITAR BÚSQUEDAS BASURA
-    
-    // 1. Verificar que haya texto
+    // Ocultar sugerencias al iniciar búsqueda
+    setMostrarSugerencias(false);
+        
     if (!termino) {
       setError('Por favor, ingresa el nombre de una carta para buscar');
       setTimeout(() => setError(''), 3000);
       return;
     }
 
-    // 2. Límite de 300 caracteres
     if (termino.length > 300) {
       setError('El nombre de búsqueda no puede exceder 300 caracteres');
       setTimeout(() => setError(''), 4000);
       return;
     }
-
-    // 3. Mínimo 2 caracteres para texto, pero permitir números de 1 dígito
+    
     if (termino.length < 2 && !/^\d+$/.test(termino)) {
       setError('Ingresa al menos 2 caracteres para buscar (excepto números)');
       setTimeout(() => setError(''), 3000);
       return;
     }
 
-    // 4. Validación inteligente de números
+    
     if (/^\d+$/.test(termino)) {
-      // Permitir números, pero con restricciones específicas para cartas TCG
+      
       if (termino.length > 5) {
         setError('Los números de serie de cartas no superan los 5 dígitos (ej: 025, 150)');
         setTimeout(() => setError(''), 4000);
         return;
       }
-      // Permitir números de 1-5 dígitos (números de cartas válidos)
+      
       console.log('🔢 Búsqueda por número de serie válida:', termino);
     }
 
-    // 5. Evitar solo caracteres especiales o espacios (pero permitir números puros)
+    
     if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9]/.test(termino)) {
       setError('Ingresa al menos una letra o número en el nombre de la carta');
       setTimeout(() => setError(''), 4000);
       return;
     }
 
-    // 6. Evitar repetición excesiva del mismo carácter (aaaaaaa, 1111111)
     if (/(.)\1{4,}/.test(termino)) {
       setError('Evita repetir el mismo carácter más de 4 veces seguidas');
       setTimeout(() => setError(''), 4000);
       return;
     }
 
-    // 7. Validación especial para números al inicio (máximo 5 dígitos seguidos)
+    
     const numeroAlInicio = termino.match(/^\d+/);
     if (numeroAlInicio && numeroAlInicio[0].length > 5) {
       setError('Máximo 5 números seguidos al inicio (ej: 025 Pikachu)');
@@ -163,14 +164,14 @@ export default function BuscarCartas() {
       return;
     }
 
-    // 8. Evitar demasiados caracteres especiales consecutivos
+    
     if (/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-'.]{3,}/.test(termino)) {
       setError('Demasiados caracteres especiales consecutivos');
       setTimeout(() => setError(''), 4000);
       return;
     }
 
-    // 9. Filtrar palabras inapropiadas básicas
+   
     const palabrasProhibidas = ['test', 'admin', 'null', 'undefined', 'script', 'alert', 'hack'];
     const terminoLower = termino.toLowerCase();
     if (palabrasProhibidas.some(palabra => terminoLower.includes(palabra))) {
@@ -179,10 +180,10 @@ export default function BuscarCartas() {
       return;
     }
 
-    // Usar el término normalizado para la búsqueda
-    const terminoParaBuscar = terminoNormalizado || termino;
+    
+    const terminoParaBuscar = normalizarTexto(termino);
 
-    // Solo buscar si el término es diferente al último buscado
+    
     if (terminoParaBuscar === lastSearchTerm && hasSearched) {
       return;
     }
@@ -198,11 +199,10 @@ export default function BuscarCartas() {
     try {
       const res = await fetch(`${apiUrl}/api/cartas?nombre=${encodeURIComponent(terminoParaBuscar)}`);
       const data = await res.json();
-
-      // 🔍 Verificar si es una sugerencia promocional
+      
       if (data.length === 1 && data[0].sugerenciaUrl) {
         console.log('🎯 Frontend: Detectada sugerencia promocional:', data[0]);
-        // Navegar a página de detalle con sugerencia
+        
         navigate(`/sugerencia-promocional`, {
           state: {
             sugerenciaUrl: data[0].sugerenciaUrl,
@@ -214,7 +214,7 @@ export default function BuscarCartas() {
       }
 
       if (data.length === 1) {
-        // Guardar el estado antes de navegar
+        
         setCartas(data);
         setHasSearched(true);
         setLastSearchTerm(terminoParaBuscar);
@@ -223,8 +223,61 @@ export default function BuscarCartas() {
         setCartas(data);
         setHasSearched(true);
         setLastSearchTerm(terminoParaBuscar);
+                
+        if (data.length === 0) {
+          console.log('⚠️ Frontend: Búsqueda sin resultados guardada:', terminoParaBuscar);
+        } else {
+          console.log('✅ Frontend: Búsqueda exitosa:', data.length, 'resultado(s) para:', terminoParaBuscar);
+        }
+      }
+    } catch (err) {
+      console.error('Error al buscar cartas:', err);
+      setError('Error al conectar con el servidor. Verifica tu conexión.');
+    } finally {
+      setLoading(false);
+    }
+
+    
+    if (terminoParaBuscar === lastSearchTerm && hasSearched) {
+      return;
+    }
+
+    console.log('🔍 Frontend: Buscando con término validado y normalizado:', terminoParaBuscar);
+    if (termino !== terminoParaBuscar) {
+      console.log('🔄 Frontend: Normalización aplicada:', termino, '→', terminoParaBuscar);
+    }
+
+    setLoading(true);
+    setCartas([]);
+    setError('');
+    try {
+      const res = await fetch(`${apiUrl}/api/cartas?nombre=${encodeURIComponent(terminoParaBuscar)}`);
+      const data = await res.json();
+      
+      if (data.length === 1 && data[0].sugerenciaUrl) {
+        console.log('🎯 Frontend: Detectada sugerencia promocional:', data[0]);
         
-        // Log específico para búsquedas sin resultados
+        navigate(`/sugerencia-promocional`, {
+          state: {
+            sugerenciaUrl: data[0].sugerenciaUrl,
+            mensaje: data[0].mensaje,
+            terminoBuscado: terminoParaBuscar
+          }
+        });
+        return;
+      }
+
+      if (data.length === 1) {
+        
+        setCartas(data);
+        setHasSearched(true);
+        setLastSearchTerm(terminoParaBuscar);
+        navigate(`/carta/${data[0].id}`);
+      } else {
+        setCartas(data);
+        setHasSearched(true);
+        setLastSearchTerm(terminoParaBuscar);
+                
         if (data.length === 0) {
           console.log('⚠️ Frontend: Búsqueda sin resultados guardada:', terminoParaBuscar);
         } else {
@@ -251,8 +304,8 @@ export default function BuscarCartas() {
   const seleccionarSugerencia = (sugerencia) => {
     setNombre(sugerencia);
     setMostrarSugerencias(false);
-    // Opcional: buscar automáticamente
-    // buscarCartas();
+    // Buscar inmediatamente usando la sugerencia directamente
+    buscarCartasConTermino(sugerencia);
   };
 
   const scrollToTop = () => {

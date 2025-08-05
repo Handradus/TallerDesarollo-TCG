@@ -4,7 +4,7 @@ const CartaLink = require('../entities/CartaLink');
 const Tienda = require('../entities/Tienda');
 const { verificarYBuscarLink } = require('../helpers/verificarYBuscarLink');
 
-const enProceso = new Set(); // <- Asegúrate de tener esto arriba
+const enProceso = new Set(); 
 
 async function obtenerTiendas(req, res) {
   const { id } = req.params;
@@ -31,25 +31,25 @@ async function obtenerTiendas(req, res) {
 
     const tiendas = await tiendaRepo.findBy({ activo: true });
 
-    // Para PRECIOS: Verificar si los links son recientes (vencen en 2 horas)
-    const CACHE_PRECIOS_DURACION = 2 * 60 * 60 * 1000; // 2 horas en milisegundos
+    
+    const CACHE_PRECIOS_DURACION = 2 * 60 * 60 * 1000; 
     const ahora = new Date();
     const linksRecientes = links.filter(link => {
       const tiempoTranscurrido = ahora - new Date(link.fechaGuardado);
       return tiempoTranscurrido < CACHE_PRECIOS_DURACION;
     });
 
-    // Si no hay links recientes (precios caducados), hacer scraping
+    
     if (linksRecientes.length === 0) {
       console.log(`🔍 Scraping de precios para carta "${carta.nombre}" (cache: ${links.length} links, recientes: ${linksRecientes.length})`);
 
-      // Limpiar links antiguos de precios
+      
       if (links.length > 0) {
         await linkRepo.remove(links);
         console.log(`🧹 Limpiados ${links.length} links de precios antiguos`);
       }
 
-      // Ejecutar verificaciones en paralelo
+      
       const promesasVerificacion = tiendas.map(async (tienda) => {
         console.log(`📦 Procesando tienda: ${tienda.nombre} (${tienda.tipoBusqueda})`);
         try {
@@ -60,10 +60,10 @@ async function obtenerTiendas(req, res) {
         }
       });
 
-      // Ejecutar todas las verificaciones en paralelo
+      
       await Promise.allSettled(promesasVerificacion);
 
-      // Volver a consultar los links luego del scraping
+     
       links = await linkRepo.find({
         where: { carta: { id: carta.id } },
         relations: ['tienda']
@@ -75,20 +75,20 @@ async function obtenerTiendas(req, res) {
       links = linksRecientes;
     }
 
-    // Armar respuesta por tienda
+    
     const resultado = {};
     for (const tienda of tiendas) {
       const link = links.find(l => l.tienda.id === tienda.id);
       resultado[tienda.nombre] = link
         ? {
-            id: tienda.id, // ← Añadir ID de la tienda
+            id: tienda.id, 
             url: link.url,
             verificada: link.verificada,
             precio: link.precio || null,
             tipo: link.tipoProducto || null
           }
         : {
-            id: tienda.id, // ← Añadir ID de la tienda
+            id: tienda.id, 
             url: null,
             verificada: false
           };
@@ -105,7 +105,7 @@ async function obtenerTiendas(req, res) {
   }
 }
 
-// Función opcional para refrescar datos de una carta específica
+
 async function refrescarTiendas(req, res) {
   const { id } = req.params;
 
@@ -124,7 +124,7 @@ async function refrescarTiendas(req, res) {
     const carta = await cartaRepo.findOneBy({ id: parseInt(id) });
     if (!carta) return res.status(404).json({ error: "Carta no encontrada" });
 
-    // Eliminar todos los links existentes para forzar nuevo scraping
+    
     const linksExistentes = await linkRepo.find({
       where: { carta: { id: carta.id } }
     });
@@ -136,7 +136,7 @@ async function refrescarTiendas(req, res) {
 
     const tiendas = await tiendaRepo.findBy({ activo: true });
 
-    // Ejecutar nuevo scraping
+    
     console.log(`🔍 Ejecutando nuevo scraping para carta "${carta.nombre}"`);
     
     const promesasVerificacion = tiendas.map(async (tienda) => {
@@ -151,13 +151,13 @@ async function refrescarTiendas(req, res) {
 
     await Promise.allSettled(promesasVerificacion);
 
-    // Obtener los nuevos links
+    
     const nuevosLinks = await linkRepo.find({
       where: { carta: { id: carta.id } },
       relations: ['tienda']
     });
 
-    // Armar respuesta
+    
     const resultado = {};
     for (const tienda of tiendas) {
       const link = nuevosLinks.find(l => l.tienda.id === tienda.id);

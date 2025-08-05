@@ -85,18 +85,17 @@ export default function EditarTiendas() {
     }));
   };
 
-  // Función para detectar si hay cambios en el formulario
+ 
   const hayCambios = () => {
     if (!datosOriginales || Object.keys(datosOriginales).length === 0) {
       return false;
     }
 
-    // Comparar cada campo
+    
     for (const campo in datosOriginales) {
       const valorOriginal = datosOriginales[campo];
       const valorActual = formData[campo];
-      
-      // Normalizar valores para comparación (null, undefined, '' se consideran iguales)
+            
       const normalizar = (valor) => {
         if (valor === null || valor === undefined || valor === '') {
           return '';
@@ -112,8 +111,7 @@ export default function EditarTiendas() {
 
     return false;
   };
-
-  // Función para obtener solo los campos que han cambiado
+  
   const obtenerCambios = () => {
     const cambios = {};
     
@@ -121,10 +119,10 @@ export default function EditarTiendas() {
       const valorOriginal = datosOriginales[campo];
       const valorActual = formData[campo];
       
-      // Normalizar valores para comparación
+      
       const normalizar = (valor) => {
         if (valor === null || valor === undefined || valor === '') {
-          return null; // Usar null como valor estándar para campos vacíos
+          return null; 
         }
         return valor;
       };
@@ -140,26 +138,23 @@ export default function EditarTiendas() {
     return cambios;
   };
 
-  // Función para validar URLs (más flexible)
+  
   const esUrlValida = (url) => {
-    try {
-      // Si no tiene protocolo, agregar https://
+    try {      
       let urlCompleta = url;
       if (!/^https?:\/\//i.test(url)) {
         urlCompleta = 'https://' + url;
       }
-      
-      // Validar que sea una URL válida
+            
       const urlObj = new URL(urlCompleta);
-      
-      // Verificar que tenga un dominio válido (al menos un punto)
+            
       return urlObj.hostname.includes('.');
     } catch {
       return false;
     }
   };
 
-  // Función para obtener clase de contador de caracteres
+  
   const getCharacterCountClass = (current, max) => {
     const percentage = (current / max) * 100;
     if (percentage >= 90) return 'character-danger';
@@ -170,7 +165,7 @@ export default function EditarTiendas() {
   const validarFormulario = (datos) => {
     const errores = [];
 
-    // Validar nombre
+    
     if (!datos.nombre || !datos.nombre.trim()) {
       errores.push('El nombre de la tienda es requerido');
     } else if (datos.nombre.length > 100) {
@@ -178,18 +173,15 @@ export default function EditarTiendas() {
     } else if (!/^[a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ\-_.&()]+$/.test(datos.nombre)) {
       errores.push('El nombre solo puede contener letras, números, espacios y los caracteres: - _ . & ( )');
     }
-
-    // Validar descripción
+    
     if (datos.descripcion && datos.descripcion.length > 500) {
       errores.push('La descripción no puede exceder 500 caracteres');
     }
-
-    // Validar dirección
+    
     if (datos.direccion && datos.direccion.length > 200) {
       errores.push('La dirección no puede exceder 200 caracteres');
     }
-
-    // Validar teléfono
+   
     if (datos.telefono) {
       const telefonoLimpio = datos.telefono.replace(/[\s\-+()]/g, '');
       if (!/^\d{8,15}$/.test(telefonoLimpio)) {
@@ -206,8 +198,7 @@ export default function EditarTiendas() {
     if (!datos.urlBase || !datos.urlBase.trim()) {
       errores.push('La URL base es requerida');
     }
-
-    // Validar URLs si están presentes
+    
     const urlFields = [
       { field: 'urlBusqueda', name: 'URL de búsqueda' },
       { field: 'urlBase', name: 'URL base' },
@@ -239,19 +230,17 @@ export default function EditarTiendas() {
     try {
       setGuardando(true);
       
-      // Verificar si hay cambios antes de proceder
+      
       if (!hayCambios()) {
         console.log('❌ [guardarCambios] No se detectaron cambios');
         mostrarMensaje('error', 'No se detectaron cambios para guardar');
         setGuardando(false);
         return;
       }
-
-      // Obtener solo los campos que han cambiado
+      
       const cambios = obtenerCambios();
       console.log('🔄 [guardarCambios] Cambios detectados:', cambios);
-      
-      // Validar datos antes de enviar (validar formData completo)
+            
       console.log('🔄 [guardarCambios] Validando formulario...');
       const erroresValidacion = validarFormulario(formData);
       if (erroresValidacion.length > 0) {
@@ -260,11 +249,9 @@ export default function EditarTiendas() {
         return;
       }
       console.log('✅ [guardarCambios] Validación exitosa');
-      
-      // Preparar datos para enviar (solo los cambios)
+            
       const dataToSend = { ...cambios };
-      
-      // Convertir valoración a número si está presente en los cambios
+            
       if (dataToSend.valoracion !== undefined) {
         if (dataToSend.valoracion) {
           dataToSend.valoracion = parseFloat(dataToSend.valoracion);
@@ -272,8 +259,7 @@ export default function EditarTiendas() {
           dataToSend.valoracion = null;
         }
       }
-
-      // Limpiar campos vacíos (convertir strings vacíos a null)
+      
       Object.keys(dataToSend).forEach(key => {
         if (dataToSend[key] === '') {
           dataToSend[key] = null;
@@ -572,7 +558,7 @@ export default function EditarTiendas() {
                 </div>
               </div>
             ) : (
-              // Modo vista
+              
               <div className="tienda-info">
                 {/* 1. Nombre */}
                 <div className="tienda-nombre">

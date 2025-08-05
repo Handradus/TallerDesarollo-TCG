@@ -95,7 +95,7 @@ async function buscarEnTiendaShopify(tienda, carta) {
       const href = link.attr('href');
       const urlCompleta = `${tienda.urlBase}${href}`;
 
-      // Usar la función auxiliar para análisis mejorado
+      
       const analisis = analizarCoincidenciasCarta(carta, href, texto, tienda);
 
       console.log(`🔍 Comparando [${tienda.nombre}]:\n   ↪ texto = "${texto}"\n   ↪ href = "${href}"\n   ↪ coincideTexto = ${analisis.coincideTexto}\n   ↪ coincideUrl = ${analisis.coincideUrl}`);
@@ -104,7 +104,7 @@ async function buscarEnTiendaShopify(tienda, carta) {
         const existe = await urlExiste(urlCompleta);
         console.log(`🔗 Verificando existencia: ${urlCompleta} → ${existe}`);
         if (href && existe) {
-          // Scrapear el precio de la página del producto
+          
           const precio = await scrapearPrecioShopify(urlCompleta, tienda.nombre);
           return { 
             url: urlCompleta, 
@@ -146,7 +146,7 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
       const textoElemento = link.text().toLowerCase();
       const urlCompleta = href.startsWith("http") ? href : `${tienda.urlBase}${href}`;
 
-      // Usar la función auxiliar para análisis mejorado
+      
       const analisis = analizarCoincidenciasCarta(carta, href, textoElemento, tienda);
 
       console.log(`🔍 Comparando [${tienda.nombre}]:\n   ↪ texto = "${textoElemento}"\n   ↪ href = "${href}"\n   ↪ coincideTexto = ${analisis.coincideTexto}\n   ↪ coincideUrl = ${analisis.coincideUrl}`);
@@ -155,7 +155,7 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
         const existe = await urlExiste(urlCompleta);
         console.log(`🔗 Verificando existencia: ${urlCompleta} → ${existe}`);
         if (existe) {
-          // Verificamos si el producto está agotado (solo log informativo)
+          
           try {
             const detalle = await axios.get(urlCompleta, {
               headers: {
@@ -174,7 +174,7 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
 
           console.log(`✅ Coincidencia encontrada: ${urlCompleta}`);
           
-          // Scrapear el precio de la página del producto
+          
           const precio = await scrapearPrecioLevelUp(urlCompleta);
           return { 
             url: urlCompleta, 
@@ -193,7 +193,7 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
   return null;
 }
 
-// Función para scrapear precios en tiendas Shopify (optimizada)
+
 async function scrapearPrecioShopify(url, nombreTienda) {
   try {
     console.log(`💰 Scrapeando precio Shopify en: ${url}`);
@@ -203,12 +203,12 @@ async function scrapearPrecioShopify(url, nombreTienda) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'Accept': 'text/html',
       },
-      timeout: 4000 // Timeout agresivo para velocidad
+      timeout: 4000 
     });
 
     const $ = cheerio.load(res.data);
     
-    // Selectores más específicos y ordenados por probabilidad
+    
     const selectoresPrecio = [
       '.price .money',
       '.product-price .money', 
@@ -241,7 +241,7 @@ async function scrapearPrecioShopify(url, nombreTienda) {
   }
 }
 
-// Función para scrapear precios en LevelUp (optimizada)
+
 async function scrapearPrecioLevelUp(url) {
   try {
     console.log(`💰 Scrapeando precio LevelUp en: ${url}`);
@@ -251,16 +251,16 @@ async function scrapearPrecioLevelUp(url) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'Accept': 'text/html',
       },
-      timeout: 4000 // Timeout agresivo para velocidad
+      timeout: 4000 
     });
 
     const $ = cheerio.load(res.data);
     
-    // Selectores más específicos para LevelUp
+    
     const selectoresPrecio = [
       '.woocommerce-Price-amount',
       '.price .woocommerce-Price-amount',
-      'ins .woocommerce-Price-amount', // precio con descuento
+      'ins .woocommerce-Price-amount', 
       '.price',
       '.amount'
     ];
@@ -287,11 +287,11 @@ async function scrapearPrecioLevelUp(url) {
   }
 }
 
-// Función auxiliar para limpiar precios (optimizada)
+
 function limpiarPrecio(textoPrecio) {
   if (!textoPrecio) return null;
   
-  // Buscar patrones de precio más específicos
+ 
   const patronesPrecio = [
     /\$\s*(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/,  // $1,234.56
     /(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)\s*\$/,  // 1,234.56$

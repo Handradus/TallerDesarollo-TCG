@@ -1,7 +1,7 @@
 const tiendaPublicaService = require('../services/tiendaPublicaService');
 
 class TiendaPublicaController {
-  // GET /api/tiendas - Obtener todas las tiendas activas
+  
   async obtenerTiendasPublicas(req, res) {
     try {
       const resultado = await tiendaPublicaService.obtenerTiendasPublicas();
@@ -20,7 +20,7 @@ class TiendaPublicaController {
     }
   }
 
-  // GET /api/tiendas/:nombreTienda - Obtener una tienda específica
+  
   async obtenerTiendaPorNombre(req, res) {
     try {
       const { nombreTienda } = req.params;
@@ -48,7 +48,7 @@ class TiendaPublicaController {
     }
   }
 
-  // GET /api/tiendas/buscar/:termino - Buscar tiendas
+
   async buscarTiendas(req, res) {
     try {
       const { termino } = req.params;
@@ -76,7 +76,7 @@ class TiendaPublicaController {
     }
   }
 
-  // GET /api/tiendas/url/:nombre - Generar URL amigable para una tienda
+ 
   async generarUrlAmigable(req, res) {
     try {
       const { nombre } = req.params;

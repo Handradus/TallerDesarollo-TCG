@@ -21,10 +21,10 @@ const HOST = process.env.HOST || '0.0.0.0';
 const PORT = process.env.PORT || 3000;
 
 AppDataSource.initialize()
-  .then(async () => { // <- esta línea se corrige
+  .then(async () => { 
     console.log('📦 Conectado a PostgreSQL correctamente');
 
-    await seedTiendas(); // ahora puedes usar await sin error
+    await seedTiendas(); 
 
     // Rutas
     app.use('/api/cartas', cartaRoutes);

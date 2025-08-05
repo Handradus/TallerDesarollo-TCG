@@ -1,10 +1,10 @@
 const { DataSource } = require('typeorm');
 require('dotenv').config();
 
-const Carta = require('./entities/Carta'); // ← sin destructuración
+const Carta = require('./entities/Carta'); 
 const ConsultaAPI = require('./entities/ConsultaAPI');
 const Tienda = require('./entities/Tienda');
-const CartaLink = require('./entities/CartaLink'); // Asegúrate de importar CartaLink si lo necesitas
+const CartaLink = require('./entities/CartaLink'); 
 const HistorialCarta = require('./entities/HistorialCarta');
 const HistorialTienda = require('./entities/HistorialTienda');
 
@@ -17,7 +17,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: true,
   logging: true,
-  entities: [Carta,ConsultaAPI,Tienda,CartaLink,HistorialCarta,HistorialTienda], // ← arreglo de entidades reales, no strings
+  entities: [Carta,ConsultaAPI,Tienda,CartaLink,HistorialCarta,HistorialTienda], 
 });
 
 module.exports = { AppDataSource };
