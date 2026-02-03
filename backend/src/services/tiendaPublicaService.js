@@ -4,12 +4,26 @@ const Tienda = require('../entities/Tienda');
 class TiendaPublicaService {
 
   // Obtener todas las tiendas activas para mostrar públicamente
-  async obtenerTiendasPublicas() {
+  async obtenerTiendasPublicas(filtros = {}) {
     try {
       const tiendaRepository = AppDataSource.getRepository(Tienda);
+
+      const whereClause = { activo: true };
+
+      if (filtros.region) {
+        whereClause.region = filtros.region;
+      }
+
+      if (filtros.tipo && filtros.tipo !== 'todos') {
+        const { In } = require('typeorm');
+        if (filtros.tipo === 'online') whereClause.tipo = In(['online', 'ambos']);
+        else if (filtros.tipo === 'fisica') whereClause.tipo = In(['fisica', 'ambos']);
+        else whereClause.tipo = filtros.tipo;
+      }
+
       const tiendas = await tiendaRepository.find({
-        where: { activo: true },
-        select: ['id', 'nombre', 'logo', 'valoracion', 'tipoBusqueda'],
+        where: whereClause,
+        select: ['id', 'nombre', 'logo', 'valoracion', 'tipoBusqueda', 'region', 'tipo'],
         order: { nombre: 'ASC' }
       });
 
@@ -30,7 +44,7 @@ class TiendaPublicaService {
   async obtenerTiendaPorNombre(nombreTienda) {
     try {
       const tiendaRepository = AppDataSource.getRepository(Tienda);
-      
+
       // Convertir el nombre de URL de vuelta a nombre normal
       const nombreDecodificado = nombreTienda
         .replace(/-/g, ' ')
@@ -77,7 +91,7 @@ class TiendaPublicaService {
   async buscarTiendas(termino) {
     try {
       const tiendaRepository = AppDataSource.getRepository(Tienda);
-      
+
       const tiendas = await tiendaRepository
         .createQueryBuilder('tienda')
         .where('tienda.activo = :activo', { activo: true })

@@ -34,3 +34,6 @@ dist-ssr
 /frontend/.env
 /frontend/dist/
 /frontend/.vite/
+
+# AI Service
+ai_service/

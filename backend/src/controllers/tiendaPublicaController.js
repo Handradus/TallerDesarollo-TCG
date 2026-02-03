@@ -1,11 +1,12 @@
 const tiendaPublicaService = require('../services/tiendaPublicaService');
 
 class TiendaPublicaController {
-  
+
   async obtenerTiendasPublicas(req, res) {
     try {
-      const resultado = await tiendaPublicaService.obtenerTiendasPublicas();
-      
+      const { region, tipo } = req.query;
+      const resultado = await tiendaPublicaService.obtenerTiendasPublicas({ region, tipo });
+
       if (resultado.success) {
         res.status(200).json(resultado);
       } else {
@@ -20,11 +21,11 @@ class TiendaPublicaController {
     }
   }
 
-  
+
   async obtenerTiendaPorNombre(req, res) {
     try {
       const { nombreTienda } = req.params;
-      
+
       if (!nombreTienda) {
         return res.status(400).json({
           success: false,
@@ -33,7 +34,7 @@ class TiendaPublicaController {
       }
 
       const resultado = await tiendaPublicaService.obtenerTiendaPorNombre(nombreTienda);
-      
+
       if (resultado.success) {
         res.status(200).json(resultado);
       } else {
@@ -52,7 +53,7 @@ class TiendaPublicaController {
   async buscarTiendas(req, res) {
     try {
       const { termino } = req.params;
-      
+
       if (!termino || termino.trim().length < 2) {
         return res.status(400).json({
           success: false,
@@ -61,7 +62,7 @@ class TiendaPublicaController {
       }
 
       const resultado = await tiendaPublicaService.buscarTiendas(termino.trim());
-      
+
       if (resultado.success) {
         res.status(200).json(resultado);
       } else {
@@ -76,11 +77,11 @@ class TiendaPublicaController {
     }
   }
 
- 
+
   async generarUrlAmigable(req, res) {
     try {
       const { nombre } = req.params;
-      
+
       if (!nombre) {
         return res.status(400).json({
           success: false,
@@ -89,7 +90,7 @@ class TiendaPublicaController {
       }
 
       const urlAmigable = tiendaPublicaService.generarUrlAmigable(nombre);
-      
+
       res.status(200).json({
         success: true,
         urlAmigable: urlAmigable

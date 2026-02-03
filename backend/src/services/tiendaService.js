@@ -1,8 +1,9 @@
 const { AppDataSource } = require('../data-source');
 const Tienda = require('../entities/Tienda');
+const SuggestedStore = require('../entities/SuggestedStore');
 
 class TiendaService {
-  
+
   /**
    * Crear una nueva tienda
    * @param {Object} datostienda - Datos de la tienda a crear
@@ -11,16 +12,16 @@ class TiendaService {
   async crearTienda(datosTienda) {
     try {
       const tiendaRepo = AppDataSource.getRepository(Tienda);
-      
+
       // Validar datos requeridos
       this.validarDatosTienda(datosTienda);
-      
+
       // Verificar que no existe una tienda con el mismo nombre
       const tiendaExistente = await tiendaRepo.findOneBy({ nombre: datosTienda.nombre });
       if (tiendaExistente) {
         throw new Error(`Ya existe una tienda con el nombre "${datosTienda.nombre}"`);
       }
-      
+
       // Crear nueva instancia de tienda
       const nuevaTienda = tiendaRepo.create({
         nombre: datosTienda.nombre,
@@ -35,44 +36,59 @@ class TiendaService {
         ultimaActualizacion: new Date(),
         activo: datosTienda.activo !== undefined ? datosTienda.activo : true
       });
-      
+
       // Guardar en la base de datos
       const tiendaGuardada = await tiendaRepo.save(nuevaTienda);
-      
+
       console.log(`✅ Nueva tienda creada: ${tiendaGuardada.nombre} (ID: ${tiendaGuardada.id})`);
       return tiendaGuardada;
-      
+
     } catch (error) {
       console.error('❌ Error al crear tienda:', error.message);
       throw error;
     }
   }
-  
+
   /**
    * Obtener todas las tiendas
-   * @param {Boolean} soloActivas - Si solo se deben obtener tiendas activas
+   * @param {Object} filtros - Filtros disponibles (activas, region, tipo)
    * @returns {Array} - Lista de tiendas
    */
-  async obtenerTiendas(soloActivas = false) {
+  async obtenerTiendas(filtros = {}) {
     try {
       const tiendaRepo = AppDataSource.getRepository(Tienda);
-      
-      const opciones = {};
-      if (soloActivas) {
-        opciones.where = { activo: true };
+
+      const whereClause = {};
+
+      if (filtros.activas) {
+        whereClause.activo = true;
       }
-      
-      const tiendas = await tiendaRepo.find(opciones);
-      
-      console.log(`📋 Obtenidas ${tiendas.length} tienda(s)${soloActivas ? ' activas' : ''}`);
+
+      if (filtros.region) {
+        whereClause.region = filtros.region;
+      }
+
+      if (filtros.tipo && filtros.tipo !== 'todos') {
+        // Si es online, buscamos 'online' o 'ambos'. Si es fisica, 'fisica' o 'ambos'
+        // O mejor hacemos match exacto o usamos IN.
+        // Simplifiquemos: Si el usuario pide 'online', traemos 'online' y 'ambos'
+        const { In } = require('typeorm');
+        if (filtros.tipo === 'online') whereClause.tipo = In(['online', 'ambos']);
+        else if (filtros.tipo === 'fisica') whereClause.tipo = In(['fisica', 'ambos']);
+        else whereClause.tipo = filtros.tipo;
+      }
+
+      const tiendas = await tiendaRepo.find({ where: whereClause });
+
+      console.log(`📋 Obtenidas ${tiendas.length} tienda(s) con filtros:`, filtros);
       return tiendas;
-      
+
     } catch (error) {
       console.error('❌ Error al obtener tiendas:', error.message);
       throw error;
     }
   }
-  
+
   /**
    * Obtener una tienda por ID
    * @param {Number} id - ID de la tienda
@@ -81,22 +97,22 @@ class TiendaService {
   async obtenerTiendaPorId(id) {
     try {
       const tiendaRepo = AppDataSource.getRepository(Tienda);
-      
+
       const tienda = await tiendaRepo.findOneBy({ id: parseInt(id) });
-      
+
       if (!tienda) {
         throw new Error(`No se encontró tienda con ID ${id}`);
       }
-      
+
       console.log(`🔍 Tienda encontrada: ${tienda.nombre} (ID: ${tienda.id})`);
       return tienda;
-      
+
     } catch (error) {
       console.error('❌ Error al obtener tienda por ID:', error.message);
       throw error;
     }
   }
-  
+
   /**
    * Actualizar una tienda existente
    * @param {Number} id - ID de la tienda a actualizar
@@ -106,38 +122,38 @@ class TiendaService {
   async actualizarTienda(id, datosActualizacion) {
     try {
       const tiendaRepo = AppDataSource.getRepository(Tienda);
-      
+
       const tienda = await tiendaRepo.findOneBy({ id: parseInt(id) });
       if (!tienda) {
         throw new Error(`No se encontró tienda con ID ${id}`);
       }
-      
+
       // Actualizar campos permitidos
       const camposPermitidos = [
-        'nombre', 'descripcion', 'valoracion', 'urlBusqueda', 
-        'tipoBusqueda', 'urlBase', 'direccion', 'telefono', 
+        'nombre', 'descripcion', 'valoracion', 'urlBusqueda',
+        'tipoBusqueda', 'urlBase', 'direccion', 'telefono',
         'logo', 'activo'
       ];
-      
+
       camposPermitidos.forEach(campo => {
         if (datosActualizacion[campo] !== undefined) {
           tienda[campo] = datosActualizacion[campo];
         }
       });
-      
+
       tienda.ultimaActualizacion = new Date();
-      
+
       const tiendaActualizada = await tiendaRepo.save(tienda);
-      
+
       console.log(`✅ Tienda actualizada: ${tiendaActualizada.nombre} (ID: ${tiendaActualizada.id})`);
       return tiendaActualizada;
-      
+
     } catch (error) {
       console.error('❌ Error al actualizar tienda:', error.message);
       throw error;
     }
   }
-  
+
   /**
    * Eliminar una tienda (desactivar)
    * @param {Number} id - ID de la tienda a eliminar
@@ -146,34 +162,34 @@ class TiendaService {
   async eliminarTienda(id) {
     try {
       const tiendaRepo = AppDataSource.getRepository(Tienda);
-      
+
       const tienda = await tiendaRepo.findOneBy({ id: parseInt(id) });
       if (!tienda) {
         throw new Error(`No se encontró tienda con ID ${id}`);
       }
-      
+
       // En lugar de eliminar físicamente, desactivamos la tienda
       tienda.activo = false;
       tienda.ultimaActualizacion = new Date();
-      
+
       await tiendaRepo.save(tienda);
-      
+
       console.log(`🗑️ Tienda desactivada: ${tienda.nombre} (ID: ${tienda.id})`);
       return { message: 'Tienda desactivada exitosamente', tienda };
-      
+
     } catch (error) {
       console.error('❌ Error al eliminar tienda:', error.message);
       throw error;
     }
   }
-  
+
   /**
    * Validar datos de tienda
    * @param {Object} datos - Datos a validar
    */
   validarDatosTienda(datos) {
     const errores = [];
-    
+
     // Campos requeridos
     if (!datos.nombre || datos.nombre.trim() === '') {
       errores.push('El nombre de la tienda es requerido');
@@ -187,17 +203,17 @@ class TiendaService {
         errores.push('El nombre solo puede contener letras, números, espacios y los caracteres: - _ . & ( )');
       }
     }
-    
+
     // Validar descripción
     if (datos.descripcion && datos.descripcion.length > 500) {
       errores.push('La descripción no puede exceder 500 caracteres');
     }
-    
+
     // Validar dirección
     if (datos.direccion && datos.direccion.length > 200) {
       errores.push('La dirección no puede exceder 200 caracteres');
     }
-    
+
     // Validar teléfono
     if (datos.telefono) {
       const telefonoLimpio = datos.telefono.replace(/[\s\-+()]/g, '');
@@ -205,19 +221,19 @@ class TiendaService {
         errores.push('El teléfono debe contener solo números y tener entre 8 y 15 dígitos');
       }
     }
-    
+
     if (!datos.urlBusqueda || datos.urlBusqueda.trim() === '') {
       errores.push('La URL de búsqueda es requerida');
     }
-    
+
     if (!datos.tipoBusqueda || datos.tipoBusqueda.trim() === '') {
       errores.push('El tipo de búsqueda es requerido');
     }
-    
+
     if (!datos.urlBase || datos.urlBase.trim() === '') {
       errores.push('La URL base es requerida');
     }
-    
+
     // Validaciones de formato
     if (datos.valoracion !== null && datos.valoracion !== undefined) {
       const valoracion = parseFloat(datos.valoracion);
@@ -225,14 +241,14 @@ class TiendaService {
         errores.push('La valoración debe ser un número entre 0 y 5');
       }
     }
-    
+
     // Validar URLs si están presentes
     const urlFields = [
       { field: 'urlBusqueda', name: 'URL de búsqueda' },
       { field: 'urlBase', name: 'URL base' },
       { field: 'logo', name: 'URL del logo' }
     ];
-    
+
     urlFields.forEach(({ field, name }) => {
       if (datos[field]) {
         // Validar longitud de URL
@@ -243,12 +259,12 @@ class TiendaService {
         }
       }
     });
-    
+
     if (errores.length > 0) {
       throw new Error(`Errores de validación: ${errores.join(', ')}`);
     }
   }
-  
+
   /**
    * Validar si una URL es válida
    * @param {String} url - URL a validar
@@ -275,17 +291,17 @@ class TiendaService {
       if (!/^https?:\/\//i.test(url)) {
         urlCompleta = 'https://' + url;
       }
-      
+
       // Validar que sea una URL válida
       const urlObj = new URL(urlCompleta);
-      
+
       // Verificar que contenga www.
       return urlObj.hostname.includes('www.');
     } catch {
       return false;
     }
   }
-  
+
   /**
    * Obtener tiendas para administración (incluye inactivas)
    * @returns {Array} - Lista de todas las tiendas
@@ -293,14 +309,14 @@ class TiendaService {
   async obtenerTiendasParaAdmin() {
     try {
       const tiendaRepo = AppDataSource.getRepository(Tienda);
-      
+
       const tiendas = await tiendaRepo.find({
         order: { ultimaActualizacion: 'DESC' }
       });
-      
+
       console.log(`📋 Obtenidas ${tiendas.length} tienda(s) para administración`);
       return tiendas;
-      
+
     } catch (error) {
       console.error('❌ Error al obtener tiendas para admin:', error.message);
       throw error;
@@ -321,6 +337,61 @@ class TiendaService {
       'custom',
       'api'
     ];
+  }
+
+  // SUGERENCIAS
+  async sugerirTienda(datos, userId) {
+    const repo = AppDataSource.getRepository(SuggestedStore);
+    // Validar datos básicos (reusando validación existente o una más laxa)
+    // this.validarDatosTienda(datos); // Podríamos validar, pero quizás ser flexibles.
+
+    const suggestion = repo.create({
+      ...datos,
+      userId,
+      status: 'pending',
+      tipo: datos.tipo || 'ambos',
+      region: datos.region || null
+    });
+    return await repo.save(suggestion);
+  }
+
+  async obtenerSugerencias(status = 'pending') {
+    const repo = AppDataSource.getRepository(SuggestedStore);
+    return await repo.find({
+      where: { status },
+      relations: ['user'],
+      order: { createdAt: 'DESC' }
+    });
+  }
+
+  async moderarSugerencia(id, accion) {
+    const repo = AppDataSource.getRepository(SuggestedStore);
+    const suggestion = await repo.findOneBy({ id });
+    if (!suggestion) throw new Error('Sugerencia no encontrada');
+
+    if (accion === 'reject') {
+      suggestion.status = 'rejected';
+      return await repo.save(suggestion);
+    } else if (accion === 'approve') {
+      suggestion.status = 'approved';
+      await repo.save(suggestion);
+
+      // Crear la tienda real
+      return await this.crearTienda({
+        nombre: suggestion.nombre,
+        urlBusqueda: suggestion.urlBusqueda,
+        tipoBusqueda: suggestion.tipoBusqueda,
+        urlBase: suggestion.urlBase,
+        region: suggestion.region,
+        tipo: suggestion.tipo,
+        descripcion: suggestion.descripcion,
+        direccion: suggestion.direccion || null,
+        telefono: suggestion.telefono || null,
+        logo: suggestion.logo,
+        activo: true
+      });
+    }
+    throw new Error('Acción inválida');
   }
 }
 

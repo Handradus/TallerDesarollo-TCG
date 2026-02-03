@@ -1,5 +1,6 @@
 const express = require('express');
 const { buscarCartaAdmin } = require('../services/pokemonTCGService');
+const { obtenerTiendasAdmin } = require('../controllers/verificarTiendas');
 const router = express.Router();
 
 
@@ -34,5 +35,8 @@ router.post('/actualizarbd', async (req, res) => {
     });
   }
 });
+
+// Forzar actualización completa de precios de tiendas (sin cache)
+router.post('/carta/:id/forzar-precios', obtenerTiendasAdmin);
 
 module.exports = router;

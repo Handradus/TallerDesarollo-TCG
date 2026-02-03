@@ -4,11 +4,29 @@ import './css/tiendas.css';
 
 export default function Tiendas() {
   const navigate = useNavigate();
-  const [tiendas, setTiendas] = useState([]);
+  const [tiendas, setTiendasFiltradas] = useState([]); // reused names slightly confusing, let's clean up
+  // Actually, let's keep it simple.
+  const [tiendasList, setTiendasList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Filters
   const [busqueda, setBusqueda] = useState('');
-  const [tiendasFiltradas, setTiendasFiltradas] = useState([]);
+  const [regionFilter, setRegionFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('todos'); // todos, online, fisica
+
+  // Suggestion Modal
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [suggestionData, setSuggestionData] = useState({
+    nombre: '', urlBase: '', urlBusqueda: '', tipoBusqueda: 'shopify',
+    tipo: 'ambos', region: '', descripcion: ''
+  });
+
+  const regionesChile = [
+    "Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", "Coquimbo",
+    "Valparaíso", "Metropolitana", "O'Higgins", "Maule", "Ñuble",
+    "Biobío", "La Araucanía", "Los Ríos", "Los Lagos", "Aysén", "Magallanes"
+  ];
 
   const apiUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -17,18 +35,36 @@ export default function Tiendas() {
   }, []);
 
   useEffect(() => {
-    filtrarTiendas();
-  }, [busqueda, tiendas]);
+    cargarTiendas();
+  }, [busqueda, regionFilter, typeFilter]); // Reload when filters change (server side filtering)
+
+  // Old client side filtering removed in favor of server side + search
+  // But search is client side in original code?
+  // User asked for region/online filtering.
+  // Let's make search client-side still if backend search endpoint isn't being used for text?
+  // Backend `buscarTiendas` endpoint exists but `tiendas-publicas` returns all.
+  // We updated `tiendas-publicas` to accept Filters!
+  // So we should use server side filtering for Region/Type.
+  // For Search (text), we can keep client side or move to server.
+  // Original code loaded ALL then filtered client side.
+  // Let's load with Region/Type from server, then filter name client side.
 
   const cargarTiendas = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${apiUrl}/api/tiendas-publicas`);
+      let url = `${apiUrl}/api/tiendas-publicas?`;
+      if (regionFilter) url += `&region=${encodeURIComponent(regionFilter)}`;
+      if (typeFilter && typeFilter !== 'todos') url += `&tipo=${typeFilter}`;
+
+      const response = await fetch(url);
       const data = await response.json();
-      
+
       if (data.success) {
-        setTiendas(data.tiendas);
-        setTiendasFiltradas(data.tiendas);
+        let filtered = data.tiendas;
+        if (busqueda) {
+          filtered = filtered.filter(t => t.nombre.toLowerCase().includes(busqueda.toLowerCase()));
+        }
+        setTiendasList(filtered);
       } else {
         setError('Error al cargar las tiendas');
       }
@@ -40,16 +76,30 @@ export default function Tiendas() {
     }
   };
 
-  const filtrarTiendas = () => {
-    if (!busqueda.trim()) {
-      setTiendasFiltradas(tiendas);
-    } else {
-      const filtradas = tiendas.filter(tienda =>
-        tienda.nombre.toLowerCase().includes(busqueda.toLowerCase())
-      );
-      setTiendasFiltradas(filtradas);
+  const handleSuggest = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return alert('Debes iniciar sesión para sugerir');
+
+      await fetch(`${apiUrl}/api/tiendas/sugerir`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(suggestionData)
+      });
+      alert('Sugerencia enviada a revisión!');
+      setShowSuggestModal(false);
+      setSuggestionData({
+        nombre: '', urlBase: '', urlBusqueda: '', tipoBusqueda: 'shopify',
+        tipo: 'ambos', region: '', descripcion: ''
+      });
+    } catch (e) {
+      console.error(e);
+      alert('Error enviando sugerencia');
     }
-  };
+  }
 
   const generarUrlTienda = (nombreTienda) => {
     return nombreTienda
@@ -93,7 +143,7 @@ export default function Tiendas() {
   return (
     <div className="tiendas-container">
       <div className="tiendas-header">
-        <button 
+        <button
           className="btn-volver"
           onClick={() => navigate('/')}
         >
@@ -113,7 +163,7 @@ export default function Tiendas() {
             onChange={(e) => setBusqueda(e.target.value)}
           />
           {busqueda && (
-            <button 
+            <button
               className="clear-search"
               onClick={() => setBusqueda('')}
               title="Limpiar búsqueda"
@@ -122,26 +172,58 @@ export default function Tiendas() {
             </button>
           )}
         </div>
-        
+
+        {/* Filters Row */}
+        <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+          <select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            className="filter-select"
+          >
+            <option value="todos">Todos los Tipos</option>
+            <option value="online">Online</option>
+            <option value="fisica">Física</option>
+          </select>
+
+          {(typeFilter !== 'online') && (
+            <select
+              value={regionFilter}
+              onChange={e => setRegionFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="">Todas las Regiones</option>
+              {regionesChile.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          )}
+
+          <button
+            className="btn-primary"
+            style={{ marginLeft: 'auto' }}
+            onClick={() => setShowSuggestModal(true)}
+          >
+            💡 Sugerir Tienda
+          </button>
+        </div>
+
         {busqueda && (
           <p className="search-results">
-            Mostrando {tiendasFiltradas.length} de {tiendas.length} tiendas
+            Mostrando {tiendasList.length} tiendas
           </p>
         )}
       </div>
 
       <div className="tiendas-grid">
-        {tiendasFiltradas.length > 0 ? (
-          tiendasFiltradas.map((tienda) => (
-            <div 
-              key={tienda.id} 
+        {tiendasList.length > 0 ? (
+          tiendasList.map((tienda) => (
+            <div
+              key={tienda.id}
               className="tienda-item"
               onClick={() => irATienda(tienda)}
             >
               <div className="tienda-logo-container">
                 {tienda.logo ? (
-                  <img 
-                    src={tienda.logo} 
+                  <img
+                    src={tienda.logo}
                     alt={`Logo ${tienda.nombre}`}
                     className="tienda-logo-img"
                     onError={(e) => {
@@ -150,28 +232,28 @@ export default function Tiendas() {
                     }}
                   />
                 ) : null}
-                <div 
+                <div
                   className="tienda-logo-placeholder"
                   style={{ display: tienda.logo ? 'none' : 'flex' }}
                 >
                   🏪
                 </div>
               </div>
-              
+
               <div className="tienda-info">
                 <h3 className="tienda-nombre">{tienda.nombre}</h3>
-                
+
                 {tienda.valoracion && (
                   <div className="tienda-valoracion">
                     <span className="estrellas">⭐</span>
                     <span className="valoracion-numero">{tienda.valoracion}/5</span>
                   </div>
                 )}
-                
+
                 <div className="tienda-tipo">
                   <span className="tipo-badge">{tienda.tipoBusqueda}</span>
                 </div>
-                
+
                 <div className="ver-mas">
                   Ver detalles →
                 </div>
@@ -183,13 +265,13 @@ export default function Tiendas() {
             <div className="no-results-icon">🔍</div>
             <h3>No se encontraron tiendas</h3>
             <p>
-              {busqueda 
+              {busqueda
                 ? `No hay tiendas que coincidan con "${busqueda}"`
                 : 'No hay tiendas disponibles en este momento'
               }
             </p>
             {busqueda && (
-              <button 
+              <button
                 onClick={() => setBusqueda('')}
                 className="btn-clear-search"
               >
@@ -205,6 +287,51 @@ export default function Tiendas() {
           <p>Total de tiendas disponibles: <strong>{tiendas.length}</strong></p>
         </div>
       )}
-    </div>
+
+
+      {
+        showSuggestModal && (
+          <div className="modal-overlay" onClick={() => setShowSuggestModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+              <button className="modal-close" onClick={() => setShowSuggestModal(false)}>&times;</button>
+              <h2>💡 Sugerir Nueva Tienda</h2>
+              <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>
+                Ayúdanos a crecer. Tu sugerencia será revisada por un administrador.
+              </p>
+
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <input type="text" placeholder="Nombre de la Tienda" className="text-input"
+                  value={suggestionData.nombre} onChange={e => setSuggestionData({ ...suggestionData, nombre: e.target.value })} />
+              </div>
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <input type="text" placeholder="URL Base (ej: https://mitienda.cl)" className="text-input"
+                  value={suggestionData.urlBase} onChange={e => setSuggestionData({ ...suggestionData, urlBase: e.target.value })} />
+              </div>
+              <div className="form-group" style={{ marginBottom: '10px' }}>
+                <select className="filter-select" style={{ width: '100%' }}
+                  value={suggestionData.tipo} onChange={e => setSuggestionData({ ...suggestionData, tipo: e.target.value })}>
+                  <option value="ambos">Ambos (Online y Física)</option>
+                  <option value="online">Solo Online</option>
+                  <option value="fisica">Solo Física</option>
+                </select>
+              </div>
+              {suggestionData.tipo !== 'online' && (
+                <div className="form-group" style={{ marginBottom: '10px' }}>
+                  <select className="filter-select" style={{ width: '100%' }}
+                    value={suggestionData.region} onChange={e => setSuggestionData({ ...suggestionData, region: e.target.value })}>
+                    <option value="">-- Región --</option>
+                    {regionesChile.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              )}
+
+              <div style={{ textAlign: 'right', marginTop: '20px' }}>
+                <button className="btn-primary" onClick={handleSuggest}>Enviar Sugerencia</button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 }

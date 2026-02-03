@@ -196,7 +196,7 @@
   color: #495057;
   font-size: 1.1rem;
   font-weight: 500;
-  margin: 1.5rem 0;
+  margin: 1.5rem 0 0 0;
   padding: 1rem;
   background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
   border-radius: 12px;
@@ -204,6 +204,59 @@
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Selector de tipo de búsqueda */
+.search-type-selector {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 8px 16px;
+  border: 1px solid rgba(100, 108, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.search-type-selector label {
+  transition: all 0.2s ease;
+}
+
+.search-type-selector label:hover {
+  color: #646cff;
+}
+
+/* Controles de ordenamiento */
+.sort-controls {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.sort-controls:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.sort-controls select {
+  background-color: white;
+  transition: all 0.2s ease;
+}
+
+.sort-controls select:hover {
+  border-color: #646cff;
+}
+
+.sort-controls select:focus {
+  outline: none;
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.1);
+}
+
+.sort-controls button {
+  transition: all 0.2s ease;
+}
+
+.sort-controls button:hover {
+  background: #e9ecef !important;
+  border-color: #adb5bd !important;
 }
 
 /* Grilla de cartas - FORZAR GRID LAYOUT COMPLETAMENTE */

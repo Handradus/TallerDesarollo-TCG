@@ -1,6 +1,8 @@
 import './css/detalleCarta.css';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
+import axios from 'axios';
+import { useAuth } from './context/AuthContext';
 
 export default function CartaDetalle() {
   const { id } = useParams();
@@ -13,6 +15,26 @@ export default function CartaDetalle() {
   const [preciosPriceCharting, setPreciosPriceCharting] = useState(null);
   const [cargandoPreciosPriceCharting, setCargandoPreciosPriceCharting] = useState(false);
   const apiUrl = import.meta.env.VITE_API_BASE_URL;
+  const { user } = useAuth();
+
+  const agregarAColeccion = async () => {
+    if (!user) return alert('Debes iniciar sesión');
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${apiUrl}/api/collection/add`, { cartaId: carta.id }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Carta agregada a tu colección!');
+    } catch (error) {
+      console.error(error);
+      alert('Error al agregar carta');
+    }
+  };
+
+  const venderCarta = () => {
+    if (!user) return alert('Debes iniciar sesión');
+    navigate('/mi-tienda', { state: { sellCard: carta } });
+  };
 
   // 🟡 Si se recibió una sugerencia en lugar de una carta válida
   const sugerenciaUrl = location.state?.sugerenciaUrl;
@@ -30,24 +52,24 @@ export default function CartaDetalle() {
           <p style={{ fontSize: '1rem', marginBottom: '2rem' }}>
             {sugerenciaMensaje || "Parece que esta carta es una promoción exclusiva o muy rara. Te recomendamos buscar en Pokumon.com:"}
           </p>
-          <a 
-            href={sugerenciaUrl} 
-            target="_blank" 
+          <a
+            href={sugerenciaUrl}
+            target="_blank"
             rel="noopener noreferrer"
             className="btn-sugerencia"
           >
             🌐 Buscar en Pokumon.com
           </a>
           <div style={{ marginTop: '2rem' }}>
-            <button 
-              className="btn-volver" 
+            <button
+              className="btn-volver"
               onClick={() => navigate(-1)}
               style={{ marginRight: '1rem' }}
             >
               ← Volver atrás
             </button>
-            <button 
-              className="btn-volver" 
+            <button
+              className="btn-volver"
               onClick={() => navigate('/')}
             >
               🏠 Ir al inicio
@@ -89,7 +111,7 @@ export default function CartaDetalle() {
     if (sugerenciaUrl || !id || id === 'undefined') {
       return;
     }
-    
+
     fetch(`${apiUrl}/api/cartas/${id}`)
       .then(res => res.json())
       .then(data => {
@@ -106,7 +128,7 @@ export default function CartaDetalle() {
     if (carta.nombre) {
       document.title = `${carta.nombre} | Pokémon TCG`;
     }
-    
+
     // Limpiar título al desmontar el componente
     return () => {
       document.title = "Pokémon TCG";
@@ -118,7 +140,7 @@ export default function CartaDetalle() {
     const handleScroll = () => {
       const navbar = document.querySelector('.carta-navbar');
       const scrolled = window.scrollY > 200; // Mostrar título después de 200px de scroll
-      
+
       if (navbar) {
         if (scrolled) {
           navbar.classList.add('navbar-scrolled');
@@ -143,7 +165,7 @@ export default function CartaDetalle() {
     } catch (err) {
       console.error('Error al registrar visita a tienda:', err);
     }
-    
+
     // Abrir tienda en nueva pestaña
     window.open(tienda.url, '_blank');
   };
@@ -153,13 +175,13 @@ export default function CartaDetalle() {
     if (sugerenciaUrl || !id || id === 'undefined') {
       return;
     }
-    
+
     setCargandoPreciosPriceCharting(true);
     try {
       const url = `${apiUrl}/api/cartas/${id}/precios-pricecharting${forzar ? '?forzar=true' : ''}`;
       const response = await fetch(url);
       const data = await response.json();
-      
+
       if (response.ok) {
         setPreciosPriceCharting(data);
         console.log('✅ Precios de PriceCharting obtenidos:', data);
@@ -182,7 +204,7 @@ export default function CartaDetalle() {
     if (sugerenciaUrl || !id || id === 'undefined') {
       return;
     }
-    
+
     if (!hasFetchedTiendas && carta && carta.id) {
       setCargandoTiendas(true);
       fetch(`${apiUrl}/api/cartas/${id}/tiendas`)
@@ -198,7 +220,7 @@ export default function CartaDetalle() {
               verificada: datos.verificada,
               precio: datos.precio
             }));
-          
+
           setCarta(prev => ({
             ...prev,
             tiendasDisponibles: tiendasArray
@@ -217,7 +239,7 @@ export default function CartaDetalle() {
         setMostrarModal(false);
       }
     };
-    
+
     if (mostrarModal) {
       document.addEventListener('keydown', handleEsc);
       // Prevenir scroll del body cuando el modal está abierto
@@ -225,7 +247,7 @@ export default function CartaDetalle() {
     } else {
       document.body.style.overflow = 'auto';
     }
-    
+
     return () => {
       document.removeEventListener('keydown', handleEsc);
       document.body.style.overflow = 'auto';
@@ -249,15 +271,15 @@ export default function CartaDetalle() {
       <nav className="carta-navbar">
         <div className="navbar-content">
           <div className="nav-buttons">
-            <button 
-              className="btn-nav btn-volver" 
+            <button
+              className="btn-nav btn-volver"
               onClick={() => navigate(-1)}
               title="Volver a la página anterior"
             >
               ← Volver
             </button>
-            <button 
-              className="btn-nav btn-home" 
+            <button
+              className="btn-nav btn-home"
               onClick={() => navigate('/')}
               title="Ir al inicio"
             >
@@ -280,13 +302,33 @@ export default function CartaDetalle() {
           </h1>
         </div>
 
+        {/* Action Buttons for User */}
+        {user && (
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '2rem' }}>
+            <button
+              onClick={agregarAColeccion}
+              className="btn-primary"
+              style={{ padding: '10px 20px', fontSize: '1.2rem', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+            >
+              + Agregar a Colección
+            </button>
+            <button
+              onClick={venderCarta}
+              className="btn-secondary"
+              style={{ padding: '10px 20px', fontSize: '1.2rem', backgroundColor: '#FF9800', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+            >
+              $ Vender Carta
+            </button>
+          </div>
+        )}
+
         {/* Contenido principal - grid de 2 columnas: Imagen y Precios */}
         <div className="carta-contenido">
           {/* Columna izquierda: Imagen */}
           <div className="carta-imagen-seccion">
             <div className="carta-imagen">
-              <img 
-                src={carta.imagenGrande || carta.imagenPequena || '/placeholder-card.png'} 
+              <img
+                src={carta.imagenGrande || carta.imagenPequena || '/placeholder-card.png'}
                 alt={carta.nombre}
                 onClick={() => setMostrarModal(true)}
                 style={{ cursor: 'pointer' }}
@@ -303,7 +345,7 @@ export default function CartaDetalle() {
             {(carta.precioNormal || carta.precioHolofoil || preciosPriceCharting?.precioPriceCharting) && (
               <div className="precios">
                 <h3>💰 Precios estimados</h3>
-                
+
                 {/* Precios TCGPlayer */}
                 {(carta.precioNormal || carta.precioHolofoil) && (
                   <div className="precio-section">
@@ -337,9 +379,9 @@ export default function CartaDetalle() {
                       return null;
                     })()}
                     {preciosPriceCharting?.url ? (
-                      <a 
-                        href={preciosPriceCharting.url} 
-                        target="_blank" 
+                      <a
+                        href={preciosPriceCharting.url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="pricecharting-badge pricecharting-link"
                         title="Ver en PriceCharting (abre en nueva pestaña)"
@@ -350,7 +392,7 @@ export default function CartaDetalle() {
                       <span className="pricecharting-badge">📈 PriceCharting</span>
                     )}
                     {!cargandoPreciosPriceCharting && preciosPriceCharting && !preciosPriceCharting.error && (
-                      <button 
+                      <button
                         className="btn-actualizar-precios"
                         onClick={() => obtenerPreciosPriceCharting(true)}
                         title="Actualizar precio de PriceCharting"
@@ -359,20 +401,20 @@ export default function CartaDetalle() {
                       </button>
                     )}
                   </div>
-                  
+
                   {cargandoPreciosPriceCharting && (
                     <div className="loading-precios">
                       <div className="spinner"></div>
                       <span>Consultando PriceCharting...</span>
                     </div>
                   )}
-                  
+
                   {!cargandoPreciosPriceCharting && preciosPriceCharting && (
                     <>
                       {preciosPriceCharting.error ? (
                         <div className="precio-error">
                           ⚠️ {preciosPriceCharting.error}
-                          <button 
+                          <button
                             className="btn-reintentar"
                             onClick={() => obtenerPreciosPriceCharting(true)}
                           >
@@ -391,9 +433,9 @@ export default function CartaDetalle() {
                             <div className="precio-no-disponible">
                               📭 No se encontró precio en PriceCharting
                               {preciosPriceCharting.url && (
-                                <a 
-                                  href={preciosPriceCharting.url} 
-                                  target="_blank" 
+                                <a
+                                  href={preciosPriceCharting.url}
+                                  target="_blank"
                                   rel="noopener noreferrer"
                                   className="btn-ver-en-sitio"
                                 >
@@ -402,7 +444,7 @@ export default function CartaDetalle() {
                               )}
                             </div>
                           )}
-                          
+
                           {preciosPriceCharting.fechaActualizacion && (
                             <div className="precio-timestamp">
                               🕒 Actualizado: {new Date(preciosPriceCharting.fechaActualizacion).toLocaleString()}
@@ -413,10 +455,10 @@ export default function CartaDetalle() {
                       )}
                     </>
                   )}
-                  
+
                   {!cargandoPreciosPriceCharting && !preciosPriceCharting && (
                     <div className="precio-no-consultado">
-                      <button 
+                      <button
                         className="btn-consultar-precios"
                         onClick={() => obtenerPreciosPriceCharting(false)}
                       >
@@ -447,8 +489,8 @@ export default function CartaDetalle() {
                     <div className="tienda-info">
                       {tienda.logo ? (
                         <div className="tienda-logo-section">
-                          <img 
-                            src={tienda.logo} 
+                          <img
+                            src={tienda.logo}
                             alt={`Logo ${tienda.nombre}`}
                             className="tienda-logo-small"
                             onError={(e) => {
@@ -463,7 +505,7 @@ export default function CartaDetalle() {
                       ) : (
                         <span className="tienda-icon">🏪</span>
                       )}
-                      <button 
+                      <button
                         onClick={() => handleTiendaClick(tienda)}
                         className="tienda-link"
                       >
@@ -553,19 +595,19 @@ export default function CartaDetalle() {
 
       {/* Modal de imagen en pantalla completa */}
       {mostrarModal && (
-        <div 
+        <div
           className="modal-overlay"
           onClick={() => setMostrarModal(false)}
         >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button 
+            <button
               className="modal-close"
               onClick={() => setMostrarModal(false)}
               title="Cerrar (ESC)"
             >
               ✕
             </button>
-            <img 
+            <img
               src={carta.imagenGrande || carta.imagenPequena || '/placeholder-card.png'}
               alt={carta.nombre}
               className="modal-image"

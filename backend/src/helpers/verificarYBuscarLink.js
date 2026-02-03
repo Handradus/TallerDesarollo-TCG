@@ -3,45 +3,57 @@ const CartaLink = require('../entities/CartaLink');
 const { buscarEnTiendaShopify, buscarEnTiendaLevelUp } = require('./buscadores');
 
 async function verificarYBuscarLink(carta, tienda) {
-  console.log(`✅ Ejecutando verificación con cheerio para carta "${carta.nombre}" en tienda "${tienda.nombre}"`);
-
   const linkRepo = AppDataSource.getRepository(CartaLink);
+  
+  console.log(`🔍 [ADMIN DEBUG] Iniciando búsqueda: "${carta.nombre}" en ${tienda.nombre}`);
+  console.log(`🔍 [ADMIN DEBUG] Configuración tienda:`, {
+    id: tienda.id,
+    nombre: tienda.nombre,
+    tipoBusqueda: tienda.tipoBusqueda,
+    urlBase: tienda.urlBase,
+    urlBusqueda: tienda.urlBusqueda
+  });
 
   let resultado = null;
-
-  console.log(`🔍 Tipo de búsqueda: ${tienda.tipoBusqueda}`);
+  const tiempoInicio = Date.now();
 
   if (tienda.tipoBusqueda === 'shopify') {
-    console.log(`🛒 Ejecutando buscarEnTiendaShopify...`);
+    console.log(`🛒 [ADMIN DEBUG] Llamando buscarEnTiendaShopify...`);
     resultado = await buscarEnTiendaShopify(tienda, carta);
-    console.log(`🛒 Resultado de Shopify:`, resultado);
   } else if (tienda.tipoBusqueda === 'levelup') {
-    console.log(`🎮 Ejecutando buscarEnTiendaLevelUp...`);
+    console.log(`🎮 [ADMIN DEBUG] Llamando buscarEnTiendaLevelUp...`);
     resultado = await buscarEnTiendaLevelUp(tienda, carta);
-    console.log(`🎮 Resultado de LevelUp:`, resultado);
   } else {
-    console.warn(`⚠️ Tipo de tienda desconocido: ${tienda.tipoBusqueda}`);
+    console.log(`❌ [${tienda.nombre}] Tipo de búsqueda desconocido: ${tienda.tipoBusqueda}`);
     return null;
   }
 
+  const tiempoTotal = Date.now() - tiempoInicio;
+  console.log(`⏱️ [ADMIN DEBUG] Búsqueda en ${tienda.nombre} tardó ${tiempoTotal}ms`);
+
+  console.log(`📊 [ADMIN DEBUG] Resultado de búsqueda:`, resultado);
+
+  // Log de resultado final con más detalle
   if (resultado && resultado.url) {
-    console.log(`✅ URL encontrada, guardando en BD...`);
+    console.log(`✅ [${tienda.nombre}] ENCONTRADO: "${carta.nombre}" → ${resultado.url}`);
+    console.log(`💰 [${tienda.nombre}] Precio encontrado: ${resultado.precio}`);
+    
     const nuevoLink = linkRepo.create({
       url: resultado.url,
       verificada: resultado.verificada,
-      precio: resultado.precio || null, // ← Agregar el precio aquí
+      precio: resultado.precio || null,
       carta: { id: carta.id },
       tienda: { id: tienda.id }
     });
 
+    console.log(`💾 [ADMIN DEBUG] Guardando link en base de datos...`);
     await linkRepo.save(nuevoLink);
-    console.log(`💾 Link guardado con precio: ${resultado.precio || 'sin precio'} para "${carta.nombre}" en "${tienda.nombre}"`);
+    console.log(`💾 [ADMIN DEBUG] Link guardado exitosamente`);
   } else {
-    console.warn(`⚠️ Falló verificación en ${tienda.nombre}: no se encontró URL o resultado es null`);
-    console.log(`🐛 Detalle del resultado:`, resultado);
+    console.log(`❌ [${tienda.nombre}] NO ENCONTRADO: "${carta.nombre}"`);
   }
-}
 
-module.exports = { verificarYBuscarLink };
+  return resultado;
+}
 
 module.exports = { verificarYBuscarLink };

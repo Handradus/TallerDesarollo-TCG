@@ -20,5 +20,7 @@ module.exports = new EntitySchema({
     logo: { type: 'varchar', nullable: true },
     ultimaActualizacion: { type: 'timestamp', nullable: true },
     activo: { type: 'boolean', default: true },
+    region: { type: 'varchar', nullable: true },
+    tipo: { type: 'varchar', default: 'ambos' }, // online, fisica, ambos
   },
 });
