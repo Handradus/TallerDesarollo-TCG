@@ -8,7 +8,7 @@ const cartaRepository = AppDataSource.getRepository(Carta);
 const { IsNull } = require('typeorm');
 
 const addToCollection = async (req, res) => {
-    const { cartaId, binderId } = req.body;
+    const { cartaId, binderId, isOwned = true } = req.body;
     const userId = req.user.userId;
 
     if (!cartaId) {
@@ -33,18 +33,36 @@ const addToCollection = async (req, res) => {
         });
 
         if (item) {
-            item.quantity += 1;
+            if (isOwned) {
+                // Changing from Wanted (false) to Owned (true)
+                if (!item.isOwned) {
+                    item.isOwned = true;
+                    item.quantity = 1; // Start with 1 when converting
+                } else {
+                    // Already owned, increment
+                    item.quantity += 1;
+                }
+            } else {
+                // Trying to add as Wanted
+                if (item.isOwned) {
+                    // Already owned, ignore request to mark as wanted
+                    return res.status(200).json({ message: 'Item already owned', item });
+                }
+                // Already wanted, do nothing (or could verify quantity 0)
+            }
         } else {
+            // New item
             item = collectionRepository.create({
                 userId,
                 cartaId,
-                quantity: 1,
+                quantity: isOwned ? 1 : 0,
+                isOwned: isOwned,
                 customCollection: binderId ? { id: binderId } : null
             });
         }
 
         await collectionRepository.save(item);
-        res.json({ message: 'Added to collection', item });
+        res.json({ message: 'Collection updated', item });
     } catch (error) {
         console.error('Error adding to collection:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -110,6 +128,7 @@ const getCollection = async (req, res) => {
         const formatted = collection.map(item => ({
             ...item.carta,
             quantity: item.quantity,
+            isOwned: item.isOwned,
             collectionId: item.id,
             addedAt: item.addedAt
         }));

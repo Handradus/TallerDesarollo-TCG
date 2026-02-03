@@ -111,8 +111,9 @@ export default function Coleccion() {
         return acc;
     }, {});
 
-    // Calculate Total Value
+    // Calculate Total Value (only for owned cards)
     const totalValue = filteredCards.reduce((sum, card) => {
+        if (!card.isOwned && card.quantity === 0) return sum;
         const price = parseFloat(card.precioPriceCharting || card.precioNormal || 0);
         return sum + (price * (card.quantity || 1));
     }, 0);
@@ -208,33 +209,73 @@ export default function Coleccion() {
                                     <h2 className="set-title">{setName}</h2>
                                     <div className="results-grid">
                                         {cardsBySet[setName].map(card => (
-                                            <div key={card.collectionId} className="card-item collection-card">
+                                            <div key={card.collectionId} className={`card-item collection-card ${(!card.isOwned || card.quantity === 0) ? 'is-wanted' : ''}`}>
                                                 <div
-                                                    style={{ cursor: 'pointer' }}
+                                                    style={{ cursor: 'pointer', position: 'relative' }}
                                                     onClick={() => window.open(`/carta/${card.id}`, '_blank')}
                                                     title="Ver detalles de la carta"
                                                 >
-                                                    <img src={card.imagenPequena} alt={card.nombre} loading="lazy" />
+                                                    <img
+                                                        src={card.imagenPequena}
+                                                        alt={card.nombre}
+                                                        loading="lazy"
+                                                        style={(!card.isOwned || card.quantity === 0) ? { filter: 'grayscale(100%) opacity(0.7)' } : {}}
+                                                    />
+                                                    {(!card.isOwned || card.quantity === 0) && (
+                                                        <div style={{
+                                                            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                                                            background: 'rgba(0,0,0,0.7)', color: 'white', padding: '5px 10px', borderRadius: '5px',
+                                                            fontWeight: 'bold', pointerEvents: 'none', fontSize: '0.8rem'
+                                                        }}>
+                                                            LO QUIERO
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="card-info">
                                                     <h4>{card.nombre}</h4>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <span className="card-qty">x{card.quantity}</span>
-                                                        {showPrices && (
+                                                        <span className="card-qty">
+                                                            {(!card.isOwned || card.quantity === 0) ? 'Deseada' : `x${card.quantity}`}
+                                                        </span>
+                                                        {showPrices && (card.isOwned || card.quantity > 0) && (
                                                             <span style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '0.9rem' }}>
                                                                 ${(parseFloat(card.precioPriceCharting || card.precioNormal || 0)).toFixed(2)}
                                                             </span>
                                                         )}
                                                     </div>
                                                     <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); navigate('/mi-tienda', { state: { sellCard: card } }); }}
-                                                            className="btn-secondary btn-sm"
-                                                            style={{ fontSize: '0.8rem', padding: '2px 8px' }}
-                                                            title="Vender en Mercado"
-                                                        >
-                                                            💰
-                                                        </button>
+                                                        {(!card.isOwned || card.quantity === 0) ? (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const addToCollection = async () => {
+                                                                        try {
+                                                                            const token = localStorage.getItem('token');
+                                                                            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/collection/add`,
+                                                                                { cartaId: card.id, isOwned: true, binderId: selectedBinderId },
+                                                                                { headers: { Authorization: `Bearer ${token}` } }
+                                                                            );
+                                                                            fetchCollection();
+                                                                        } catch (e) { console.error(e); }
+                                                                    };
+                                                                    addToCollection();
+                                                                }}
+                                                                className="btn-primary btn-sm"
+                                                                style={{ fontSize: '0.8rem', padding: '2px 8px', backgroundColor: '#4CAF50' }}
+                                                                title="Ya la conseguí (Marcar como obtenida)"
+                                                            >
+                                                                ✅ Conseguí
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); navigate('/mi-tienda', { state: { sellCard: card } }); }}
+                                                                className="btn-secondary btn-sm"
+                                                                style={{ fontSize: '0.8rem', padding: '2px 8px' }}
+                                                                title="Vender en Mercado"
+                                                            >
+                                                                💰
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); removeFromCollection(card.id); }}
                                                             className="btn-danger btn-sm"

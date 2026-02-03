@@ -21,13 +21,34 @@ export default function CartaDetalle() {
     if (!user) return alert('Debes iniciar sesión');
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${apiUrl}/api/collection/add`, { cartaId: carta.id }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Default behavior: add as IS_OWNED = true
+      await axios.post(`${apiUrl}/api/collection/add`,
+        { cartaId: carta.id, isOwned: true },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       alert('Carta agregada a tu colección!');
     } catch (error) {
       console.error(error);
       alert('Error al agregar carta');
+    }
+  };
+
+  const agregarDeseado = async () => {
+    if (!user) return alert('Debes iniciar sesión');
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${apiUrl}/api/collection/add`,
+        { cartaId: carta.id, isOwned: false },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert('Carta agregada a tus deseados!');
+    } catch (error) {
+      console.error(error);
+      if (error.response && error.response.data && error.response.data.message === 'Item already owned') {
+        alert('Ya tienes esta carta en tu colección.');
+      } else {
+        alert('Error al agregar a deseados');
+      }
     }
   };
 
@@ -311,6 +332,14 @@ export default function CartaDetalle() {
               style={{ padding: '10px 20px', fontSize: '1.2rem', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
             >
               + Agregar a Colección
+            </button>
+            <button
+              onClick={agregarDeseado}
+              className="btn-secondary"
+              style={{ padding: '10px 20px', fontSize: '1.2rem', backgroundColor: '#9C27B0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+              title="Marcar como 'Lo Quiero' (se mostrará gris en tu colección)"
+            >
+              ❤️ Lo Quiero
             </button>
             <button
               onClick={venderCarta}

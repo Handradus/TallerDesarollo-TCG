@@ -9,6 +9,10 @@ module.exports = new EntitySchema({
             type: 'int',
             generated: true,
         },
+        isOwned: {
+            type: 'boolean',
+            default: true,
+        },
         quantity: {
             type: 'int',
             default: 1,
