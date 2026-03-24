@@ -30,7 +30,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: true,
   logging: true,
-  entities: [Carta, ConsultaAPI, Tienda, CartaLink, HistorialCarta, HistorialTienda, require('./entities/User'), require('./entities/UserCollection'), require('./entities/MarketItem'), require('./entities/Message'), require('./entities/CustomCollection'), require('./entities/UserComment')],
+  entities: [Carta, ConsultaAPI, Tienda, CartaLink, HistorialCarta, HistorialTienda, require('./entities/User'), require('./entities/UserCollection'), require('./entities/MarketItem'), require('./entities/Message'), require('./entities/CustomCollection'), require('./entities/UserComment'), require('./entities/Report')],
 });
 
 module.exports = { AppDataSource };

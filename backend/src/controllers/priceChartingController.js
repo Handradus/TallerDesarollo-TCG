@@ -8,6 +8,25 @@ async function obtenerPreciosPriceCharting(req, res) {
   const { id } = req.params;
   const { forzar } = req.query; 
 
+  if (forzar === 'true') {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ error: "No autorizado para forzar actualización. Se requiere token." });
+    }
+    
+    try {
+      const jwt = require('jsonwebtoken');
+      const user = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_change_me');
+      if (user.role !== 'admin') {
+        return res.status(403).json({ error: "Solo los administradores pueden forzar actualización de precios." });
+      }
+    } catch (err) {
+      return res.status(403).json({ error: "Token inválido o expirado" });
+    }
+  }
+
   const cartaId = parseInt(id);
   if (isNaN(cartaId) || cartaId <= 0) {
     console.error(`❌ [obtenerPreciosPriceCharting] ID inválido recibido: "${id}"`);

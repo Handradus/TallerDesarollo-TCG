@@ -22,6 +22,10 @@ export default function Coleccion() {
     const [selectedRarity, setSelectedRarity] = useState('');
     const [showPrices, setShowPrices] = useState(false);
 
+    // Edit Item Modal States
+    const [editItem, setEditItem] = useState(null);
+    const [editForm, setEditForm] = useState({ condition: '', language: '', foilType: '' });
+
     useEffect(() => {
         fetchBinders();
     }, []);
@@ -89,6 +93,31 @@ export default function Coleccion() {
             console.error('Error removing card:', error);
         }
     }
+
+    const openEditModal = (item) => {
+        setEditItem(item);
+        setEditForm({
+            condition: item.condition || 'NM',
+            language: item.language || 'ES',
+            foilType: item.foilType || 'Normal'
+        });
+    };
+
+    const submitEditItem = async () => {
+        if (!editItem) return;
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/collection/item/${editItem.collectionId}`,
+                editForm,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setEditItem(null);
+            fetchCollection(); // Refresh
+        } catch (e) {
+            console.error('Error updating item:', e);
+            alert('Error al actualizar la carta');
+        }
+    };
 
     // Derived lists for dropdowns based on CURRENT view
     const sets = [...new Set(cards.map(c => c.set).filter(Boolean))].sort();
@@ -243,6 +272,16 @@ export default function Coleccion() {
                                                             </span>
                                                         )}
                                                     </div>
+                                                    
+                                                    {/* Custom Properties Badges */}
+                                                    {(card.isOwned || card.quantity > 0) && (
+                                                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '5px' }}>
+                                                            {card.condition && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.condition}</span>}
+                                                            {card.language && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.language}</span>}
+                                                            {card.foilType && card.foilType !== 'Normal' && <span style={{fontSize: '0.7rem', background: 'linear-gradient(45deg, #ffd700, #ff8c00)', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{card.foilType}</span>}
+                                                        </div>
+                                                    )}
+
                                                     <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
                                                         {(!card.isOwned || card.quantity === 0) ? (
                                                             <button
@@ -277,8 +316,16 @@ export default function Coleccion() {
                                                             </button>
                                                         )}
                                                         <button
+                                                            onClick={(e) => { e.stopPropagation(); openEditModal(card); }}
+                                                            className="btn-secondary btn-sm"
+                                                            title="Editar detalles (Estado, Idioma...)"
+                                                        >
+                                                            ✏️
+                                                        </button>
+                                                        <button
                                                             onClick={(e) => { e.stopPropagation(); removeFromCollection(card.id); }}
                                                             className="btn-danger btn-sm"
+                                                            title="Eliminar de la colección"
                                                         >
                                                             🗑️
                                                         </button>
@@ -310,6 +357,64 @@ export default function Coleccion() {
                         <div style={{ marginTop: '15px', textAlign: 'right' }}>
                             <button className="btn-secondary" onClick={() => setShowCreateModal(false)} style={{ marginRight: '10px' }}>Cancelar</button>
                             <button className="btn-primary" onClick={createBinder}>Crear</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Item Modal */}
+            {editItem && (
+                <div className="modal-overlay" onClick={() => setEditItem(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <h3>Editar Carta: {editItem.nombre}</h3>
+                        
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Estado (Condition)</label>
+                            <select 
+                                className="filter-select" 
+                                style={{ width: '100%' }}
+                                value={editForm.condition} 
+                                onChange={e => setEditForm({...editForm, condition: e.target.value})}
+                            >
+                                <option value="NM">Near Mint (NM)</option>
+                                <option value="LP">Lightly Played (LP)</option>
+                                <option value="MP">Moderately Played (MP)</option>
+                                <option value="HP">Heavily Played (HP)</option>
+                                <option value="DM">Damaged (DM)</option>
+                            </select>
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Idioma</label>
+                            <select 
+                                className="filter-select" 
+                                style={{ width: '100%' }}
+                                value={editForm.language} 
+                                onChange={e => setEditForm({...editForm, language: e.target.value})}
+                            >
+                                <option value="ES">Español (ES)</option>
+                                <option value="EN">Inglés (EN)</option>
+                                <option value="JP">Japonés (JP)</option>
+                            </select>
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Tipo (Foil)</label>
+                            <select 
+                                className="filter-select" 
+                                style={{ width: '100%' }}
+                                value={editForm.foilType} 
+                                onChange={e => setEditForm({...editForm, foilType: e.target.value})}
+                            >
+                                <option value="Normal">Normal</option>
+                                <option value="Reverse">Reverse Holo</option>
+                                <option value="Holo">Holo</option>
+                            </select>
+                        </div>
+
+                        <div style={{ marginTop: '20px', textAlign: 'right' }}>
+                            <button className="btn-secondary" onClick={() => setEditItem(null)} style={{ marginRight: '10px' }}>Cancelar</button>
+                            <button className="btn-primary" onClick={submitEditItem}>Guardar</button>
                         </div>
                     </div>
                 </div>

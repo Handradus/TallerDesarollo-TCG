@@ -17,6 +17,18 @@ module.exports = new EntitySchema({
             type: 'int',
             default: 1,
         },
+        condition: {
+            type: 'varchar',
+            default: 'NM', // NM, LP, MP, HP, DM
+        },
+        language: {
+            type: 'varchar',
+            default: 'ES', // ES, EN, JP...
+        },
+        foilType: {
+            type: 'varchar',
+            default: 'Normal', // Normal, Holo, Reverse
+        },
         addedAt: {
             type: 'timestamp',
             createDate: true,

@@ -8,7 +8,7 @@ const cartaRepository = AppDataSource.getRepository(Carta);
 const { IsNull } = require('typeorm');
 
 const addToCollection = async (req, res) => {
-    const { cartaId, binderId, isOwned = true } = req.body;
+    const { cartaId, binderId, isOwned = true, forceAdd = false, condition = 'NM', language = 'ES', foilType = 'Normal' } = req.body;
     const userId = req.user.userId;
 
     if (!cartaId) {
@@ -19,45 +19,52 @@ const addToCollection = async (req, res) => {
         const carta = await cartaRepository.findOneBy({ id: cartaId });
         if (!carta) return res.status(404).json({ message: 'Card not found' });
 
-        // Search scope: if binderId is provided, look in that binder.
-        // If no binderId, look for entries where customCollectionId is NULL (General collection)
-        const whereClause = {
-            userId,
-            cartaId,
-            customCollection: binderId ? { id: binderId } : IsNull()
-        };
+        // Check if ANY copy of this card exists in this binder (General duplicate check)
+        if (isOwned && !forceAdd) {
+            const duplicateCheck = await collectionRepository.findOne({
+                where: {
+                    userId,
+                    cartaId,
+                    customCollection: binderId ? { id: binderId } : IsNull()
+                }
+            });
+            if (duplicateCheck) {
+                return res.status(409).json({ error: 'Ya tienes esta carta en esta colección. ¿Deseas agregar otra copia?' });
+            }
+        }
 
-        let item = await collectionRepository.findOne({
-            where: whereClause,
+        let item;
+        // Search just to see if we are converting a "wanted" to "owned" 
+        // We only care about finding a wanted version to convert if it exists.
+        const wantedItem = await collectionRepository.findOne({
+            where: {
+                userId,
+                cartaId,
+                customCollection: binderId ? { id: binderId } : IsNull(),
+                isOwned: false
+            },
             relations: ['customCollection']
         });
 
-        if (item) {
-            if (isOwned) {
-                // Changing from Wanted (false) to Owned (true)
-                if (!item.isOwned) {
-                    item.isOwned = true;
-                    item.quantity = 1; // Start with 1 when converting
-                } else {
-                    // Already owned, increment
-                    item.quantity += 1;
-                }
-            } else {
-                // Trying to add as Wanted
-                if (item.isOwned) {
-                    // Already owned, ignore request to mark as wanted
-                    return res.status(200).json({ message: 'Item already owned', item });
-                }
-                // Already wanted, do nothing (or could verify quantity 0)
-            }
+        if (wantedItem && isOwned) {
+            // Converting from wanted to owned
+            wantedItem.isOwned = true;
+            wantedItem.quantity = 1;
+            wantedItem.condition = condition;
+            wantedItem.language = language;
+            wantedItem.foilType = foilType;
+            item = wantedItem;
         } else {
-            // New item
+            // Always create a new item stack for new owned cards
             item = collectionRepository.create({
                 userId,
                 cartaId,
                 quantity: isOwned ? 1 : 0,
                 isOwned: isOwned,
-                customCollection: binderId ? { id: binderId } : null
+                customCollection: binderId ? { id: binderId } : null,
+                condition,
+                language,
+                foilType
             });
         }
 
@@ -123,14 +130,16 @@ const getCollection = async (req, res) => {
             }
         });
 
-        // Group by Set manually if needed, or return flat list
         // Returning flat list with full card details
         const formatted = collection.map(item => ({
             ...item.carta,
             quantity: item.quantity,
             isOwned: item.isOwned,
             collectionId: item.id,
-            addedAt: item.addedAt
+            addedAt: item.addedAt,
+            condition: item.condition,
+            language: item.language,
+            foilType: item.foilType
         }));
 
         res.json(formatted);
@@ -176,10 +185,38 @@ const getBinders = async (req, res) => {
     }
 };
 
+const updateCollectionItem = async (req, res) => {
+    const userId = req.user.userId;
+    const itemId = req.params.id;
+    const { condition, language, foilType } = req.body;
+
+    try {
+        const item = await collectionRepository.findOne({
+            where: { id: itemId, userId },
+            relations: ['customCollection']
+        });
+
+        if (!item) {
+            return res.status(404).json({ message: 'Item not found in your collection' });
+        }
+
+        // Update current item in place WITHOUT merging
+        if (condition) item.condition = condition;
+        if (language) item.language = language;
+        if (foilType) item.foilType = foilType;
+        await collectionRepository.save(item);
+        return res.json({ message: 'Item updated successfully', item });
+    } catch (error) {
+        console.error('Error updating collection item:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 module.exports = {
     addToCollection,
     removeFromCollection,
     getCollection,
     createBinder,
-    getBinders
+    getBinders,
+    updateCollectionItem
 };

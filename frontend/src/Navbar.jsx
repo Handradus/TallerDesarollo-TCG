@@ -98,7 +98,8 @@ export default function Navbar() {
     { path: '/admin-precios', label: '🔥 Forzar Precios' },
     { path: '/agregar-tienda', label: '➕ Agregar Tienda' },
     { path: '/editar-tiendas', label: '✏️ Editar Tiendas' },
-    { path: '/admin-moderacion', label: '⚖️ Moderación Tiendas' }
+    { path: '/admin-moderacion', label: '⚖️ Moderación Tiendas' },
+    { path: '/admin-reportes', label: '🚩 Reportes Usuarios' }
   ];
 
   const isActive = (path) => {

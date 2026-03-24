@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # 1. Base de Datos
+  db:
+    image: postgres:15-alpine
+    container_name: tcg_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Backend (Node.js API)
+  backend:
+    build: ./backend
+    container_name: tcg_backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      POKEMONTCG_API_KEY: ${POKEMONTCG_API_KEY}
+    volumes:
+      - uploads_data:/app/public/uploads
+    # Exponemos el puerto solo para debugging o si queremos saltarnos el nginx (opcional)
+    ports: 
+      - "3000:3000"
+
+  # 3. Frontend (Nginx Server)
+  frontend:
+    build: ./frontend
+    container_name: tcg_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    volumes:
+      # Montamos el mismo volumen de uploads para que Nginx pueda servir las fotos rápido
+      - uploads_data:/usr/share/nginx/html/uploads
+
+  # 4. Seeder (Poblar Base de Datos)
+  # Este servicio corre una vez y muere. Sirve para cargar las cartas si no existen.
+  seed:
+    build: ./backend
+    container_name: tcg_seeder
+    restart: "no" # Solo corre una vez
+    depends_on:
+      - db
+      - backend # Esperamos a que el backend arranque (y cree las tablas)
+    environment:
+      # Mismas variables que backend para conectar a DB
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    # Comando específico para correr la migración
+    command: ["node", "src/scripts/migrarDatosTCG.js"]
+
+volumes:
+  postgres_data:
+  uploads_data: 
+    # ^ Aquí vivirán tus imágenes de Multer

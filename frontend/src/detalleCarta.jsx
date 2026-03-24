@@ -10,6 +10,9 @@ export default function CartaDetalle() {
   const location = useLocation();
   const [carta, setCarta] = useState({});
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [mostrarModalColeccion, setMostrarModalColeccion] = useState(false);
+  const [binders, setBinders] = useState([]);
+  const [selectedBinder, setSelectedBinder] = useState('');
   const [cargandoTiendas, setCargandoTiendas] = useState(false);
   const [hasFetchedTiendas, setHasFetchedTiendas] = useState(false);
   const [preciosPriceCharting, setPreciosPriceCharting] = useState(null);
@@ -17,19 +20,50 @@ export default function CartaDetalle() {
   const apiUrl = import.meta.env.VITE_API_BASE_URL;
   const { user } = useAuth();
 
-  const agregarAColeccion = async () => {
-    if (!user) return alert('Debes iniciar sesión');
+  const fetchBinders = async () => {
     try {
       const token = localStorage.getItem('token');
-      // Default behavior: add as IS_OWNED = true
+      const res = await axios.get(`${apiUrl}/api/collection/binders`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBinders(res.data);
+    } catch (error) {
+      console.error('Error fetching binders:', error);
+    }
+  };
+
+  const abrirModalColeccion = () => {
+    if (!user) return alert('Debes iniciar sesión');
+    fetchBinders();
+    setMostrarModalColeccion(true);
+  };
+
+  const confirmarAgregarColeccion = async (forceAdd = false) => {
+    try {
+      const token = localStorage.getItem('token');
+      const payload = { cartaId: carta.id, isOwned: true, forceAdd };
+      if (selectedBinder) {
+        payload.binderId = selectedBinder;
+      }
+      
       await axios.post(`${apiUrl}/api/collection/add`,
-        { cartaId: carta.id, isOwned: true },
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert('Carta agregada a tu colección!');
+      setMostrarModalColeccion(false);
+      setSelectedBinder('');
     } catch (error) {
       console.error(error);
-      alert('Error al agregar carta');
+      if (error.response?.status === 409) {
+        if (window.confirm(error.response.data.error || 'Ya tienes esta carta. ¿Deseas agregarla de todas formas?')) {
+          confirmarAgregarColeccion(true);
+        }
+      } else if (error.response?.data?.error) {
+        alert(error.response.data.error);
+      } else {
+        alert('Error al agregar carta');
+      }
     }
   };
 
@@ -67,25 +101,34 @@ export default function CartaDetalle() {
       <div className="detalle-container">
         <div className="sugerencia-container">
           <h2>🔍 Carta no encontrada</h2>
-          <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>
+          <p className="sugerencia-intro">
             No encontramos "<strong>{terminoBuscado}</strong>" en nuestra base de datos.
           </p>
-          <p style={{ fontSize: '1rem', marginBottom: '2rem' }}>
-            {sugerenciaMensaje || "Parece que esta carta es una promoción exclusiva o muy rara. Te recomendamos buscar en Pokumon.com:"}
+          <p className="sugerencia-mensaje">
+            {sugerenciaMensaje || "Parece que esta carta es una promoción exclusiva o muy rara. Te recomendamos buscar en PriceCharting o Pokumon.com:"}
           </p>
-          <a
-            href={sugerenciaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-sugerencia"
-          >
-            🌐 Buscar en Pokumon.com
-          </a>
-          <div style={{ marginTop: '2rem' }}>
+          <div className="sugerencia-acciones">
+            <a
+              href={`https://www.pricecharting.com/search-products?q=${terminoBuscado ? encodeURIComponent(terminoBuscado) : ''}&type=prices`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-sugerencia btn-sugerencia-price"
+            >
+              📈 Buscar en PriceCharting
+            </a>
+            <a
+              href={`https://pokumon.com/cards?search=${terminoBuscado ? encodeURIComponent(terminoBuscado) : ''}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-sugerencia btn-sugerencia-pokumon"
+            >
+              🌐 Buscar en Pokumon.com
+            </a>
+          </div>
+          <div className="sugerencia-nav">
             <button
               className="btn-volver"
               onClick={() => navigate(-1)}
-              style={{ marginRight: '1rem' }}
             >
               ← Volver atrás
             </button>
@@ -200,7 +243,9 @@ export default function CartaDetalle() {
     setCargandoPreciosPriceCharting(true);
     try {
       const url = `${apiUrl}/api/cartas/${id}/precios-pricecharting${forzar ? '?forzar=true' : ''}`;
-      const response = await fetch(url);
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await fetch(url, { headers });
       const data = await response.json();
 
       if (response.ok) {
@@ -327,7 +372,7 @@ export default function CartaDetalle() {
         {user && (
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '2rem' }}>
             <button
-              onClick={agregarAColeccion}
+              onClick={abrirModalColeccion}
               className="btn-primary"
               style={{ padding: '10px 20px', fontSize: '1.2rem', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
             >
@@ -420,7 +465,7 @@ export default function CartaDetalle() {
                     ) : (
                       <span className="pricecharting-badge">📈 PriceCharting</span>
                     )}
-                    {!cargandoPreciosPriceCharting && preciosPriceCharting && !preciosPriceCharting.error && (
+                    {!cargandoPreciosPriceCharting && preciosPriceCharting && !preciosPriceCharting.error && user?.role === 'admin' && (
                       <button
                         className="btn-actualizar-precios"
                         onClick={() => obtenerPreciosPriceCharting(true)}
@@ -443,12 +488,14 @@ export default function CartaDetalle() {
                       {preciosPriceCharting.error ? (
                         <div className="precio-error">
                           ⚠️ {preciosPriceCharting.error}
-                          <button
-                            className="btn-reintentar"
-                            onClick={() => obtenerPreciosPriceCharting(true)}
-                          >
-                            Reintentar
-                          </button>
+                          {user?.role === 'admin' && (
+                            <button
+                              className="btn-reintentar"
+                              onClick={() => obtenerPreciosPriceCharting(true)}
+                            >
+                              Reintentar
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <>
@@ -501,62 +548,6 @@ export default function CartaDetalle() {
                   💡 Los precios son referenciales y pueden variar según la condición y disponibilidad.
                 </p>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Tiendas disponibles - sección independiente debajo de imagen y precios */}
-        <div className="tiendas-seccion-completa">
-          <div className="precios">
-            <h3>🏪 Disponibilidad en tiendas</h3>
-            {cargandoTiendas ? (
-              <p>Cargando tiendas...</p>
-            ) : carta.tiendasDisponibles && carta.tiendasDisponibles.length > 0 ? (
-              <div className="tiendas-grid">
-                {carta.tiendasDisponibles.map((tienda, index) => (
-                  <div key={index} className="tienda-item">
-                    <div className="tienda-info">
-                      {tienda.logo ? (
-                        <div className="tienda-logo-section">
-                          <img
-                            src={tienda.logo}
-                            alt={`Logo ${tienda.nombre}`}
-                            className="tienda-logo-small"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextElementSibling.style.display = 'inline';
-                            }}
-                          />
-                          <span className="tienda-nombre-fallback" style={{ display: 'none' }}>
-                            🏪
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="tienda-icon">🏪</span>
-                      )}
-                      <button
-                        onClick={() => handleTiendaClick(tienda)}
-                        className="tienda-link"
-                      >
-                        {tienda.nombre}
-                      </button>
-                    </div>
-                    <div className="tienda-details">
-                      {tienda.precio && (
-                        <span className="tienda-precio">${tienda.precio}</span>
-                      )}
-                      {tienda.verificada && (
-                        <span className="tienda-verificada">✅ Verificada</span>
-                      )}
-                      {tienda.valoracion && (
-                        <span className="tienda-valoracion">⭐ {tienda.valoracion}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-tiendas">No hay tiendas disponibles para esta carta.</p>
             )}
           </div>
         </div>
@@ -620,6 +611,62 @@ export default function CartaDetalle() {
             </div>
           )}
         </div>
+
+        {/* Tiendas disponibles - sección independiente debajo de imagen y precios */}
+        <div className="tiendas-seccion-completa">
+          <div className="precios">
+            <h3>🏪 Disponibilidad en tiendas</h3>
+            {cargandoTiendas ? (
+              <p>Cargando tiendas...</p>
+            ) : carta.tiendasDisponibles && carta.tiendasDisponibles.length > 0 ? (
+              <div className="tiendas-grid">
+                {carta.tiendasDisponibles.map((tienda, index) => (
+                  <div key={index} className="tienda-item">
+                    <div className="tienda-info">
+                      {tienda.logo ? (
+                        <div className="tienda-logo-section">
+                          <img
+                            src={tienda.logo}
+                            alt={`Logo ${tienda.nombre}`}
+                            className="tienda-logo-small"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextElementSibling.style.display = 'inline';
+                            }}
+                          />
+                          <span className="tienda-nombre-fallback" style={{ display: 'none' }}>
+                            🏪
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="tienda-icon">🏪</span>
+                      )}
+                      <button
+                        onClick={() => handleTiendaClick(tienda)}
+                        className="tienda-link"
+                      >
+                        {tienda.nombre}
+                      </button>
+                    </div>
+                    <div className="tienda-details">
+                      {tienda.precio && (
+                        <span className="tienda-precio">${tienda.precio}</span>
+                      )}
+                      {tienda.verificada && (
+                        <span className="tienda-verificada">✅ Verificada</span>
+                      )}
+                      {tienda.valoracion && (
+                        <span className="tienda-valoracion">⭐ {tienda.valoracion}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="no-tiendas">No hay tiendas disponibles para esta carta.</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Modal de imagen en pantalla completa */}
@@ -647,6 +694,47 @@ export default function CartaDetalle() {
             <div className="modal-info">
               <h3>{carta.nombre}</h3>
               <p>{carta.numero} • {carta.set}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para elegir carpeta al agregar a colección */}
+      {mostrarModalColeccion && (
+        <div className="modal-overlay" onClick={() => setMostrarModalColeccion(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <button className="modal-close" onClick={() => setMostrarModalColeccion(false)}>&times;</button>
+            <h2 style={{ marginTop: 0, color: '#333' }}>Agregar a Colección</h2>
+            
+            <div style={{ margin: '20px 0' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Elige dónde guardar esta carta:</label>
+              <select 
+                value={selectedBinder} 
+                onChange={e => setSelectedBinder(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem' }}
+              >
+                <option value="">Colección General</option>
+                {binders.map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button 
+                className="btn-secondary" 
+                onClick={() => setMostrarModalColeccion(false)}
+                style={{ padding: '8px 15px', border: '1px solid #ccc', background: '#f5f5f5', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn-primary" 
+                onClick={() => confirmarAgregarColeccion(false)}
+                style={{ padding: '8px 15px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                ✅ Confirmar
+              </button>
             </div>
           </div>
         </div>

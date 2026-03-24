@@ -13,7 +13,7 @@ const palabrasPromoEspecial = new Set([
   'exclusive', 'limited', 'distribution', 'event', 'birthday', 'misprint', 'error', 'japan',
   'launch', 'special', 'delivery', 'promo', 'anime', 'expo', 'black', 'star', 'mail-in',
   'celebration', 'anniversary', 'gold', 'silver', 'crystal', 'winner', 'finalist', 'stamped',
-  'holographic', 'foil', 'miscut', 'off-center', 'prototype', 'test', 'beta', 'alpha'
+  'holographic', 'foil', 'miscut', 'off-center', 'prototype', 'test', 'beta', 'alpha', 'hat', 'poncho'
 ]);
 
 function esBusquedaPromocional(input) {

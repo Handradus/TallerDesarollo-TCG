@@ -15,6 +15,7 @@ import Mensajes from './Mensajes';
 import MiPerfil from './MiPerfil';
 import PerfilPublico from './PerfilPublico';
 import AdminModeracion from './AdminModeracion';
+import AdminReportes from './AdminReportes';
 
 export default function AppRoutes() {
   return (
@@ -27,6 +28,7 @@ export default function AppRoutes() {
       <Route path="/agregar-tienda" element={<AgregarTienda />} />
       <Route path="/editar-tiendas" element={<EditarTiendas />} />
       <Route path="/admin-moderacion" element={<AdminModeracion />} />
+      <Route path="/admin-reportes" element={<AdminReportes />} />
       <Route path="/tiendas" element={<Tiendas />} />
       <Route path="/tienda/:nombreTienda" element={<TiendaDetalle />} />
       <Route path="/coleccion" element={<Coleccion />} />

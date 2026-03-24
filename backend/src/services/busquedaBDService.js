@@ -27,11 +27,13 @@ async function buscarEnBD(input, tipoBusqueda = 'carta') {
     
     // **APLICAR LÓGICA INTELIGENTE MEJORADA PARA CARTAS**
     console.log(`🎯 APLICANDO LÓGICA INTELIGENTE PARA CARTAS`);
-    
+
+    let resultadosBD = [];
+
     // **CASO 1: BÚSQUEDAS ESPECÍFICAS** (fracciones, códigos, números solos)
     const resultadoEspecifico = await manejarBusquedaEspecifica(inputOriginal, cartaRepo);
-    if (resultadoEspecifico) {
-      return resultadoEspecifico;
+    if (resultadoEspecifico !== null) {
+      resultadosBD = resultadoEspecifico;
     }
 
     const palabras = inputOriginal.split(/\s+/);
@@ -40,36 +42,41 @@ async function buscarEnBD(input, tipoBusqueda = 'carta') {
     
     console.log(`🔍 Análisis: ${palabras.length} palabras, ${posiblesNumeros.length} números`);
 
-    // **CASO 2: NOMBRE + NÚMERO** ("pikachu 25", "25 pikachu")
-    if (palabras.length === 2 && posiblesNumeros.length === 1) {
-      return await manejarNombreYNumero(palabras, posiblesNumeros, cartaRepo);
+    if (resultadoEspecifico === null) {
+      // **CASO 2: NOMBRE + NÚMERO** ("pikachu 25", "25 pikachu")
+      if (palabras.length === 2 && posiblesNumeros.length === 1) {
+        resultadosBD = await manejarNombreYNumero(palabras, posiblesNumeros, cartaRepo);
+      }
+
+      // **CASO 3: UNA PALABRA** ("pikachu")
+      else if (palabras.length === 1) {
+        resultadosBD = await manejarUnaPalabra(inputOriginal, cartaRepo);
+      }
+
+      // **CASO 4: VARIAS PALABRAS** - Lógica inteligente mejorada
+      else if (palabras.length >= 2) {
+        resultadosBD = await manejarVariasPalabras(palabras, posiblesNombre, cartaRepo);
+      }
+
+      // **FALLBACK**: Búsqueda flexible
+      else {
+        console.log(`🔄 Aplicando búsqueda flexible`);
+        resultadosBD = await busquedaFlexible(posiblesNombre, cartaRepo);
+      }
     }
 
-    // **CASO 3: UNA PALABRA** ("pikachu")
-    if (palabras.length === 1) {
-      return await manejarUnaPalabra(inputOriginal, cartaRepo);
-    }
-
-    // **CASO 4: VARIAS PALABRAS** - Lógica inteligente mejorada
-    if (palabras.length >= 2) {
-      return await manejarVariasPalabras(palabras, posiblesNombre, cartaRepo);
-    }
-
-    // **FALLBACK**: Búsqueda flexible
-    console.log(`🔄 Aplicando búsqueda flexible`);
-    const resultadoFlexible = await busquedaFlexible(posiblesNombre, cartaRepo);
-    if (resultadoFlexible.length > 0) {
-      return resultadoFlexible;
+    if (resultadosBD.length > 0) {
+      return resultadosBD;
     }
 
     // **SUGERENCIA PROMOCIONAL**
     if (esBusquedaPromocional(inputOriginal)) {
-      const urlSugerida = `https://pokumon.com/cards?search=${encodeURIComponent(inputOriginal)}`;
+      const urlSugerida = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(inputOriginal)}&type=prices`;
       console.log(`🔔 Sugerencia promocional: ${urlSugerida}`);
       return [{
-        mensaje: 'Tu búsqueda parece ser una carta promocional exclusiva o de evento. Te recomendamos visitar Pokumon:',
+        mensaje: 'Tu búsqueda parece referirse a una carta muy específica, promocional o rara que no está en nuestra BD. Te recomendamos buscarla en PriceCharting o Pokumon.com:',
         sugerenciaUrl: urlSugerida,
-        origen: 'sugerencia-pokumon'
+        origen: 'sugerencia-pricecharting'
       }];
     }
 
@@ -306,16 +313,37 @@ async function manejarVariasPalabras(palabras, posiblesNombre, cartaRepo) {
   let setName = '';
   
   // Buscar qué palabra podría ser el set
-  for (let i = 0; i < palabras.length; i++) {
-    const palabra = palabras[i];
-    const esParteDSet = setsConocidos.some(set => 
-      palabra.toLowerCase().includes(set) || set.includes(palabra.toLowerCase())
-    );
-    
-    if (esParteDSet) {
-      setName = palabra;
-      nombrePokemon = palabras.filter((p, index) => index !== i).join(' ');
+  const setsOrdenados = [...setsConocidos].sort((a, b) => b.length - a.length);
+  
+  for (const set of setsOrdenados) {
+    if (posiblesNombre.toLowerCase().includes(set)) {
+      // Si el nombre del set coincide exactamente con un Pokémon conocido (ej "pikachu"), 
+      // y la búsqueda tiene más palabras, omitirlo aquí para no confundir al Pokémon con el set.
+      if (cartasConocidas.includes(set) && posiblesNombre.length > set.length) continue;
+
+      setName = set;
+      nombrePokemon = posiblesNombre.toLowerCase().replace(new RegExp(set, 'i'), '').trim().replace(/\s+/g, ' ');
       break;
+    }
+  }
+
+  // Fallback si escribió una versión corta de una palabra del set (ej. "pikachu surgin")
+  if (!setName) {
+    // Buscar de derecha a izquierda, ya que normalmente el set se escribe al final
+    for (let i = palabras.length - 1; i >= 0; i--) {
+      const palabra = palabras[i].toLowerCase();
+      if (palabra.length < 3) continue;
+      
+      // Evitar confundir el nombre del Pokémon con un set que lo contenga (ej. "pikachu" en "detective pikachu")
+      if (cartasConocidas.includes(palabra)) continue;
+      
+      const esParteDSet = setsConocidos.some(set => set.includes(palabra));
+      
+      if (esParteDSet) {
+        setName = palabras[i];
+        nombrePokemon = palabras.filter((_, index) => index !== i).join(' ');
+        break;
+      }
     }
   }
   

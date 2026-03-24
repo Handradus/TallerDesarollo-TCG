@@ -59,6 +59,7 @@ AppDataSource.initialize()
     app.use('/api/market', marketRoutes);
     app.use('/api/messages', messageRoutes);
     app.use('/api/profile', require('./routes/profile.routes'));
+    app.use('/api/reports', require('./routes/report.routes'));
 
 
     // Create HTTP Server

@@ -14,6 +14,8 @@ export default function Mercado() {
 
     const [messageText, setMessageText] = useState('');
     const [selectedItem, setSelectedItem] = useState(null);
+    const [reportItem, setReportItem] = useState(null);
+    const [reportReason, setReportReason] = useState('');
     const { user } = useAuth();
     const apiUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -61,6 +63,29 @@ export default function Mercado() {
         } catch (error) {
             console.error(error);
             alert('Error enviando mensaje');
+        }
+    }
+
+    const submitReport = async () => {
+        if (!reportReason.trim()) return alert('Por favor, ingresa un motivo');
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post(`${apiUrl}/api/reports`, {
+                marketItemId: reportItem.id,
+                reason: reportReason
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert('Reporte enviado correctamente.');
+            setReportItem(null);
+            setReportReason('');
+        } catch (error) {
+            console.error(error);
+            if (error.response && error.response.data && error.response.data.error) {
+                alert(error.response.data.error);
+            } else {
+                alert('Error al enviar el reporte');
+            }
         }
     }
 
@@ -183,13 +208,23 @@ export default function Mercado() {
                                         )}
 
                                         {user && user.id !== item.userId ? (
-                                            <button
-                                                onClick={() => setSelectedItem(item)}
-                                                className="btn-primary"
-                                                style={{ width: '100%', fontSize: '0.9rem', padding: '10px' }}
-                                            >
-                                                📩 Contactar
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '5px', width: '100%' }}>
+                                                <button
+                                                    onClick={() => setSelectedItem(item)}
+                                                    className="btn-primary"
+                                                    style={{ flex: 1, fontSize: '0.9rem', padding: '10px' }}
+                                                >
+                                                    📩 Contactar
+                                                </button>
+                                                <button
+                                                    onClick={() => setReportItem(item)}
+                                                    className="btn-danger"
+                                                    style={{ fontSize: '0.9rem', padding: '10px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                                    title="Reportar Publicación"
+                                                >
+                                                    🚩
+                                                </button>
+                                            </div>
                                         ) : (
                                             !user ? (
                                                 <small style={{ display: 'block', textAlign: 'center', color: '#888' }}>Inicia sesión para comprar</small>
@@ -240,6 +275,40 @@ export default function Mercado() {
                         <div style={{ textAlign: 'right' }}>
                             <button className="btn-secondary" onClick={() => setSelectedItem(null)} style={{ marginRight: '10px' }}>Cancelar</button>
                             <button onClick={contactSeller} className="btn-primary">Enviar Mensaje</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {reportItem && (
+                <div className="modal-overlay" onClick={() => setReportItem(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <button className="modal-close" onClick={() => setReportItem(null)}>&times;</button>
+                        <h2 style={{ marginTop: 0, color: '#e74c3c' }}>🚩 Reportar Publicación</h2>
+                        <p style={{ fontSize: '0.9rem', color: '#555', marginBottom: '15px' }}>
+                            Si esta publicación incumple las normas (ej: foto falsa, fraude, contenido inapropiado), envíanos un reporte detallado.
+                        </p>
+
+                        <div style={{ background: '#f9f9f9', padding: '15px', borderRadius: '10px', marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
+                            <img src={reportItem.realImage ? `${apiUrl}${reportItem.realImage}` : reportItem.carta.imagenPequena} alt="" style={{ height: '80px', borderRadius: '4px' }} />
+                            <div>
+                                <h4 style={{ margin: 0 }}>{reportItem.carta.nombre}</h4>
+                                <p style={{ margin: '5px 0', fontSize: '0.85rem', color: '#666' }}>Vendedor: {reportItem.user.name}</p>
+                            </div>
+                        </div>
+
+                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Motivo del Reporte:</label>
+                        <textarea
+                            value={reportReason}
+                            onChange={e => setReportReason(e.target.value)}
+                            className="text-input"
+                            placeholder="Ej: La imagen no corresponde a la carta, parece estafa..."
+                            style={{ height: '100px', fontFamily: 'inherit', marginBottom: '20px' }}
+                        ></textarea>
+
+                        <div style={{ textAlign: 'right' }}>
+                            <button className="btn-secondary" onClick={() => setReportItem(null)} style={{ marginRight: '10px' }}>Cancelar</button>
+                            <button onClick={submitReport} className="btn-danger" style={{ background: '#e74c3c', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Enviar Reporte</button>
                         </div>
                     </div>
                 </div>

@@ -8,6 +8,7 @@ router.use(verifyToken);
 router.post('/add', collectionController.addToCollection);
 router.post('/remove', collectionController.removeFromCollection);
 router.get('/', collectionController.getCollection);
+router.put('/item/:id', collectionController.updateCollectionItem);
 
 // Binder Routes
 router.post('/binders', collectionController.createBinder);

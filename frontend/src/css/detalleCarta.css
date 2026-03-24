@@ -196,6 +196,89 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
+
+.sugerencia-container {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.sugerencia-container h2 {
+  color: #111827;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.sugerencia-intro {
+  color: #1f2937;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.sugerencia-mensaje {
+  color: #374151;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.sugerencia-acciones {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-sugerencia {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 12px;
+  padding: 0.85rem 1.2rem;
+  min-width: 240px;
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.btn-sugerencia:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.25);
+  filter: brightness(1.05);
+}
+
+.btn-sugerencia-price {
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+}
+
+.btn-sugerencia-pokumon {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.sugerencia-nav {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sugerencia-nav .btn-volver {
+  min-width: 190px;
+}
+
 .carta-contenido {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -716,6 +799,18 @@
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
   }
+
+  .sugerencia-container {
+    padding: 2rem;
+  }
+
+  .sugerencia-container h2 {
+    font-size: 1.6rem;
+  }
+
+  .btn-sugerencia {
+    min-width: 100%;
+  }
   
   .precio-grid {
     grid-template-columns: 1fr;
@@ -761,6 +856,25 @@
   .btn-nav {
     padding: 0.3rem 0.6rem;
     font-size: 0.75rem;
+  }
+
+  .sugerencia-container {
+    padding: 1.5rem 1rem;
+    border-radius: 14px;
+  }
+
+  .sugerencia-container h2 {
+    font-size: 1.35rem;
+  }
+
+  .sugerencia-intro,
+  .sugerencia-mensaje {
+    font-size: 0.95rem;
+  }
+
+  .sugerencia-nav .btn-volver {
+    width: 100%;
+    min-width: 0;
   }
   
   .btn-volver,
