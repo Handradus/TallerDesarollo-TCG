@@ -6,6 +6,7 @@ const verifyToken = require('../middleware/auth.middleware');
 // Public routes (anyone can search) - optional, but let's keep search public?
 // Or maybe verifyToken? Let's make search public but listing private.
 router.get('/search', marketController.searchMarket);
+router.get('/carta/:cartaId', marketController.getListingsByCarta);
 
 const multer = require('multer');
 const path = require('path');

@@ -15,6 +15,10 @@ export default function CartaDetalle() {
   const [selectedBinder, setSelectedBinder] = useState('');
   const [cargandoTiendas, setCargandoTiendas] = useState(false);
   const [hasFetchedTiendas, setHasFetchedTiendas] = useState(false);
+  const [seccionActiva, setSeccionActiva] = useState('tiendas');
+  const [marketItems, setMarketItems] = useState([]);
+  const [cargandoMarket, setCargandoMarket] = useState(false);
+  const [hasFetchedMarket, setHasFetchedMarket] = useState(false);
   const [preciosPriceCharting, setPreciosPriceCharting] = useState(null);
   const [cargandoPreciosPriceCharting, setCargandoPreciosPriceCharting] = useState(false);
   const apiUrl = import.meta.env.VITE_API_BASE_URL;
@@ -105,6 +109,23 @@ export default function CartaDetalle() {
     } catch (error) {
       console.error(error);
       alert('Error al borrar caché');
+    }
+  };
+
+  const fetchMarketItems = async () => {
+    if (!id || id === 'undefined' || sugerenciaUrl) return;
+
+    setCargandoMarket(true);
+    try {
+      const res = await axios.get(`${apiUrl}/api/market/carta/${id}`);
+      setMarketItems(Array.isArray(res.data) ? res.data : []);
+      setHasFetchedMarket(true);
+    } catch (error) {
+      console.error('❌ Error al obtener mercado de la carta:', error);
+      setMarketItems([]);
+      setHasFetchedMarket(true);
+    } finally {
+      setCargandoMarket(false);
     }
   };
 
@@ -199,6 +220,8 @@ export default function CartaDetalle() {
       .then(data => {
         setCarta(data);
         setHasFetchedTiendas(false);
+        setHasFetchedMarket(false);
+        setMarketItems([]);
         // Obtener precios de PriceCharting si la carta ya los tiene o si han pasado más de 24 horas
         obtenerPreciosPriceCharting();
       })
@@ -317,6 +340,12 @@ export default function CartaDetalle() {
     }
   }, [carta, hasFetchedTiendas, id, sugerenciaUrl]);
 
+  useEffect(() => {
+    if (seccionActiva === 'mercado' && !hasFetchedMarket && carta?.id && !sugerenciaUrl) {
+      fetchMarketItems();
+    }
+  }, [seccionActiva, hasFetchedMarket, carta?.id, sugerenciaUrl]);
+
   // Efecto para manejar la tecla ESC en el modal
   useEffect(() => {
     const handleEsc = (event) => {
@@ -349,6 +378,11 @@ export default function CartaDetalle() {
   }
 
   const tipoColor = getTipoColor(carta.tipos);
+  const formatearPrecioCLP = (valor) => {
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) return valor;
+    return new Intl.NumberFormat('es-CL').format(numero);
+  };
 
   return (
     <div className="detalle-container">
@@ -610,102 +644,166 @@ export default function CartaDetalle() {
             </div>
           </div>
 
-          {/* Ataques */}
-          {carta.ataques && carta.ataques.length > 0 && (
-            <div className="precios">
-              <h3>⚔️ Ataques</h3>
-              <div className="ataques-lista">
-                {carta.ataques.map((ataque, index) => (
-                  <div key={index} className="ataque-item">
-                    <div className="ataque-nombre">
-                      <strong>{ataque.name}</strong>
-                      {ataque.damage && <span className="damage">• {ataque.damage}</span>}
-                    </div>
-                    {ataque.text && (
-                      <div className="ataque-descripcion">{ataque.text}</div>
-                    )}
+          <div className="detalle-tabs">
+            <button
+              className={`detalle-tab ${seccionActiva === 'tiendas' ? 'active' : ''}`}
+              onClick={() => setSeccionActiva('tiendas')}
+            >
+              🏪 Tiendas {carta.tiendasDisponibles ? `(${carta.tiendasDisponibles.length})` : ''}
+            </button>
+            <button
+              className={`detalle-tab ${seccionActiva === 'mercado' ? 'active' : ''}`}
+              onClick={() => setSeccionActiva('mercado')}
+            >
+              🛒 Mercado {hasFetchedMarket ? `(${marketItems.length})` : ''}
+            </button>
+          </div>
+
+          {seccionActiva === 'tiendas' ? (
+            <div className="tiendas-seccion-completa">
+              <div className="precios">
+                <h3>🏪 Disponibilidad en tiendas
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={limpiarCacheTiendas}
+                      title="Borrar caché de precios y re-scrapear"
+                      style={{
+                        marginLeft: '12px',
+                        padding: '4px 10px',
+                        fontSize: '0.75rem',
+                        backgroundColor: '#e74c3c',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        verticalAlign: 'middle',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      🗑️ Borrar caché
+                    </button>
+                  )}
+                </h3>
+                {cargandoTiendas ? (
+                  <p>Cargando tiendas...</p>
+                ) : carta.tiendasDisponibles && carta.tiendasDisponibles.length > 0 ? (
+                  <div className="tiendas-grid">
+                    {carta.tiendasDisponibles.map((tienda, index) => (
+                      <div key={index} className="tienda-item">
+                        <div className="tienda-info">
+                          {tienda.logo ? (
+                            <div className="tienda-logo-section">
+                              <img
+                                src={tienda.logo}
+                                alt={`Logo ${tienda.nombre}`}
+                                className="tienda-logo-small"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextElementSibling.style.display = 'inline';
+                                }}
+                              />
+                              <span className="tienda-nombre-fallback" style={{ display: 'none' }}>
+                                🏪
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="tienda-icon">🏪</span>
+                          )}
+                          <button
+                            onClick={() => handleTiendaClick(tienda)}
+                            className="tienda-link"
+                          >
+                            {tienda.nombre}
+                          </button>
+                        </div>
+                        <div className="tienda-details">
+                          {tienda.precio && (
+                            <span className="tienda-precio">${tienda.precio}</span>
+                          )}
+                          {tienda.verificada && (
+                            <span className="tienda-verificada">✅ Verificada</span>
+                          )}
+                          {tienda.valoracion && (
+                            <span className="tienda-valoracion">⭐ {tienda.valoracion}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p className="no-tiendas">No hay tiendas disponibles para esta carta.</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="tiendas-seccion-completa">
+              <div className="precios">
+                <h3>🛒 Mercado de la página</h3>
+                <p style={{ marginTop: '-0.5rem', color: '#4b5563' }}>
+                  Publicaciones activas para esta carta dentro del mercado.
+                </p>
+
+                {cargandoMarket ? (
+                  <p>Cargando publicaciones del mercado...</p>
+                ) : marketItems.length > 0 ? (
+                  <div className="mercado-grid-detalle">
+                    {marketItems.map((item) => {
+                      const cartaMercado = item.carta || carta;
+                      return (
+                        <article key={item.id} className="mercado-card-detalle">
+                          <div className="mercado-card-imagen">
+                            <img
+                              src={item.realImage ? `${apiUrl}${item.realImage}` : (cartaMercado.imagenPequena || carta.imagenPequena)}
+                              alt={cartaMercado.nombre || carta.nombre}
+                              onError={(e) => {
+                                e.target.src = cartaMercado.imagenPequena || carta.imagenPequena || '/placeholder-card.png';
+                              }}
+                            />
+                          </div>
+
+                          <div className="mercado-card-body">
+                            <div className="mercado-card-topline">
+                              <span className="mercado-card-price">${formatearPrecioCLP(item.price)}</span>
+                              <span className="mercado-card-qty">x{item.quantity || 1}</span>
+                            </div>
+
+                            <h4>{cartaMercado.nombre || carta.nombre}</h4>
+
+                            <div className="mercado-card-meta">
+                              <span>🧾 Nº {cartaMercado.numero || carta.numero}</span>
+                              <span>📚 {cartaMercado.set || carta.set}</span>
+                              <span>👤 {item.user?.name || 'Vendedor'}</span>
+                            </div>
+
+                            <div className="mercado-card-meta">
+                              {item.deliveryType && <span>🚚 {item.deliveryType}</span>}
+                              {item.region && <span>📍 {item.region}</span>}
+                            </div>
+
+                            {item.description && (
+                              <p className="mercado-card-description">{item.description}</p>
+                            )}
+
+                            <div className="mercado-card-footer">
+                              <small>📅 {new Date(item.createdAt).toLocaleDateString()}</small>
+                              <button
+                                className="btn-mercado-ver-completo"
+                                onClick={() => navigate('/mercado')}
+                              >
+                                Ver mercado completo
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="no-tiendas">No hay publicaciones activas para esta carta.</p>
+                )}
               </div>
             </div>
           )}
-        </div>
-
-        {/* Tiendas disponibles - sección independiente debajo de imagen y precios */}
-        <div className="tiendas-seccion-completa">
-          <div className="precios">
-            <h3>🏪 Disponibilidad en tiendas
-              {user?.role === 'admin' && (
-                <button
-                  onClick={limpiarCacheTiendas}
-                  title="Borrar caché de precios y re-scrapear"
-                  style={{
-                    marginLeft: '12px',
-                    padding: '4px 10px',
-                    fontSize: '0.75rem',
-                    backgroundColor: '#e74c3c',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    verticalAlign: 'middle',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  🗑️ Borrar caché
-                </button>
-              )}
-            </h3>
-            {cargandoTiendas ? (
-              <p>Cargando tiendas...</p>
-            ) : carta.tiendasDisponibles && carta.tiendasDisponibles.length > 0 ? (
-              <div className="tiendas-grid">
-                {carta.tiendasDisponibles.map((tienda, index) => (
-                  <div key={index} className="tienda-item">
-                    <div className="tienda-info">
-                      {tienda.logo ? (
-                        <div className="tienda-logo-section">
-                          <img
-                            src={tienda.logo}
-                            alt={`Logo ${tienda.nombre}`}
-                            className="tienda-logo-small"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextElementSibling.style.display = 'inline';
-                            }}
-                          />
-                          <span className="tienda-nombre-fallback" style={{ display: 'none' }}>
-                            🏪
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="tienda-icon">🏪</span>
-                      )}
-                      <button
-                        onClick={() => handleTiendaClick(tienda)}
-                        className="tienda-link"
-                      >
-                        {tienda.nombre}
-                      </button>
-                    </div>
-                    <div className="tienda-details">
-                      {tienda.precio && (
-                        <span className="tienda-precio">${tienda.precio}</span>
-                      )}
-                      {tienda.verificada && (
-                        <span className="tienda-verificada">✅ Verificada</span>
-                      )}
-                      {tienda.valoracion && (
-                        <span className="tienda-valoracion">⭐ {tienda.valoracion}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-tiendas">No hay tiendas disponibles para esta carta.</p>
-            )}
-          </div>
         </div>
       </div>
 

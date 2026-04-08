@@ -423,6 +423,36 @@
   gap: 2rem;
 }
 
+.detalle-tabs {
+  display: flex;
+  gap: 0.75rem;
+  margin: 2rem 0 1rem;
+  flex-wrap: wrap;
+}
+
+.detalle-tab {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.8rem 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.detalle-tab:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.detalle-tab.active {
+  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 10px 22px rgba(17, 24, 39, 0.25);
+}
+
 /* Sección completa de tiendas - independiente */
 .tiendas-seccion-completa {
   margin-top: 2rem;
@@ -435,6 +465,109 @@
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1rem;
   max-width: 100%;
+}
+
+.mercado-grid-detalle {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 1rem;
+}
+
+.mercado-card-detalle {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(145deg, #f8fafc, #eef2ff);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(59, 130, 246, 0.14);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.mercado-card-imagen {
+  background: #fff;
+  padding: 1rem;
+  text-align: center;
+}
+
+.mercado-card-imagen img {
+  width: 100%;
+  max-width: 210px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.mercado-card-body {
+  padding: 1rem 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mercado-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mercado-card-price {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-weight: 800;
+}
+
+.mercado-card-qty {
+  color: #4b5563;
+  font-weight: 700;
+}
+
+.mercado-card-body h4 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.mercado-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  color: #4b5563;
+  font-size: 0.88rem;
+}
+
+.mercado-card-description {
+  margin: 0;
+  color: #374151;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.mercado-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-mercado-ver-completo {
+  border: none;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-mercado-ver-completo:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
 }
 
 .info-grid {

@@ -60,6 +60,39 @@ const getMyListings = async (req, res) => {
     }
 };
 
+const getListingsByCarta = async (req, res) => {
+    try {
+        const { cartaId } = req.params;
+
+        if (!cartaId) {
+            return res.status(400).json({ message: 'Carta ID is required' });
+        }
+
+        const items = await marketRepository
+            .createQueryBuilder('item')
+            .leftJoinAndSelect('item.carta', 'carta')
+            .leftJoinAndSelect('item.user', 'user')
+            .where('item.active = :active', { active: true })
+            .andWhere('item.cartaId = :cartaId', { cartaId: Number(cartaId) })
+            .orderBy('item.createdAt', 'DESC')
+            .getMany();
+
+        const safeItems = items.map(item => ({
+            ...item,
+            user: item.user ? {
+                id: item.user.id,
+                name: item.user.name,
+                picture: item.user.picture
+            } : null
+        }));
+
+        res.json(safeItems);
+    } catch (error) {
+        console.error('Error fetching market listings by carta:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 const searchMarket = async (req, res) => {
     try {
         const { query } = req.query;
@@ -123,6 +156,7 @@ const deleteResult = async (req, res) => {
 module.exports = {
     listForSale,
     getMyListings,
+    getListingsByCarta,
     searchMarket,
     deleteResult // renamed from removeListing to avoid collision if needed
 };
