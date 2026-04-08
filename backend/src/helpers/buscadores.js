@@ -296,23 +296,50 @@ async function buscarEnTiendaShopify(tienda, carta) {
       let disponible = false;
 
       try {
-        const productoJsonUrl = `${urlBase}/products/${handle}.json`;
-        const pRes = await axios.get(productoJsonUrl, {
-          headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
-          timeout: 5000
-        });
-        const variants = pRes.data?.product?.variants || [];
+        // Shopify .json no siempre incluye "available" por variante.
+        // El endpoint .js sí trae disponibilidad real, por eso lo priorizamos.
+        let variants = [];
+        const productoJsUrl = `${urlBase}/products/${handle}.js`;
+        try {
+          const pJsRes = await axios.get(productoJsUrl, {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+            timeout: 5000
+          });
+          variants = pJsRes.data?.variants || [];
+        } catch (eJs) {
+          const productoJsonUrl = `${urlBase}/products/${handle}.json`;
+          const pRes = await axios.get(productoJsonUrl, {
+            headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+            timeout: 5000
+          });
+          variants = pRes.data?.product?.variants || [];
+        }
+
+        const normalizarPrecioVariant = (rawPrice) => {
+          if (typeof rawPrice === 'number') {
+            // En endpoint .js Shopify suele venir en centavos
+            return Math.round(rawPrice / 100).toString();
+          }
+
+          const parsed = Number(rawPrice);
+          if (Number.isFinite(parsed)) {
+            return Math.round(parsed).toString();
+          }
+
+          return null;
+        };
+
         // Tomar variante más barata disponible
-        const disponibles = variants.filter(v => v.available);
+        const disponibles = variants.filter(v => v.available === true);
         if (disponibles.length > 0) {
           disponible = true;
-          precio = (disponibles[0].price / 1).toFixed(0); // precio en CLP
+          precio = normalizarPrecioVariant(disponibles[0].price);
         } else if (variants.length > 0) {
           disponible = false;
-          precio = (variants[0].price / 1).toFixed(0);
+          precio = normalizarPrecioVariant(variants[0].price);
         }
       } catch (e) {
-        console.warn(`⚠️ [${tienda.nombre}] No se pudo obtener product.json: ${e.message}`);
+        console.warn(`⚠️ [${tienda.nombre}] No se pudo obtener detalle de producto Shopify: ${e.message}`);
       }
 
       console.log(`✅ [${tienda.nombre}] ENCONTRADO: "${producto.title}" | $${precio} | disponible: ${disponible}`);
