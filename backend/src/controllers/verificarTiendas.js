@@ -36,11 +36,19 @@ async function obtenerTiendas(req, res) {
     tiendas.forEach(t => console.log(`   - ${t.nombre} (${t.tipoBusqueda})`));
 
     
-    const CACHE_PRECIOS_DURACION = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
+    const CACHE_PRECIOS_POSITIVO_DURACION = 3 * 24 * 60 * 60 * 1000; // 3 días
+    const CACHE_PRECIOS_NEGATIVO_DURACION = 24 * 60 * 60 * 1000; // 24 horas
     const ahora = new Date();
+
+    const obtenerDuracionCacheLink = (link) => {
+      const esPositivo = Boolean(link.url) && link.verificada === true && link.disponible !== false;
+      return esPositivo ? CACHE_PRECIOS_POSITIVO_DURACION : CACHE_PRECIOS_NEGATIVO_DURACION;
+    };
+
     const linksRecientes = links.filter(link => {
       const tiempoTranscurrido = ahora - new Date(link.fechaGuardado);
-      return tiempoTranscurrido < CACHE_PRECIOS_DURACION;
+      const duracionCache = obtenerDuracionCacheLink(link);
+      return tiempoTranscurrido < duracionCache;
     });
 
     
@@ -74,7 +82,7 @@ async function obtenerTiendas(req, res) {
         relations: ['tienda']
       });
 
-      console.log(`💾 Scraping de precios completado para carta "${carta.nombre}" - ${links.length} links guardados (válidos por 24 horas)`);
+      console.log(`💾 Scraping de precios completado para carta "${carta.nombre}" - ${links.length} links guardados (positivos 3 días, negativos 24 horas)`);
     } else {
       console.log(`⚡ Usando cache de precios para carta "${carta.nombre}" - ${linksRecientes.length} links recientes`);
       links = linksRecientes;
