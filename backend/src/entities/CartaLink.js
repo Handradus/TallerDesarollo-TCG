@@ -11,6 +11,7 @@ module.exports = new EntitySchema({
     },
     url: { type: 'varchar' },
     verificada: { type: 'boolean', default: true },
+    disponible: { type: 'boolean', default: true },
     idioma: { type: 'varchar', nullable: true },
     tipoProducto: { type: 'varchar', nullable: true },
     precio: { type: 'decimal', nullable: true },

@@ -91,12 +91,30 @@ export default function CartaDetalle() {
     navigate('/mi-tienda', { state: { sellCard: carta } });
   };
 
+  const limpiarCacheTiendas = async () => {
+    if (!window.confirm('\u00bfBorrar el caché de tiendas para esta carta? Se volverá a scrapear la próxima vez que alguien la consulte.')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.delete(`${apiUrl}/api/cartas/${id}/tiendas/cache`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert(`\u2705 ${res.data.mensaje}`);
+      // Forzar re-fetch de tiendas
+      setHasFetchedTiendas(false);
+      setCarta(prev => ({ ...prev, tiendasDisponibles: undefined }));
+    } catch (error) {
+      console.error(error);
+      alert('Error al borrar caché');
+    }
+  };
+
   // 🟡 Si se recibió una sugerencia en lugar de una carta válida
   const sugerenciaUrl = location.state?.sugerenciaUrl;
   const sugerenciaMensaje = location.state?.mensaje;
   const terminoBuscado = location.state?.terminoBuscado;
 
   if (sugerenciaUrl) {
+    const terminoProcesado = terminoBuscado ? terminoBuscado.replace(/\bpromo\b/gi, '').replace(/\s+/g, ' ').trim() : '';
     return (
       <div className="detalle-container">
         <div className="sugerencia-container">
@@ -109,7 +127,7 @@ export default function CartaDetalle() {
           </p>
           <div className="sugerencia-acciones">
             <a
-              href={`https://www.pricecharting.com/search-products?q=${terminoBuscado ? encodeURIComponent(terminoBuscado) : ''}&type=prices`}
+              href={`https://www.pricecharting.com/search-products?q=${encodeURIComponent(terminoProcesado)}&type=prices`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-sugerencia btn-sugerencia-price"
@@ -117,7 +135,7 @@ export default function CartaDetalle() {
               📈 Buscar en PriceCharting
             </a>
             <a
-              href={`https://pokumon.com/cards?search=${terminoBuscado ? encodeURIComponent(terminoBuscado) : ''}`}
+              href={`https://pokumon.com/cards?search=${encodeURIComponent(terminoProcesado)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-sugerencia btn-sugerencia-pokumon"
@@ -278,13 +296,14 @@ export default function CartaDetalle() {
         .then(tiendas => {
           // Convertir objeto de tiendas a array para el frontend
           const tiendasArray = Object.entries(tiendas)
-            .filter(([nombre, datos]) => datos.url) // Solo tiendas con URL válida
+            .filter(([nombre, datos]) => datos.url && datos.disponible !== false) // Solo tiendas con URL válida y stock disponible
             .map(([nombre, datos]) => ({
               id: datos.id, // ← Incluir ID de la tienda
               nombre,
               url: datos.url,
               verificada: datos.verificada,
-              precio: datos.precio
+              precio: datos.precio,
+              disponible: datos.disponible !== undefined ? datos.disponible : true
             }));
 
           setCarta(prev => ({
@@ -615,7 +634,28 @@ export default function CartaDetalle() {
         {/* Tiendas disponibles - sección independiente debajo de imagen y precios */}
         <div className="tiendas-seccion-completa">
           <div className="precios">
-            <h3>🏪 Disponibilidad en tiendas</h3>
+            <h3>🏪 Disponibilidad en tiendas
+              {user?.role === 'admin' && (
+                <button
+                  onClick={limpiarCacheTiendas}
+                  title="Borrar caché de precios y re-scrapear"
+                  style={{
+                    marginLeft: '12px',
+                    padding: '4px 10px',
+                    fontSize: '0.75rem',
+                    backgroundColor: '#e74c3c',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    verticalAlign: 'middle',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  🗑️ Borrar caché
+                </button>
+              )}
+            </h3>
             {cargandoTiendas ? (
               <p>Cargando tiendas...</p>
             ) : carta.tiendasDisponibles && carta.tiendasDisponibles.length > 0 ? (

@@ -1,6 +1,6 @@
 // Service para actualizar BD con cartas desde API
 const { AppDataSource } = require('../data-source');
-const { Carta } = require('../entities/Carta');
+const Carta = require('../entities/Carta');
 
 // Función para guardar cartas de API a BD
 async function guardarCartasDesdeAPI(cartasAPI) {
@@ -32,7 +32,7 @@ async function guardarCartasDesdeAPI(cartasAPI) {
         cartaExistente.imagenGrande = cartaAPI.imagenGrande || cartaAPI.imagen;
         cartaExistente.precioNormal = cartaAPI.precioNormal || cartaAPI.precio;
         cartaExistente.precioHolofoil = cartaAPI.precioHolofoil;
-        cartaExistente.fechaActualizacion = new Date();
+        // No existe fechaActualizacion en la entidad, se omite
         
         const cartaActualizada = await repository.save(cartaExistente);
         cartasActualizadas.push({
@@ -54,8 +54,6 @@ async function guardarCartasDesdeAPI(cartasAPI) {
           imagenGrande: cartaAPI.imagenGrande || cartaAPI.imagen,
           precioNormal: cartaAPI.precioNormal || cartaAPI.precio,
           precioHolofoil: cartaAPI.precioHolofoil,
-          fechaCreacion: new Date(),
-          fechaActualizacion: new Date()
         });
         
         const cartaGuardada = await repository.save(nuevaCarta);

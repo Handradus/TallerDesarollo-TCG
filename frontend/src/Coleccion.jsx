@@ -94,6 +94,29 @@ export default function Coleccion() {
         }
     }
 
+    const addCopy = async (card) => {
+        if (!window.confirm(`¿Deseas agregar otra copia exacta de ${card.nombre}?`)) return;
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/collection/add`,
+                { 
+                    cartaId: card.id, 
+                    binderId: selectedBinderId, 
+                    isOwned: card.isOwned, // Misma propiedad de posesión (Deseada o En Colección)
+                    forceAdd: true, // Forzar creación de otra copia separada
+                    condition: card.condition,
+                    language: card.language,
+                    foilType: card.foilType
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            fetchCollection();
+        } catch (error) {
+            console.error('Error adding copy:', error);
+            alert('Error al agregar copia');
+        }
+    };
+
     const openEditModal = (item) => {
         setEditItem(item);
         setEditForm({
@@ -261,7 +284,10 @@ export default function Coleccion() {
                                                     )}
                                                 </div>
                                                 <div className="card-info">
-                                                    <h4>{card.nombre}</h4>
+                                                    <h4>
+                                                        {card.nombre}{' '}
+                                                        {card.numero && <span style={{fontSize: '0.8rem', color: '#666', fontWeight: 'normal'}}>#{card.numero}</span>}
+                                                    </h4>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                         <span className="card-qty">
                                                             {(!card.isOwned || card.quantity === 0) ? 'Deseada' : `x${card.quantity}`}
@@ -274,13 +300,11 @@ export default function Coleccion() {
                                                     </div>
                                                     
                                                     {/* Custom Properties Badges */}
-                                                    {(card.isOwned || card.quantity > 0) && (
-                                                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '5px' }}>
-                                                            {card.condition && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.condition}</span>}
-                                                            {card.language && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.language}</span>}
-                                                            {card.foilType && card.foilType !== 'Normal' && <span style={{fontSize: '0.7rem', background: 'linear-gradient(45deg, #ffd700, #ff8c00)', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{card.foilType}</span>}
-                                                        </div>
-                                                    )}
+                                                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '5px' }}>
+                                                        {card.condition && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.condition}</span>}
+                                                        {card.language && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.language}</span>}
+                                                        {card.foilType && card.foilType !== 'Normal' && <span style={{fontSize: '0.7rem', background: 'linear-gradient(45deg, #ffd700, #ff8c00)', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{card.foilType}</span>}
+                                                    </div>
 
                                                     <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
                                                         {(!card.isOwned || card.quantity === 0) ? (
@@ -321,6 +345,13 @@ export default function Coleccion() {
                                                             title="Editar detalles (Estado, Idioma...)"
                                                         >
                                                             ✏️
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); addCopy(card); }}
+                                                            className="btn-secondary btn-sm"
+                                                            title="Agregar otra copia"
+                                                        >
+                                                            ➕
                                                         </button>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); removeFromCollection(card.id); }}

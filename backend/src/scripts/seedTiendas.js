@@ -59,8 +59,8 @@ const tiendasPredefinidas = [
     nombre: 'Collector Center - Singles',
     descripcion: 'Sección especializada en cartas individuales de Collector Center.',
     valoracion: 4.2,
-    urlBusqueda: 'https://singles.collectorcenter.cl/?s=BUSQUEDA&asp_active=1&p_asid=2&p_asp_data=1&aspf[_stock_status__1]=instock&filters_initial=1&filters_changed=0&qtranslate_lang=0&woo_currency=CLP&current_page_id=40',
-    tipoBusqueda: 'levelup',
+    urlBusqueda: 'https://singles.collectorcenter.cl/search?q=BUSQUEDA&options%5Bprefix%5D=last',
+    tipoBusqueda: 'shopify',
     urlBase: 'https://singles.collectorcenter.cl',
     direccion: 'Online, Chile',
     telefono: null,
@@ -105,7 +105,7 @@ const tiendasPredefinidas = [
     telefono: null,
     logo: null,
     ultimaActualizacion: null,
-    activo: true,
+    activo: false,
   },
   {
     nombre: 'Guildreams',
@@ -118,7 +118,7 @@ const tiendasPredefinidas = [
     telefono: null,
     logo: null,
     ultimaActualizacion: null,
-    activo: true,
+    activo: false,
   },
   {
     nombre: 'AFK Store',
@@ -157,14 +157,14 @@ const tiendasPredefinidas = [
     telefono: null,
     logo: null,
     ultimaActualizacion: null,
-    activo: true,
+    activo: false,
   },
   {
     nombre: 'Drawn',
     descripcion: 'Tienda chilena de cartas coleccionables y cultura pop.',
     valoracion: 4.0,
-    urlBusqueda: 'https://drawn.cl/?s=BUSQUEDA&post_type=product',
-    tipoBusqueda: 'levelup',
+    urlBusqueda: 'https://drawn.cl/search?q=BUSQUEDA&options%5Bprefix%5D=last',
+    tipoBusqueda: 'shopify',
     urlBase: 'https://drawn.cl',
     direccion: 'Online, Chile',
     telefono: null,
@@ -183,7 +183,7 @@ const tiendasPredefinidas = [
     telefono: null,
     logo: null,
     ultimaActualizacion: null,
-    activo: true,
+    activo: false,
   },
   {
     nombre: 'Golden Gamers',
@@ -196,7 +196,7 @@ const tiendasPredefinidas = [
     telefono: null,
     logo: null,
     ultimaActualizacion: null,
-    activo: true,
+    activo: false,
   },
   {
     nombre: 'Rocket TCG',
@@ -209,7 +209,7 @@ const tiendasPredefinidas = [
     telefono: null,
     logo: null,
     ultimaActualizacion: null,
-    activo: true,
+    activo: false,
   },
   {
     nombre: 'Arcadia Collects',
@@ -235,7 +235,7 @@ const tiendasPredefinidas = [
     telefono: null,
     logo: null,
     ultimaActualizacion: null,
-    activo: true,
+    activo: false,
   },
   {
     nombre: 'Pandora Store',
@@ -283,12 +283,14 @@ async function seedTiendas() {
   const tiendaRepo = AppDataSource.getRepository(Tienda);
 
   for (const tienda of tiendasPredefinidas) {
-    const yaExiste = await tiendaRepo.findOneBy({ nombre: tienda.nombre });
+    let yaExiste = await tiendaRepo.findOneBy({ nombre: tienda.nombre });
     if (!yaExiste) {
       await tiendaRepo.save(tienda);
       console.log(`✅ Insertada tienda: ${tienda.nombre}`);
     } else {
-      console.log(`ℹ️ Ya existe tienda: ${tienda.nombre}`);
+      Object.assign(yaExiste, tienda);
+      await tiendaRepo.save(yaExiste);
+      console.log(`🔄 Actualizada tienda: ${tienda.nombre}`);
     }
   }
 }

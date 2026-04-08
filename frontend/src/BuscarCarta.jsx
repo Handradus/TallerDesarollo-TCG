@@ -30,11 +30,18 @@ export default function BuscarCartas() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Estados modo selección múltiple
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [selectedCards, setSelectedCards] = useState(new Set());
+  const [isAddingBulk, setIsAddingBulk] = useState(false);
+
   // Binder State
   const [binders, setBinders] = useState([]);
   const [showBinderModal, setShowBinderModal] = useState(false);
+  const [showBulkBinderModal, setShowBulkBinderModal] = useState(false);
   const [selectedCardForBind, setSelectedCardForBind] = useState(null);
   const [targetBinderId, setTargetBinderId] = useState('');
+  const [newBinderName, setNewBinderName] = useState('');
 
   const initiateAddToCollection = async (e, carta) => {
     e.stopPropagation();
@@ -80,7 +87,106 @@ export default function BuscarCartas() {
     navigate('/mi-tienda', { state: { sellCard: carta } });
   };
 
+  const toggleCardSelection = (e, cartaId) => {
+    e.stopPropagation();
+    const newSelection = new Set(selectedCards);
+    if (newSelection.has(cartaId)) {
+      newSelection.delete(cartaId);
+    } else {
+      newSelection.add(cartaId);
+    }
+    setSelectedCards(newSelection);
+  };
 
+  const seleccionarTodas = () => {
+    if (selectedCards.size === cartas.length) {
+      setSelectedCards(new Set());
+    } else {
+      const allIds = cartas.map(c => c.id);
+      setSelectedCards(new Set(allIds));
+    }
+  };
+
+  const initiateBulkAdd = async () => {
+    if (selectedCards.size === 0) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${apiUrl}/api/collection/binders`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const userBinders = res.data;
+
+      if (userBinders.length === 0) {
+        ejecutarBulkAdd('');
+      } else {
+        setBinders(userBinders);
+        setShowBulkBinderModal(true);
+      }
+    } catch (e) {
+      console.error(e);
+      ejecutarBulkAdd('');
+    }
+  };
+
+  const ejecutarBulkAdd = async (binderId) => {
+    setIsAddingBulk(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const requests = Array.from(selectedCards).map(id => 
+        axios.post(`${apiUrl}/api/collection/add`, 
+          { cartaId: id, isOwned: false, binderId: binderId || null }, 
+          { headers: { Authorization: `Bearer ${token}` } }
+        ).catch(err => {
+           console.log("Error agregando carta (posiblemente ya existe)", id, err);
+        })
+      );
+      
+      await Promise.all(requests);
+      alert(`${selectedCards.size} cartas agregadas a tu lista de deseados (Lo Quiero)${binderId ? ' en la carpeta seleccionada' : ''}.`);
+      
+      setSelectedCards(new Set());
+      setIsMultiSelectMode(false);
+      setShowBulkBinderModal(false);
+      setTargetBinderId('');
+    } catch (error) {
+       console.error(error);
+       alert("Ocurrió un error al agregar algunas cartas.");
+    } finally {
+      setIsAddingBulk(false);
+    }
+  };
+
+  const handleConfirmSingleAdd = async () => {
+    let finalBinderId = targetBinderId;
+    if (targetBinderId === 'NEW') {
+      if (!newBinderName.trim()) return alert('Ingresa un nombre para la carpeta');
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.post(`${apiUrl}/api/collection/binders`, { name: newBinderName }, { headers: { Authorization: `Bearer ${token}` } });
+        finalBinderId = res.data.id;
+        setBinders([...binders, res.data]);
+        setNewBinderName('');
+      } catch (e) { console.error(e); return alert("Error al crear la carpeta"); }
+    }
+    addToCollection(selectedCardForBind, finalBinderId || null);
+  };
+
+  const handleConfirmBulkAdd = async () => {
+    let finalBinderId = targetBinderId;
+    if (targetBinderId === 'NEW') {
+      if (!newBinderName.trim()) return alert('Ingresa un nombre para la carpeta');
+      try {
+        const token = localStorage.getItem('token');
+        const res = await axios.post(`${apiUrl}/api/collection/binders`, { name: newBinderName }, { headers: { Authorization: `Bearer ${token}` } });
+        finalBinderId = res.data.id;
+        setBinders([...binders, res.data]);
+        setNewBinderName('');
+      } catch (e) { console.error(e); return alert("Error al crear la carpeta"); }
+    }
+    ejecutarBulkAdd(finalBinderId);
+  };
 
   // Efecto para re-ordenar cuando cambian los parámetros de ordenamiento
   useEffect(() => {
@@ -533,20 +639,94 @@ export default function BuscarCartas() {
             Resultados para: "<strong>{lastSearchTerm}</strong>" ({cartas.length} {cartas.length === 1 ? 'carta' : 'cartas'})
           </div>
 
-          {/* Controles de ordenamiento - ahora debajo de los resultados */}
+          {/* Controles de ordenamiento y multi-selección */}
           {cartas.length > 0 && (
-            <div className="sort-controls" style={{
+            <div className="search-controls-container" style={{
               display: 'flex',
-              gap: '10px',
-              alignItems: 'center',
-              justifyContent: 'center',
+              flexDirection: 'column',
+              gap: '15px',
               margin: '10px 0 20px 0',
-              fontSize: '0.9rem',
-              padding: '10px',
+              padding: '15px',
               backgroundColor: '#f8f9fa',
               borderRadius: '8px',
               border: '1px solid #e0e0e0'
             }}>
+              
+              {/* Barra de herramientas para Selección Múltiple */}
+              {user && (
+                <div className="multi-select-toolbar" style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '15px',
+                  paddingBottom: '15px',
+                  borderBottom: '1px solid #ddd',
+                  flexWrap: 'wrap'
+                }}>
+                  <button
+                    onClick={() => {
+                      setIsMultiSelectMode(!isMultiSelectMode);
+                      if (isMultiSelectMode) setSelectedCards(new Set());
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: isMultiSelectMode ? '#e53e3e' : '#3182ce',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      transition: 'background-color 0.2s'
+                    }}
+                  >
+                    {isMultiSelectMode ? 'Cancelar Selección' : '☑️ Selección Múltiple'}
+                  </button>
+
+                  {isMultiSelectMode && (
+                    <>
+                      <button
+                        onClick={seleccionarTodas}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#4a5568',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {selectedCards.size === cartas.length ? 'Desmarcar Todas' : 'Seleccionar Todas'}
+                      </button>
+
+                      <button
+                        onClick={initiateBulkAdd}
+                        disabled={selectedCards.size === 0 || isAddingBulk}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: selectedCards.size > 0 ? '#9C27B0' : '#d1d5db',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: selectedCards.size > 0 ? 'pointer' : 'not-allowed',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {isAddingBulk ? 'Agregando...' : `❤️ Agregar a Lo Quiero (${selectedCards.size})`}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Controles de Ordenamiento */}
+              <div className="sort-controls" style={{
+                display: 'flex',
+                gap: '10px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.9rem'
+              }}>
               <label style={{ fontWeight: '500' }}>Ordenar por:</label>
               <select
                 value={ordenar}
@@ -599,6 +779,7 @@ export default function BuscarCartas() {
                 </button>
               )}
             </div>
+            </div>
           )}
         </>
       )}
@@ -627,22 +808,42 @@ export default function BuscarCartas() {
           <div
             key={carta.id}
             className="carta-item"
-            onClick={() => navigate(`/carta/${carta.id}`)}
+            onClick={(e) => isMultiSelectMode ? toggleCardSelection(e, carta.id) : navigate(`/carta/${carta.id}`)}
             style={{
+              position: 'relative',
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
-              border: '1px solid #e0e0e0',
+              border: isMultiSelectMode && selectedCards.has(carta.id) ? '3px solid #9C27B0' : '1px solid #e0e0e0',
               borderRadius: '16px',
               padding: '1.5rem',
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-              transition: 'all 0.3s ease',
+              background: isMultiSelectMode && selectedCards.has(carta.id) ? 'rgba(156, 39, 176, 0.05)' : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+              boxShadow: isMultiSelectMode && selectedCards.has(carta.id) ? '0 8px 25px rgba(156, 39, 176, 0.3)' : '0 4px 20px rgba(0, 0, 0, 0.08)',
+              transition: 'all 0.2s ease',
               minHeight: '450px',
               width: '100%',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              transform: isMultiSelectMode && selectedCards.has(carta.id) ? 'scale(1.02)' : 'scale(1)'
             }}
           >
+            {isMultiSelectMode && (
+              <div style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                backgroundColor: selectedCards.has(carta.id) ? '#9C27B0' : 'white',
+                border: '2px solid #9C27B0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10
+              }}>
+                {selectedCards.has(carta.id) && <span style={{ color: 'white', fontWeight: 'bold' }}>✓</span>}
+              </div>
+            )}
             <h2>{carta.nombre}</h2>
             <div className="carta-imagen-container">
               <img src={carta.imagenPequena || carta.imagenGrande} alt={carta.nombre} />
@@ -703,16 +904,66 @@ export default function BuscarCartas() {
               className="filter-select"
               value={targetBinderId}
               onChange={e => setTargetBinderId(e.target.value)}
-              style={{ width: '100%', marginBottom: '20px', padding: '10px' }}
+              style={{ width: '100%', marginBottom: targetBinderId === 'NEW' ? '10px' : '20px', padding: '10px' }}
             >
               <option value="">🗂️ Colección General</option>
               {binders.map(b => (
                 <option key={b.id} value={b.id}>📁 {b.name}</option>
               ))}
+              <option value="NEW">➕ Crear nueva carpeta...</option>
             </select>
+            
+            {targetBinderId === 'NEW' && (
+              <input 
+                type="text" 
+                placeholder="Nombre de la nueva carpeta" 
+                value={newBinderName}
+                onChange={e => setNewBinderName(e.target.value)}
+                style={{ width: '100%', marginBottom: '20px', padding: '10px', boxSizing: 'border-box', border: '1px solid #ddd', borderRadius: '4px' }}
+                autoFocus
+              />
+            )}
+            
             <div style={{ textAlign: 'right' }}>
-              <button className="btn-secondary" onClick={() => setShowBinderModal(false)} style={{ marginRight: '10px' }}>Cancelar</button>
-              <button className="btn-primary" onClick={() => addToCollection(selectedCardForBind, targetBinderId || null)}>Confirmar</button>
+              <button className="btn-secondary" onClick={() => { setShowBinderModal(false); setNewBinderName(''); }} style={{ marginRight: '10px' }}>Cancelar</button>
+              <button className="btn-primary" onClick={handleConfirmSingleAdd}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Binder Selection Modal */}
+      {showBulkBinderModal && (
+        <div className="modal-overlay" onClick={() => setShowBulkBinderModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h3>Agregar {selectedCards.size} cartas a "Lo Quiero" en...</h3>
+            <select
+              className="filter-select"
+              value={targetBinderId}
+              onChange={e => setTargetBinderId(e.target.value)}
+              style={{ width: '100%', marginBottom: targetBinderId === 'NEW' ? '10px' : '20px', padding: '10px' }}
+            >
+              <option value="">🗂️ Colección General</option>
+              {binders.map(b => (
+                <option key={b.id} value={b.id}>📁 {b.name}</option>
+              ))}
+              <option value="NEW">➕ Crear nueva carpeta...</option>
+            </select>
+            
+            {targetBinderId === 'NEW' && (
+              <input 
+                type="text" 
+                placeholder="Nombre de la nueva carpeta" 
+                value={newBinderName}
+                onChange={e => setNewBinderName(e.target.value)}
+                style={{ width: '100%', marginBottom: '20px', padding: '10px', boxSizing: 'border-box', border: '1px solid #ddd', borderRadius: '4px' }}
+                autoFocus
+              />
+            )}
+            
+            <div style={{ textAlign: 'right' }}>
+              <button className="btn-secondary" onClick={() => { setShowBulkBinderModal(false); setNewBinderName(''); }} style={{ marginRight: '10px' }}>Cancelar</button>
+              <button className="btn-primary" onClick={handleConfirmBulkAdd}>Confirmar</button>
             </div>
           </div>
         </div>

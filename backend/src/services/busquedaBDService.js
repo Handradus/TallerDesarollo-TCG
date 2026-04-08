@@ -71,7 +71,8 @@ async function buscarEnBD(input, tipoBusqueda = 'carta') {
 
     // **SUGERENCIA PROMOCIONAL**
     if (esBusquedaPromocional(inputOriginal)) {
-      const urlSugerida = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(inputOriginal)}&type=prices`;
+      const inputSinPromo = inputOriginal.replace(/\bpromo\b/gi, '').replace(/\s+/g, ' ').trim();
+      const urlSugerida = `https://www.pricecharting.com/search-products?q=${encodeURIComponent(inputSinPromo)}&type=prices`;
       console.log(`🔔 Sugerencia promocional: ${urlSugerida}`);
       return [{
         mensaje: 'Tu búsqueda parece referirse a una carta muy específica, promocional o rara que no está en nuestra BD. Te recomendamos buscarla en PriceCharting o Pokumon.com:',
@@ -460,7 +461,7 @@ function obtenerSetsConocidos() {
     'obsidian flames', 'paradox rift', 'paldean fates', 'temporal forces', 'twilight masquerade',
     'shrouded fable', 'stellar crown', 'surging sparks',
     // Añadir variaciones de sets
-    'detective', 'pikachu', 'bolt', 'classic', 'collection'
+    'detective', 'pikachu', 'bolt', 'classic', 'collection', 'promo', 'black star'
   ];
 }
 

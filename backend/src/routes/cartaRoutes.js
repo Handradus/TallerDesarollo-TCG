@@ -118,5 +118,32 @@ router.post('/:id/tiendas/refresh', refrescarTiendas);
 router.post('/:id/tiendas/admin-force-update', obtenerTiendasAdmin); // Nueva ruta para admin
 router.get('/:id/precios-pricecharting', obtenerPreciosPriceCharting);
 
+// Borrar caché de precios de tiendas para una carta (solo admin)
+router.delete('/:id/tiendas/cache', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'No token provided' });
+
+  const jwt = require('jsonwebtoken');
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_change_me');
+  } catch {
+    return res.status(403).json({ message: 'Token inválido' });
+  }
+  if (decoded.role !== 'admin') return res.status(403).json({ message: 'Solo para admins' });
+
+  const { id } = req.params;
+  try {
+    const CartaLink = require('../entities/CartaLink');
+    const linkRepo = AppDataSource.getRepository(CartaLink);
+    const deleted = await linkRepo.delete({ carta: { id: parseInt(id) } });
+    console.log(`🗑️ [Admin] Caché borrada para carta ID ${id}: ${deleted.affected} links eliminados`);
+    res.json({ mensaje: `Caché borrada: ${deleted.affected} registros eliminados`, affected: deleted.affected });
+  } catch (error) {
+    console.error('Error borrando caché:', error);
+    res.status(500).json({ error: 'Error al borrar caché' });
+  }
+});
 
 module.exports = router;

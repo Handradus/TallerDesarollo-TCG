@@ -90,7 +90,8 @@ async function obtenerTiendas(req, res) {
             url: link.url,
             verificada: link.verificada,
             precio: link.precio || null,
-            tipo: link.tipoProducto || null
+            tipo: link.tipoProducto || null,
+            disponible: link.disponible !== undefined ? link.disponible : true
           }
         : {
             id: tienda.id, 
@@ -176,7 +177,8 @@ async function refrescarTiendas(req, res) {
             url: link.url,
             verificada: link.verificada,
             precio: link.precio || null,
-            tipo: link.tipoProducto || null
+            tipo: link.tipoProducto || null,
+            disponible: link.disponible !== undefined ? link.disponible : true
           }
         : {
             id: tienda.id,
@@ -293,6 +295,7 @@ async function obtenerTiendasAdmin(req, res) {
             verificada: link.verificada,
             precio: link.precio || null,
             tipo: link.tipoProducto || null,
+            disponible: link.disponible !== undefined ? link.disponible : true,
             fechaActualizacion: link.fechaGuardado
           }
         : {

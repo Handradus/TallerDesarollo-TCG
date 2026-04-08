@@ -64,7 +64,8 @@ async function buscarEnBD(input, tipoBusqueda = 'carta') {
 
     // **SUGERENCIA PROMOCIONAL**
     if (esBusquedaPromocional(inputOriginal)) {
-      const urlSugerida = `https://pokumon.com/cards?search=${encodeURIComponent(inputOriginal)}`;
+      const inputSinPromo = inputOriginal.replace(/\bpromo\b/gi, '').replace(/\s+/g, ' ').trim();
+      const urlSugerida = `https://pokumon.com/cards?search=${encodeURIComponent(inputSinPromo)}`;
       console.log(`🔔 Sugerencia promocional: ${urlSugerida}`);
       return [{
         mensaje: 'Tu búsqueda parece ser una carta promocional exclusiva o de evento. Te recomendamos visitar Pokumon:',
@@ -358,7 +359,7 @@ function obtenerSetsConocidos() {
     'obsidian flames', 'paradox rift', 'paldean fates', 'temporal forces', 'twilight masquerade',
     'shrouded fable', 'stellar crown', 'surging sparks',
     // Añadir variaciones de sets
-    'detective', 'pikachu', 'bolt', 'classic', 'collection'
+    'detective', 'pikachu', 'bolt', 'classic', 'collection', 'promo', 'black star'
   ];
 }
 

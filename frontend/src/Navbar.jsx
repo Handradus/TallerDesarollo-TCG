@@ -51,7 +51,7 @@ export default function Navbar() {
 
   const menuItems = [
     {
-      path: '/',
+      path: '/buscar',
       label: '🏠 Inicio',
       title: 'Ir al inicio'
     },

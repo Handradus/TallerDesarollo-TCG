@@ -41,6 +41,8 @@ async function verificarYBuscarLink(carta, tienda) {
     const nuevoLink = linkRepo.create({
       url: resultado.url,
       verificada: resultado.verificada,
+      disponible: resultado.disponible !== undefined ? resultado.disponible : true,
+      tipoProducto: resultado.tipoProducto || null,
       precio: resultado.precio || null,
       carta: { id: carta.id },
       tienda: { id: tienda.id }
@@ -51,6 +53,21 @@ async function verificarYBuscarLink(carta, tienda) {
     console.log(`💾 [ADMIN DEBUG] Link guardado exitosamente`);
   } else {
     console.log(`❌ [${tienda.nombre}] NO ENCONTRADO: "${carta.nombre}"`);
+
+    // Guardar cache negativo para evitar re-scraping en cada refresh
+    // dentro de la ventana de 24h del controlador.
+    const cacheNegativo = linkRepo.create({
+      url: '',
+      verificada: false,
+      disponible: false,
+      tipoProducto: resultado?.tipoProducto || 'no-encontrado',
+      precio: null,
+      carta: { id: carta.id },
+      tienda: { id: tienda.id }
+    });
+
+    await linkRepo.save(cacheNegativo);
+    console.log(`💾 [ADMIN DEBUG] Cache negativo guardado para ${tienda.nombre}`);
   }
 
   return resultado;

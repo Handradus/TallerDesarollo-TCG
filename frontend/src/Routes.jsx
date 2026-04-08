@@ -1,4 +1,6 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+import Landing from './Landing';
 import CartaDetalle from './detalleCarta';
 import BuscarCartas from './BuscarCarta';
 import BuscarCartaAdmin from './BuscarCartaAdmin';
@@ -18,9 +20,29 @@ import AdminModeracion from './AdminModeracion';
 import AdminReportes from './AdminReportes';
 
 export default function AppRoutes() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <p>Cargando aplicación...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
+
   return (
     <Routes>
-      <Route path="/" element={<BuscarCartas />} />
+      <Route path="/" element={<Navigate to="/buscar" replace />} />
+      <Route path="/buscar" element={<BuscarCartas />} />
       <Route path="/admin-buscar" element={<BuscarCartaAdmin />} />
       <Route path="/admin-precios" element={<AdminPrecios />} />
       <Route path="/carta/:id" element={<CartaDetalle />} />

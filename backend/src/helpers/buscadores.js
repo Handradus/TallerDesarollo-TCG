@@ -11,6 +11,10 @@ function normalizarParaUrl(texto) {
     .replace(/\s+/g, "-");
 }
 
+function removerAcentos(str = "") {
+  return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 // Función auxiliar para analizar coincidencias de carta en URLs y texto
 function analizarCoincidenciasCarta(carta, href, textoElemento, tienda) {
   const nombreCarta = carta.nombre.toLowerCase();
@@ -23,16 +27,17 @@ function analizarCoincidenciasCarta(carta, href, textoElemento, tienda) {
   console.log(`🔍 [${tienda.nombre}] Analizando carta: "${carta.nombre}"`);
   console.log(`   🔢 Número carta: "${numeroCarta}" (formateado: "${numeroFormateado}")`);
   console.log(`   📊 Total set: ${totalSet ? `"${totalSet}"` : 'N/A'}`);
-  
+
   // Múltiples variaciones del nombre para mayor flexibilidad
-  const nombreNormalizado = carta.nombre.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const nombreConGuiones = carta.nombre.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
-  const nombreSinApostrofes = carta.nombre.toLowerCase().replace(/'/g, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+  const nombreSinAcentos = removerAcentos(carta.nombre.toLowerCase());
+  const nombreNormalizado = nombreSinAcentos.replace(/[^a-z0-9]/g, '');
+  const nombreConGuiones = nombreSinAcentos.replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
+  const nombreSinApostrofes = nombreSinAcentos.replace(/'/g, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-');
   
   // Análisis del texto visible del enlace (más estricto con número)
-  const textoLower = textoElemento.toLowerCase();
-  const incluyeNombreTexto = textoLower.includes(nombreCarta) || 
-                             textoLower.includes(nombreCarta.replace(/'/g, ''));
+  const textoLower = removerAcentos(textoElemento.toLowerCase());
+  const incluyeNombreTexto = textoLower.includes(nombreSinAcentos) || 
+                             textoLower.includes(nombreSinAcentos.replace(/'/g, ''));
   
   // NÚMERO ESTRICTO: buscar patrones con MÚLTIPLES SEPARADORES
   let incluyeNumeroTexto = false;
@@ -41,11 +46,14 @@ function analizarCoincidenciasCarta(carta, href, textoElemento, tienda) {
     // Buscar patrones con diferentes separadores: /, -, _, espacio
     const separadores = ['/', '-', '_', ' '];
     const patronesCompletos = [];
+    const totalSetFormateado = totalSet.padStart(3, '0'); // 94 → 094
     
     separadores.forEach(sep => {
       patronesCompletos.push(
         `${numeroCarta}${sep}${totalSet}`,
-        `${numeroFormateado}${sep}${totalSet}`
+        `${numeroFormateado}${sep}${totalSet}`,
+        `${numeroCarta}${sep}${totalSetFormateado}`,        // con cero: 109/094
+        `${numeroFormateado}${sep}${totalSetFormateado}`   // con cero: 109/094
       );
     });
     
@@ -65,7 +73,7 @@ function analizarCoincidenciasCarta(carta, href, textoElemento, tienda) {
   console.log(`   ✅ Incluye número: ${incluyeNumeroTexto}`);
 
   // Análisis de la URL del producto (más variaciones pero estricto con número)
-  const hrefLower = href.toLowerCase();
+  const hrefLower = removerAcentos(href.toLowerCase());
   const incluyeNombreUrl = hrefLower.includes(nombreNormalizado) || 
                            hrefLower.includes(nombreConGuiones) ||
                            hrefLower.includes(nombreSinApostrofes);
@@ -154,264 +162,185 @@ async function urlExiste(url) {
 }
 
 async function buscarEnTiendaShopify(tienda, carta) {
-  // TÉRMINO DE BÚSQUEDA MEJORADO: usar espacios en lugar de caracteres especiales
-  let termino;
-  if (carta.printedTotal) {
-    // Usar espacios para la búsqueda, no caracteres especiales
-    termino = `${carta.nombre} ${carta.numero} ${carta.printedTotal}`;
-    console.log(`🔍 Término de búsqueda optimizado: "${termino}"`);
-    console.log(`🔍 Patrones que se buscarán: ${carta.numero}/${carta.printedTotal}, ${carta.numero}-${carta.printedTotal}, etc.`);
+  // Usar la API JSON nativa de Shopify: más confiable que parsear HTML
+  const urlBase = tienda.urlBase;
+  const numeroCarta = String(carta.numero);
+  const numeroFormateado = numeroCarta.padStart(3, '0');
+  const totalSet = carta.printedTotal ? String(carta.printedTotal) : null;
+  const totalSetPad = totalSet ? totalSet.padStart(3, '0') : null;
+  const terminosBusqueda = [carta.nombre];
+
+  if (totalSet) {
+    terminosBusqueda.push(
+      `${numeroCarta}/${totalSet}`,
+      `${numeroFormateado}/${totalSet}`,
+      `${numeroCarta}-${totalSet}`,
+      `${numeroFormateado}-${totalSet}`,
+      `${numeroCarta}/${totalSetPad}`,
+      `${numeroFormateado}/${totalSetPad}`
+    );
   } else {
-    termino = `${carta.nombre} ${carta.numero}`;
-    console.log(`🔍 Término de búsqueda: "${termino}" (sin total del set)`);
+    terminosBusqueda.push(numeroCarta, numeroFormateado);
   }
-  
-  const urlBusqueda = tienda.urlBusqueda.replace('BUSQUEDA', encodeURIComponent(termino));
-  console.log(`🛒 [${tienda.nombre}] Iniciando búsqueda Shopify para carta: "${carta.nombre}"`);
-  console.log(`🔍 [${tienda.nombre}] URL de búsqueda: ${urlBusqueda}`);
+
+  console.log(`🛒 [${tienda.nombre}] Shopify JSON API - términos: ${terminosBusqueda.join(' | ')}`);
 
   try {
-    const res = await axios.get(urlBusqueda);
-    const $ = cheerio.load(res.data);
-    const enlaces = $('a[href^="/products/"]');
+    const productosMap = new Map();
 
-    console.log(`🔗 [${tienda.nombre}] Enlaces encontrados: ${enlaces.length}`);
+    for (const termino of terminosBusqueda) {
+      const apiUrl = `${urlBase}/search/suggest.json?q=${encodeURIComponent(termino)}&resources[type]=product&resources[limit]=20`;
+      console.log(`🛒 [${tienda.nombre}] Shopify JSON API: ${apiUrl}`);
 
-    for (let i = 0; i < enlaces.length; i++) {
-      const link = $(enlaces[i]);
-      const texto = link.text().toLowerCase();
-      const href = link.attr('href');
-      const urlCompleta = `${tienda.urlBase}${href}`;
+      const res = await axios.get(apiUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        timeout: 8000
+      });
 
-      const analisis = analizarCoincidenciasCarta(carta, href, texto, tienda);
+      const productos = res.data?.resources?.results?.products || [];
+      console.log(`📦 [${tienda.nombre}] Productos encontrados por API para "${termino}": ${productos.length}`);
 
-      console.log(`🔍 Comparando [${tienda.nombre}]:`);
-      console.log(`   ↪ texto = "${texto}"`);
-      console.log(`   ↪ href = "${href}"`);
-      console.log(`   ↪ coincideTexto = ${analisis.coincideTexto}`);
-      console.log(`   ↪ coincideUrl = ${analisis.coincideUrl}`);
-
-      if (analisis.coincideAlguno) {
-        // VALIDACIÓN ESTRICTA UNIFICADA
-        const textoCompleto = `${texto} ${href}`.toLowerCase();
-        const nombreCartaLower = carta.nombre.toLowerCase();
-        
-        console.log(`🔍 [${tienda.nombre}] Iniciando validación estricta...`);
-        console.log(`   📝 Texto completo: "${textoCompleto}"`);
-        console.log(`   🎯 Carta buscada: "${carta.nombre}"`);
-        
-        // 1. FILTRO DE PRODUCTOS NO CARTAS
-        const terminosNoCartas = ['protector', 'sleeve', 'binder', 'portfolio', 'deck box', 'playmat', 'mat'];
-        if (terminosNoCartas.some(term => textoCompleto.includes(term))) {
-          console.log(`❌ [${tienda.nombre}] RECHAZADO: No es una carta (contiene: ${terminosNoCartas.find(term => textoCompleto.includes(term))})`);
-          continue;
+      for (const producto of productos) {
+        const llave = producto?.url || producto?.handle || producto?.title;
+        if (!productosMap.has(llave)) {
+          productosMap.set(llave, producto);
         }
-        
-        // 2. FILTRO DE SET ESTRICTO (MEJORADO)
-        if (carta.set) {
-          const setEsperado = carta.set.toLowerCase();
-          const setsComunes = ['sv', 'swsh', 'sm', 'xy', 'bw', 'dp', 'ex', 'neo', 'base', 'sw', 'celebrations'];
-          
-          // Mapeo de sets abreviados a nombres completos
-          const mapeosSet = {
-            'sv': ['sv', 'scarlet-violet', 'scarlet', 'violet'],
-            'swsh': ['swsh', 'sword-shield', 'sword', 'shield'], 
-            'sm': ['sm', 'sun-moon', 'sun', 'moon'],
-            'xy': ['xy'],
-            'bw': ['bw', 'black-white', 'black', 'white'],
-            'sw': ['sw', 'sword-shield'] // alias para swsh
-          };
-          
-          const setEncontrado = setsComunes.find(s => textoCompleto.includes(s));
-          
-          if (setEncontrado && setEncontrado !== setEsperado) {
-            // Verificar si es un mapeo válido
-            const variacionesValidas = mapeosSet[setEsperado] || [setEsperado];
-            const esVariacionValida = variacionesValidas.some(variacion => 
-              textoCompleto.includes(variacion) || setEncontrado === variacion
-            );
-            
-            if (!esVariacionValida) {
-              console.log(`❌ [${tienda.nombre}] RECHAZADO: Set incorrecto (esperaba "${carta.set}", encontró "${setEncontrado}")`);
-              continue;
-            } else {
-              console.log(`✅ [${tienda.nombre}] Set válido: "${setEncontrado}" es variación de "${setEsperado}"`);
-            }
-          }
-        }
-        
-        // 3. FILTRO DE NOMBRES COMPUESTOS
-        const nombresPokemon = [
-          'electrode', 'raichu', 'surfing', 'flying', 'team', 'rocket', 'aqua', 'magma', 'plasma',
-          'charizard', 'blastoise', 'venusaur', 'mewtwo', 'mew', 'lugia', 'ho-oh',
-          'rayquaza', 'dialga', 'palkia', 'giratina', 'arceus', 'reshiram', 'zekrom'
-        ];
-        const tieneOtroPokemon = nombresPokemon.some(pokemon => 
-          textoCompleto.includes(pokemon) && !nombreCartaLower.includes(pokemon)
-        );
-        
-        if (tieneOtroPokemon) {
-          const pokemonEncontrado = nombresPokemon.find(pokemon => 
-            textoCompleto.includes(pokemon) && !nombreCartaLower.includes(pokemon)
-          );
-          console.log(`❌ [${tienda.nombre}] RECHAZADO: Contiene otro Pokémon ("${pokemonEncontrado}")`);
-          continue;
-        }
-        
-        // 4. FILTRO DE VARIANTES NO DESEADAS
-        const variantesEspeciales = ['\\bv\\b', '\\bex\\b', '\\bgx\\b', 'vmax', 'vstar', 'mega', 'break', 'prime'];
-        const cartaTieneVariantes = variantesEspeciales.some(variante => {
-          const regex = new RegExp(variante, 'i');
-          return regex.test(nombreCartaLower);
-        });
-        
-        if (!cartaTieneVariantes) {
-          const tieneVarianteNoDeseada = variantesEspeciales.some(variante => {
-            const regex = new RegExp(variante, 'i');
-            return regex.test(textoCompleto);
-          });
-          
-          if (tieneVarianteNoDeseada) {
-            const varianteEncontrada = variantesEspeciales.find(variante => {
-              const regex = new RegExp(variante, 'i');
-              return regex.test(textoCompleto);
-            });
-            console.log(`❌ [${tienda.nombre}] RECHAZADO: Contiene variante no deseada ("${varianteEncontrada}")`);
-            continue;
-          }
-        }
-        
-        // 5. VALIDACIÓN DE NÚMERO EXACTO CON MÚLTIPLES SEPARADORES (MEJORADA)
-        const numeroCartaValidacion = String(carta.numero);
-        const totalSetValidacion = carta.printedTotal ? String(carta.printedTotal) : null;
-        const numeroFormateadoValidacion = numeroCartaValidacion.padStart(3, '0');
-        
-        console.log(`🔢 [${tienda.nombre}] Validando números exactos:`);
-        console.log(`   🎯 Número carta: "${numeroCartaValidacion}" (formateado: "${numeroFormateadoValidacion}")`);
-        console.log(`   📊 Total set: ${totalSetValidacion ? `"${totalSetValidacion}"` : 'N/A'}`);
-        console.log(`   📝 Texto completo a analizar: "${textoCompleto}"`);
-        
-        let tieneNumeroExacto = false;
-        
-        if (totalSetValidacion) {
-          // PATRÓN MEJORADO: Buscar el patrón número/total pero siendo flexible con contenido adicional
-          const separadores = ['/', '-', '_', ' ', '.', '|'];
-          const patronesCompletos = [];
-          
-          separadores.forEach(sep => {
-            // Escape del separador para regex si es necesario
-            const sepEscaped = sep.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            
-            // Crear patrones más flexibles que manejen paréntesis y otros caracteres
-            // Ejemplo: buscar "025/165" en "(025/165)" o "pikachu (025/165)"
-            patronesCompletos.push({
-              patron: `${numeroCartaValidacion}${sep}${totalSetValidacion}`,
-              regex: new RegExp(`\\(?${numeroCartaValidacion}${sepEscaped}${totalSetValidacion}\\)?`, 'i')
-            });
-            patronesCompletos.push({
-              patron: `${numeroFormateadoValidacion}${sep}${totalSetValidacion}`,
-              regex: new RegExp(`\\(?${numeroFormateadoValidacion}${sepEscaped}${totalSetValidacion}\\)?`, 'i')
-            });
-          });
-          
-          // Buscar usando regex para mayor precisión
-          for (const item of patronesCompletos) {
-            if (item.regex.test(textoCompleto)) {
-              tieneNumeroExacto = true;
-              console.log(`✅ [${tienda.nombre}] PATRÓN REGEX ENCONTRADO: "${item.patron}"`);
-              console.log(`   📋 Regex usada: ${item.regex}`);
-              break;
-            }
-          }
-          
-          if (!tieneNumeroExacto) {
-            // Fallback: búsqueda simple por si las regex fallan
-            const patronesSimples = [];
-            separadores.forEach(sep => {
-              patronesSimples.push(
-                `${numeroCartaValidacion}${sep}${totalSetValidacion}`,
-                `${numeroFormateadoValidacion}${sep}${totalSetValidacion}`
-              );
-            });
-            
-            tieneNumeroExacto = patronesSimples.some(patron => textoCompleto.includes(patron));
-            
-            if (tieneNumeroExacto) {
-              const patronEncontrado = patronesSimples.find(patron => textoCompleto.includes(patron));
-              console.log(`✅ [${tienda.nombre}] PATRÓN SIMPLE ENCONTRADO: "${patronEncontrado}"`);
-            } else {
-              console.log(`❌ [${tienda.nombre}] PATRÓN NO ENCONTRADO en "${textoCompleto}"`);
-              console.log(`   🔍 Se probaron ${patronesCompletos.length} patrones regex y ${patronesSimples.length} simples`);
-              console.log(`   📋 Ejemplos buscados: ${patronesSimples.slice(0, 4).join(', ')}`);
-              
-              // ANÁLISIS DETALLADO para debug
-              console.log(`   🔍 ANÁLISIS DETALLADO:`);
-              const numerosEnTexto = textoCompleto.match(/\d+/g) || [];
-              console.log(`   🔢 Números encontrados en texto: [${numerosEnTexto.join(', ')}]`);
-              
-              // Verificar si los números individuales están presentes
-              const tieneNumeroIndividual = numerosEnTexto.includes(numeroCartaValidacion) || 
-                                          numerosEnTexto.includes(numeroFormateadoValidacion);
-              const tieneTotalIndividual = numerosEnTexto.includes(totalSetValidacion);
-              
-              console.log(`   ✅ Contiene número carta "${numeroCartaValidacion}": ${numerosEnTexto.includes(numeroCartaValidacion)}`);
-              console.log(`   ✅ Contiene número formateado "${numeroFormateadoValidacion}": ${numerosEnTexto.includes(numeroFormateadoValidacion)}`);
-              console.log(`   ✅ Contiene total set "${totalSetValidacion}": ${tieneTotalIndividual}`);
-              
-              if (tieneNumeroIndividual && tieneTotalIndividual) {
-                console.log(`   ⚠️ [${tienda.nombre}] NÚMEROS PRESENTES INDIVIDUALMENTE - ACEPTANDO POR PROXIMIDAD`);
-                tieneNumeroExacto = true;
-              }
-            }
-          }
-        } else {
-          // Si no hay total del set, buscar solo números individuales
-          const numerosEncontrados = textoCompleto.match(/\b\d{1,3}\b/g) || [];
-          tieneNumeroExacto = numerosEncontrados.includes(numeroCartaValidacion) || 
-                             numerosEncontrados.includes(numeroFormateadoValidacion);
-          
-          if (tieneNumeroExacto) {
-            console.log(`✅ [${tienda.nombre}] NÚMERO INDIVIDUAL ENCONTRADO`);
-          } else {
-            console.log(`❌ [${tienda.nombre}] NÚMERO NO ENCONTRADO: esperaba "${numeroCartaValidacion}" o "${numeroFormateadoValidacion}", encontró: [${numerosEncontrados.join(', ')}]`);
-          }
-        }
-        
-        if (!tieneNumeroExacto) {
-          console.log(`❌ [${tienda.nombre}] NÚMERO NO EXACTO - RECHAZADO`);
-          continue;
-        }
-        
-        console.log(`✅ [${tienda.nombre}] VALIDACIÓN APROBADA - Es la carta correcta`);
-        
-        const existe = await urlExiste(urlCompleta);
-        console.log(`🔗 Verificando existencia: ${urlCompleta} → ${existe}`);
-        if (href && existe) {
-          console.log(`🛒 [${tienda.nombre}] URL existe, iniciando scraping de precio...`);
-          const precio = await scrapearPrecioShopify(urlCompleta, tienda.nombre);
-          console.log(`🛒 [${tienda.nombre}] Scraping completado, precio obtenido: ${precio}`);
-          return { 
-            url: urlCompleta, 
-            verificada: true,
-            precio: precio
-          };
-        } else {
-          console.log(`❌ [${tienda.nombre}] URL no existe o href vacío`);
-        }
-      } else {
-        console.log(`❌ [${tienda.nombre}] Sin coincidencia`);
       }
     }
 
-    console.log(`⛔ [${tienda.nombre}] No coincidencia exacta encontrada`);
+    const productosUnicos = [...productosMap.values()];
+    console.log(`📦 [${tienda.nombre}] Productos únicos acumulados: ${productosUnicos.length}`);
+
+    const nombreLower = removerAcentos(carta.nombre.toLowerCase());
+    const nombreCompacto = nombreLower.replace(/[^a-z0-9]/g, '');
+    const setLower = removerAcentos((carta.set || '').toLowerCase());
+    const setNormalizado = setLower ? normalizarParaUrl(setLower) : '';
+
+    for (const producto of productosUnicos) {
+      const titulo = removerAcentos((producto.title || '').toLowerCase());
+      const urlProducto = producto.url || '';
+      const tituloNormalizado = normalizarParaUrl(titulo);
+      const urlProductoLower = removerAcentos(urlProducto.toLowerCase());
+      const incluyeSet = !setNormalizado ||
+        tituloNormalizado.includes(setNormalizado) ||
+        urlProductoLower.includes(setNormalizado);
+      const tituloCompacto = titulo.replace(/[^a-z0-9]/g, '');
+      const incluyeNombre =
+        titulo.includes(nombreLower) ||
+        titulo.includes(nombreLower.replace(/-/g, ' ')) ||
+        tituloCompacto.includes(nombreCompacto);
+
+      // 1. El título debe contener el nombre de la carta
+      if (!incluyeNombre) continue;
+
+      // 2. Debe contener el número de carta con su total
+      let tieneNumero = false;
+      if (totalSet) {
+        const separadores = ['/', '-', '_', ' '];
+        const candidatos = [];
+        separadores.forEach(sep => {
+          candidatos.push(
+            `${numeroCarta}${sep}${totalSet}`,
+            `${numeroFormateado}${sep}${totalSet}`,
+            `${numeroCarta}${sep}${totalSetPad}`,
+            `${numeroFormateado}${sep}${totalSetPad}`
+          );
+        });
+        tieneNumero = candidatos.some(p => titulo.includes(p) || urlProducto.includes(p));
+
+        // Caso especial: cartas con numeración alfanumérica (ej: RC30/RC32)
+        // donde printedTotal puede venir como total del set principal (ej: 83).
+        if (!tieneNumero && /[a-z]/i.test(numeroCarta)) {
+          const numeroEscapado = numeroCarta.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const patronAlfanumerico = new RegExp(`${numeroEscapado}[\\/\\-\\_\\s][a-z]*\\d{1,3}`, 'i');
+          tieneNumero = patronAlfanumerico.test(titulo) || patronAlfanumerico.test(urlProducto);
+        }
+      } else {
+        // Sin total: el número aparece como dígito suelto
+        const nums = titulo.match(/\d+/g) || [];
+        tieneNumero = nums.includes(numeroCarta) || nums.includes(numeroFormateado);
+      }
+
+      if (!tieneNumero) continue;
+
+      // Algunas tiendas no incluyen el nombre del set en el título/slug.
+      // Si ya tenemos coincidencia exacta por nombre + número/total, permitimos continuar.
+      if (!incluyeSet && !totalSet) continue;
+      if (!incluyeSet && totalSet) {
+        console.log(`⚠️ [${tienda.nombre}] Coincidencia válida sin set explícito: "${producto.title}"`);
+      }
+
+      // 3. No deben aparecer variantes prohibidas si la carta no las tiene
+      const variantesEspeciales = [/\bv\b/i, /\bex\b/i, /\bgx\b/i, /\bvmax\b/i, /\bvstar\b/i, /\bmega\b/i, /\bbreak\b/i, /\bprime\b/i];
+      const cartaTieneVariante = variantesEspeciales.some(r => r.test(nombreLower));
+      if (!cartaTieneVariante) {
+        const tieneVarianteIndeseada = variantesEspeciales.some(r => r.test(titulo));
+        if (tieneVarianteIndeseada) {
+          console.log(`⛔ [${tienda.nombre}] Variante no deseada en: "${producto.title}"`);
+          continue;
+        }
+      }
+
+      // ¡Coincidencia válida!
+      const urlCompleta = urlProducto.startsWith('http') ? urlProducto : `${urlBase}${urlProducto}`;
+      // Limpiar parámetros de tracking de Shopify (_pos, _sid, _ss)
+      const urlLimpia = urlCompleta.split('?')[0];
+
+      // 4. Obtener precio y disponibilidad real desde product JSON
+      const handle = urlLimpia.split('/products/')[1];
+      let precio = null;
+      let disponible = false;
+
+      try {
+        const productoJsonUrl = `${urlBase}/products/${handle}.json`;
+        const pRes = await axios.get(productoJsonUrl, {
+          headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+          timeout: 5000
+        });
+        const variants = pRes.data?.product?.variants || [];
+        // Tomar variante más barata disponible
+        const disponibles = variants.filter(v => v.available);
+        if (disponibles.length > 0) {
+          disponible = true;
+          precio = (disponibles[0].price / 1).toFixed(0); // precio en CLP
+        } else if (variants.length > 0) {
+          disponible = false;
+          precio = (variants[0].price / 1).toFixed(0);
+        }
+      } catch (e) {
+        console.warn(`⚠️ [${tienda.nombre}] No se pudo obtener product.json: ${e.message}`);
+      }
+
+      console.log(`✅ [${tienda.nombre}] ENCONTRADO: "${producto.title}" | $${precio} | disponible: ${disponible}`);
+      return {
+        url: urlLimpia,
+        verificada: true,
+        tipoProducto: 'json-shopify',
+        precio,
+        disponible
+      };
+    }
+
+    console.log(`⛔ [${tienda.nombre}] No se encontró coincidencia exacta`);
     return null;
   } catch (error) {
-    console.log(`❌ [${tienda.nombre}] Error en búsqueda: ${error.message}`);
+    console.error(`❌ [${tienda.nombre}] Error API JSON: ${error.message}`);
     return null;
   }
 }
 
 async function buscarEnTiendaLevelUp(tienda, carta) {
+  const resultadoJson = await buscarEnTiendaLevelUpJson(tienda, carta);
+  if (resultadoJson) {
+    return resultadoJson;
+  }
+
+  console.log(`↩️ [${tienda.nombre}] Fallback a scraping HTML con Cheerio`);
+
   // TÉRMINO DE BÚSQUEDA MEJORADO: usar espacios en lugar de caracteres especiales
   let termino;
   if (carta.printedTotal) {
@@ -437,14 +366,15 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
     });
 
     const $ = cheerio.load(res.data);
-    const enlaces = $('a.woocommerce-LoopProduct-link');
+    const enlaces = $('a.woocommerce-LoopProduct-link, .product a.preview, .product-element-top > a, .product a[href*="/producto/"], .product a[href*="/product/"]');
 
     console.log(`🔗 [${tienda.nombre}] Enlaces encontrados: ${enlaces.length}`);
 
     for (let i = 0; i < enlaces.length; i++) {
       const link = $(enlaces[i]);
+      const contenedor = link.closest('.product, .type-product, .entry-summary, [class*="product"]');
+      const textoElemento = (contenedor.length > 0 ? contenedor.text() : link.text()).toLowerCase();
       const href = link.attr('href') || "";
-      const textoElemento = link.text().toLowerCase();
       const urlCompleta = href.startsWith("http") ? href : `${tienda.urlBase}${href}`;
 
       const analisis = analizarCoincidenciasCarta(carta, href, textoElemento, tienda);
@@ -477,7 +407,7 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
             'sw': ['sw', 'sword-shield'] // alias para swsh
           };
           
-          const setEncontrado = setsComunes.find(s => textoCompleto.includes(s));
+          const setEncontrado = setsComunes.find(s => new RegExp(`\\b${s}\\b`, 'i').test(textoCompleto));
           
           if (setEncontrado && setEncontrado !== setEsperado) {
             // Verificar si es un mapeo válido
@@ -572,12 +502,20 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
         console.log(`🔗 Verificando existencia: ${urlCompleta} → ${existe}`);
         if (existe) {
           console.log(`🎮 [LevelUp] Iniciando scraping de precio...`);
-          const precio = await scrapearPrecioLevelUp(urlCompleta);
-          console.log(`🎮 [LevelUp] Scraping completado, precio obtenido: ${precio}`);
+          const infoCosto = await scrapearPrecioLevelUp(urlCompleta);
+          
+          if (!infoCosto) {
+            console.log(`❌ [LevelUp] No se pudo obtener el precio.`);
+            continue;
+          }
+
+          console.log(`🎮 [LevelUp] Scraping completado, precio: ${infoCosto.precio}, disponible: ${infoCosto.disponible}`);
           return { 
             url: urlCompleta, 
             verificada: true,
-            precio: precio
+            tipoProducto: 'html-levelup',
+            precio: infoCosto.precio,
+            disponible: infoCosto.disponible
           };
         }
       }
@@ -586,6 +524,73 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
     console.log(`⛔ No se encontró coincidencia exacta en ${tienda.nombre}`);
   } catch (error) {
     console.error(`❌ Error buscando en tienda ${tienda.nombre}:`, error.message);
+  }
+
+  return null;
+}
+
+async function buscarEnTiendaLevelUpJson(tienda, carta) {
+  const termino = carta.nombre;
+  const endpoints = [
+    `${tienda.urlBase}/wp-json/wc/store/v1/products?search=${encodeURIComponent(termino)}&per_page=20`,
+    `${tienda.urlBase}/wp-json/wp/v2/product?search=${encodeURIComponent(termino)}&per_page=20`
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`🧩 [${tienda.nombre}] Probando endpoint JSON: ${endpoint}`);
+      const res = await axios.get(endpoint, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+          'Accept': 'application/json'
+        },
+        timeout: 8000,
+        validateStatus: () => true
+      });
+
+      if (res.status < 200 || res.status >= 300) {
+        console.log(`⚠️ [${tienda.nombre}] Endpoint JSON no disponible (${res.status})`);
+        continue;
+      }
+
+      const productos = Array.isArray(res.data) ? res.data : [];
+      console.log(`📦 [${tienda.nombre}] Productos JSON encontrados: ${productos.length}`);
+
+      for (const producto of productos) {
+        const tituloRaw = producto?.name || producto?.title?.rendered || '';
+        const titulo = removerAcentos(String(tituloRaw).toLowerCase());
+        const slug = String(producto?.slug || '').toLowerCase();
+        const permalink = String(producto?.permalink || producto?.link || '').trim();
+        const hrefComparacion = `${slug} ${permalink}`.trim();
+
+        const analisis = analizarCoincidenciasCarta(carta, hrefComparacion, titulo, tienda);
+        if (!analisis.coincideAlguno) continue;
+
+        const terminosNoCartas = ['protector', 'sleeve', 'binder', 'portfolio', 'deck box', 'playmat', 'mat'];
+        const textoCompleto = `${titulo} ${hrefComparacion}`;
+        if (terminosNoCartas.some(term => textoCompleto.includes(term))) continue;
+
+        const urlCompleta = permalink || (slug ? `${tienda.urlBase}/producto/${slug}` : '');
+        if (!urlCompleta) continue;
+
+        const existe = await urlExiste(urlCompleta);
+        if (!existe) continue;
+
+        const infoCosto = await scrapearPrecioLevelUp(urlCompleta);
+        if (!infoCosto) continue;
+
+        console.log(`✅ [${tienda.nombre}] Coincidencia vía JSON: "${tituloRaw}" | $${infoCosto.precio}`);
+        return {
+          url: urlCompleta,
+          verificada: true,
+          tipoProducto: 'json-levelup',
+          precio: infoCosto.precio,
+          disponible: infoCosto.disponible
+        };
+      }
+    } catch (error) {
+      console.warn(`⚠️ [${tienda.nombre}] Error en endpoint JSON ${endpoint}: ${error.message}`);
+    }
   }
 
   return null;
@@ -665,16 +670,37 @@ async function scrapearPrecioShopify(url, nombreTienda) {
         
         return !estaEnSeccionRelacionada;
       });
-      
-      const elementoPrecio = elementosValidos.first();
-      if (elementoPrecio.length > 0) {
-        let textoPrecio = elementoPrecio.text().trim();
+      for (const el of elementosValidos.toArray()) {
+        const elementoPrecio = $(el);
+        const textoPrecio = elementoPrecio.text().trim();
         const precioLimpio = limpiarPrecio(textoPrecio);
-        
-        if (precioLimpio) {
-          console.log(`💰 Precio encontrado en ${nombreTienda}: ${precioLimpio} (selector: ${selector})`);
-          return precioLimpio;
+
+        if (!precioLimpio) continue;
+
+        const precioNumerico = Number(precioLimpio);
+        if (!Number.isFinite(precioNumerico) || precioNumerico <= 0) {
+          console.log(`⚠️ Precio descartado en ${nombreTienda} por ser inválido o 0: "${textoPrecio}"`);
+          continue;
         }
+
+        console.log(`💰 Precio encontrado en ${nombreTienda}: ${precioLimpio} (selector: ${selector})`);
+        
+        let disponible = true;
+        const htmlText = $.html().toLowerCase();
+        if (
+          htmlText.includes('agotado') || 
+          htmlText.includes('sold out') || 
+          htmlText.includes('out of stock') || 
+          htmlText.includes('sin stock') ||
+          $('button[name="add"]').attr('disabled') ||
+          $('button.add-to-cart').attr('disabled') ||
+          $('[aria-disabled="true"]').length > 0
+        ) {
+          disponible = false;
+          console.log(`❌ El producto en ${nombreTienda} está AGOTADO.`);
+        }
+
+        return { precio: precioLimpio, disponible };
       }
     }
 
@@ -760,16 +786,36 @@ async function scrapearPrecioLevelUp(url) {
         
         return !estaEnSeccionRelacionada;
       });
-      
-      const elementoPrecio = elementosValidos.first();
-      if (elementoPrecio.length > 0) {
-        let textoPrecio = elementoPrecio.text().trim();
+      for (const el of elementosValidos.toArray()) {
+        const elementoPrecio = $(el);
+        const textoPrecio = elementoPrecio.text().trim();
         const precioLimpio = limpiarPrecio(textoPrecio);
-        
-        if (precioLimpio) {
-          console.log(`💰 Precio encontrado en LevelUp: ${precioLimpio} (selector: ${selector})`);
-          return precioLimpio;
+
+        if (!precioLimpio) continue;
+
+        const precioNumerico = Number(precioLimpio);
+        if (!Number.isFinite(precioNumerico) || precioNumerico <= 0) {
+          console.log(`⚠️ Precio descartado en LevelUp por ser inválido o 0: "${textoPrecio}"`);
+          continue;
         }
+
+        console.log(`💰 Precio encontrado en LevelUp: ${precioLimpio} (selector: ${selector})`);
+        
+        let disponible = true;
+        const htmlText = $.html().toLowerCase();
+        if (
+          htmlText.includes('agotado') || 
+          htmlText.includes('sold out') || 
+          htmlText.includes('out of stock') || 
+          htmlText.includes('sin stock') ||
+          $('.outofstock').length > 0 ||
+          $('p.stock.out-of-stock').length > 0
+        ) {
+          disponible = false;
+          console.log(`❌ El producto en LevelUp está AGOTADO.`);
+        }
+
+        return { precio: precioLimpio, disponible };
       }
     }
 
