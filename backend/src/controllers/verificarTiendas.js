@@ -3,8 +3,11 @@ const Carta = require('../entities/Carta');
 const CartaLink = require('../entities/CartaLink');
 const Tienda = require('../entities/Tienda');
 const { verificarYBuscarLink } = require('../helpers/verificarYBuscarLink');
+const { consumeQuota } = require('../services/scrapingQuotaService');
 
 const enProceso = new Set(); 
+const CACHE_PRECIOS_POSITIVO_DIAS = Number(process.env.TIENDAS_CACHE_POSITIVO_DIAS || 7);
+const CACHE_PRECIOS_NEGATIVO_HORAS = Number(process.env.TIENDAS_CACHE_NEGATIVO_HORAS || 72);
 
 async function obtenerTiendas(req, res) {
   const { id } = req.params;
@@ -36,8 +39,8 @@ async function obtenerTiendas(req, res) {
     tiendas.forEach(t => console.log(`   - ${t.nombre} (${t.tipoBusqueda})`));
 
     
-    const CACHE_PRECIOS_POSITIVO_DURACION = 3 * 24 * 60 * 60 * 1000; // 3 días
-    const CACHE_PRECIOS_NEGATIVO_DURACION = 24 * 60 * 60 * 1000; // 24 horas
+    const CACHE_PRECIOS_POSITIVO_DURACION = Math.max(1, CACHE_PRECIOS_POSITIVO_DIAS) * 24 * 60 * 60 * 1000;
+    const CACHE_PRECIOS_NEGATIVO_DURACION = Math.max(1, CACHE_PRECIOS_NEGATIVO_HORAS) * 60 * 60 * 1000;
     const ahora = new Date();
 
     const obtenerDuracionCacheLink = (link) => {
@@ -51,19 +54,25 @@ async function obtenerTiendas(req, res) {
       return tiempoTranscurrido < duracionCache;
     });
 
-    
-    if (linksRecientes.length === 0) {
-      console.log(`🔍 Scraping de precios para carta "${carta.nombre}" (cache: ${links.length} links, recientes: ${linksRecientes.length})`);
-      console.log(`🎯 Iniciando búsqueda en ${tiendas.length} tiendas activas...`);
+    const idsTiendasConCacheReciente = new Set(linksRecientes.map(l => l.tienda.id));
+    const tiendasPendientes = tiendas.filter(t => !idsTiendasConCacheReciente.has(t.id));
 
-      
-      if (links.length > 0) {
-        await linkRepo.remove(links);
-        console.log(`🧹 Limpiados ${links.length} links de precios antiguos`);
+    if (tiendasPendientes.length > 0) {
+      const quotaResult = await consumeQuota(req, 'new', 1);
+      if (!quotaResult.ok) {
+        return res.status(quotaResult.status || 429).json({ error: quotaResult.message });
       }
 
-      
-      const promesasVerificacion = tiendas.map(async (tienda) => {
+      console.log(`🔍 Scraping de precios para carta "${carta.nombre}" (cache total: ${links.length}, recientes: ${linksRecientes.length}, pendientes: ${tiendasPendientes.length})`);
+      console.log(`🎯 Iniciando búsqueda SOLO en ${tiendasPendientes.length} tiendas pendientes...`);
+
+      const linksStale = links.filter(l => tiendasPendientes.some(t => t.id === l.tienda.id));
+      if (linksStale.length > 0) {
+        await linkRepo.remove(linksStale);
+        console.log(`🧹 Limpiados ${linksStale.length} links stale de tiendas pendientes`);
+      }
+
+      const promesasVerificacion = tiendasPendientes.map(async (tienda) => {
         console.log(`📦 Procesando tienda: ${tienda.nombre} (${tienda.tipoBusqueda})`);
         try {
           return await verificarYBuscarLink(carta, tienda);
@@ -82,7 +91,7 @@ async function obtenerTiendas(req, res) {
         relations: ['tienda']
       });
 
-      console.log(`💾 Scraping de precios completado para carta "${carta.nombre}" - ${links.length} links guardados (positivos 3 días, negativos 24 horas)`);
+      console.log(`💾 Scraping de precios completado para carta "${carta.nombre}" - ${links.length} links guardados (positivos ${CACHE_PRECIOS_POSITIVO_DIAS} días, negativos ${CACHE_PRECIOS_NEGATIVO_HORAS} horas)`);
     } else {
       console.log(`⚡ Usando cache de precios para carta "${carta.nombre}" - ${linksRecientes.length} links recientes`);
       links = linksRecientes;
@@ -137,6 +146,11 @@ async function refrescarTiendas(req, res) {
 
     const carta = await cartaRepo.findOneBy({ id: parseInt(id) });
     if (!carta) return res.status(404).json({ error: "Carta no encontrada" });
+
+    const quotaResult = await consumeQuota(req, 'update', 1);
+    if (!quotaResult.ok) {
+      return res.status(quotaResult.status || 429).json({ error: quotaResult.message });
+    }
 
     
     const linksExistentes = await linkRepo.find({

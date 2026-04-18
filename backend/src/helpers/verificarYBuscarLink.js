@@ -1,9 +1,25 @@
 const { AppDataSource } = require('../data-source');
 const CartaLink = require('../entities/CartaLink');
+const HistorialPrecioTienda = require('../entities/HistorialPrecioTienda');
 const { buscarEnTiendaShopify, buscarEnTiendaLevelUp } = require('./buscadores');
 
 async function verificarYBuscarLink(carta, tienda) {
   const linkRepo = AppDataSource.getRepository(CartaLink);
+  const historialPrecioRepo = AppDataSource.getRepository(HistorialPrecioTienda);
+
+  const registrarSnapshotPrecio = async ({ precio, disponible, url, tipoProducto, fuente }) => {
+    const snapshot = historialPrecioRepo.create({
+      precio: precio ?? null,
+      disponible: disponible !== undefined ? disponible : true,
+      url: url || null,
+      tipoProducto: tipoProducto || null,
+      fuente: fuente || 'scraping',
+      carta: { id: carta.id },
+      tienda: { id: tienda.id },
+    });
+
+    await historialPrecioRepo.save(snapshot);
+  };
   
   console.log(`🔍 [ADMIN DEBUG] Iniciando búsqueda: "${carta.nombre}" en ${tienda.nombre}`);
   console.log(`🔍 [ADMIN DEBUG] Configuración tienda:`, {
@@ -51,6 +67,17 @@ async function verificarYBuscarLink(carta, tienda) {
     console.log(`💾 [ADMIN DEBUG] Guardando link en base de datos...`);
     await linkRepo.save(nuevoLink);
     console.log(`💾 [ADMIN DEBUG] Link guardado exitosamente`);
+
+    await registrarSnapshotPrecio({
+      precio: resultado.precio || null,
+      disponible: resultado.disponible !== undefined ? resultado.disponible : true,
+      url: resultado.url,
+      tipoProducto: resultado.tipoProducto || null,
+      fuente: 'scraping-positivo',
+    });
+    console.log(`📈 [${tienda.nombre}] Snapshot de precio guardado`);
+  } else if (resultado && resultado.temporalError) {
+    console.warn(`⚠️ [${tienda.nombre}] Error temporal de transporte, no se guarda caché negativo: ${resultado.motivo || 'sin detalle'}`);
   } else {
     console.log(`❌ [${tienda.nombre}] NO ENCONTRADO: "${carta.nombre}"`);
 
@@ -68,6 +95,15 @@ async function verificarYBuscarLink(carta, tienda) {
 
     await linkRepo.save(cacheNegativo);
     console.log(`💾 [ADMIN DEBUG] Cache negativo guardado para ${tienda.nombre}`);
+
+    await registrarSnapshotPrecio({
+      precio: null,
+      disponible: false,
+      url: null,
+      tipoProducto: resultado?.tipoProducto || 'no-encontrado',
+      fuente: 'scraping-negativo',
+    });
+    console.log(`📉 [${tienda.nombre}] Snapshot negativo guardado`);
   }
 
   return resultado;

@@ -1,5 +1,86 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+
+const DATAIMPULSE_PROXY_ENABLED = String(process.env.DATAIMPULSE_PROXY_ENABLED || 'false').toLowerCase() === 'true';
+const DATAIMPULSE_HOST = process.env.DATAIMPULSE_HOST || '';
+const DATAIMPULSE_PORT = Number(process.env.DATAIMPULSE_PORT || 0);
+const DATAIMPULSE_USERNAME = process.env.DATAIMPULSE_USERNAME || '';
+const DATAIMPULSE_PASSWORD = process.env.DATAIMPULSE_PASSWORD || '';
+const DATAIMPULSE_PROXY_PROTOCOL = (process.env.DATAIMPULSE_PROXY_PROTOCOL || 'http').toLowerCase();
+const SCRAPING_HTTP_TIMEOUT_MS = Number(process.env.SCRAPING_HTTP_TIMEOUT_MS || 7000);
+const SCRAPING_HTTP_MAX_REDIRECTS = Math.max(1, Number(process.env.SCRAPING_HTTP_MAX_REDIRECTS || 8));
+const SCRAPING_PROXY_REDIRECT_FALLBACK = String(process.env.SCRAPING_PROXY_REDIRECT_FALLBACK || 'true').toLowerCase() === 'true';
+const SCRAPING_PROXY_HTTP_FALLBACK = String(process.env.SCRAPING_PROXY_HTTP_FALLBACK || 'true').toLowerCase() === 'true';
+const SCRAPING_MAX_SEARCH_TERMS = Math.max(1, Number(process.env.SCRAPING_MAX_SEARCH_TERMS || 4));
+const SCRAPING_SHOPIFY_LIMIT = Math.max(1, Number(process.env.SCRAPING_SHOPIFY_LIMIT || 8));
+const SCRAPING_LEVELUP_LIMIT = Math.max(1, Number(process.env.SCRAPING_LEVELUP_LIMIT || 10));
+
+function getProxyTransport() {
+  if (!DATAIMPULSE_PROXY_ENABLED || !DATAIMPULSE_HOST || !DATAIMPULSE_PORT) {
+    return undefined;
+  }
+
+  const user = encodeURIComponent(DATAIMPULSE_USERNAME || '');
+  const pass = encodeURIComponent(DATAIMPULSE_PASSWORD || '');
+  const auth = user || pass ? `${user}:${pass}@` : '';
+  const proxyUrl = `${DATAIMPULSE_PROXY_PROTOCOL}://${auth}${DATAIMPULSE_HOST}:${DATAIMPULSE_PORT}`;
+  const proxyAgent = new HttpsProxyAgent(proxyUrl);
+
+  return {
+    proxy: false,
+    httpAgent: proxyAgent,
+    httpsAgent: proxyAgent,
+  };
+}
+
+async function httpGet(url, config = {}) {
+  const defaultTransport = getProxyTransport();
+
+  const doRequest = async (usarProxy) => {
+    const mergedConfig = {
+      timeout: SCRAPING_HTTP_TIMEOUT_MS,
+      maxRedirects: SCRAPING_HTTP_MAX_REDIRECTS,
+      decompress: true,
+      ...config,
+      headers: {
+        'Accept-Encoding': 'gzip, deflate, br',
+        Connection: 'keep-alive',
+        ...(config.headers || {}),
+      },
+    };
+
+    if (usarProxy && defaultTransport && !config.httpAgent && !config.httpsAgent && typeof config.proxy === 'undefined') {
+      Object.assign(mergedConfig, defaultTransport);
+    } else if (!usarProxy) {
+      mergedConfig.proxy = false;
+    }
+
+    return axios.get(url, mergedConfig);
+  };
+
+  try {
+    return await doRequest(true);
+  } catch (error) {
+    const esLoopRedirect = error?.code === 'ERR_FR_TOO_MANY_REDIRECTS' ||
+      String(error?.message || '').toLowerCase().includes('redirect');
+    const status = Number(error?.response?.status || 0);
+    const esErrorHttpProxyProbable = [400, 401, 403, 407, 429, 502, 503, 504].includes(status);
+    const puedeFallbackSinProxy = defaultTransport && typeof config.proxy === 'undefined';
+
+    if (SCRAPING_PROXY_REDIRECT_FALLBACK && puedeFallbackSinProxy && esLoopRedirect) {
+      console.warn(`⚠️ Redirect loop con proxy para ${url}. Reintentando sin proxy...`);
+      return doRequest(false);
+    }
+
+    if (SCRAPING_PROXY_HTTP_FALLBACK && puedeFallbackSinProxy && esErrorHttpProxyProbable) {
+      console.warn(`⚠️ HTTP ${status} con proxy para ${url}. Reintentando sin proxy...`);
+      return doRequest(false);
+    }
+
+    throw error;
+  }
+}
 
 function normalizarParaUrl(texto) {
   return texto
@@ -141,26 +222,6 @@ function analizarCoincidenciasCarta(carta, href, textoElemento, tienda) {
   };
 }
 
-async function urlExiste(url) {
-  try {
-    const res = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        'Accept': 'text/html',
-      },
-      timeout: 3000,
-      maxRedirects: 3,
-      validateStatus: () => true
-    });
-
-    console.log(`📡 urlExiste respuesta: ${url} → ${res.status}`);
-    return [200, 301, 302].includes(res.status);
-  } catch (err) {
-    console.warn(`⚠️ urlExiste falló con ${url} → ${err.response?.status || err.message}`);
-    return false;
-  }
-}
-
 async function buscarEnTiendaShopify(tienda, carta) {
   // Usar la API JSON nativa de Shopify: más confiable que parsear HTML
   const urlBase = tienda.urlBase;
@@ -183,22 +244,23 @@ async function buscarEnTiendaShopify(tienda, carta) {
     terminosBusqueda.push(numeroCarta, numeroFormateado);
   }
 
-  console.log(`🛒 [${tienda.nombre}] Shopify JSON API - términos: ${terminosBusqueda.join(' | ')}`);
+  const terminosBusquedaUnicos = [...new Set(terminosBusqueda)].slice(0, SCRAPING_MAX_SEARCH_TERMS);
+
+  console.log(`🛒 [${tienda.nombre}] Shopify JSON API - términos: ${terminosBusquedaUnicos.join(' | ')}`);
 
   try {
     const productosMap = new Map();
 
-    for (const termino of terminosBusqueda) {
-      const apiUrl = `${urlBase}/search/suggest.json?q=${encodeURIComponent(termino)}&resources[type]=product&resources[limit]=20`;
+    for (const termino of terminosBusquedaUnicos) {
+      const apiUrl = `${urlBase}/search/suggest.json?q=${encodeURIComponent(termino)}&resources[type]=product&resources[limit]=${SCRAPING_SHOPIFY_LIMIT}`;
       console.log(`🛒 [${tienda.nombre}] Shopify JSON API: ${apiUrl}`);
 
-      const res = await axios.get(apiUrl, {
+      const res = await httpGet(apiUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         },
-        timeout: 8000
       });
 
       const productos = res.data?.resources?.results?.products || [];
@@ -301,16 +363,14 @@ async function buscarEnTiendaShopify(tienda, carta) {
         let variants = [];
         const productoJsUrl = `${urlBase}/products/${handle}.js`;
         try {
-          const pJsRes = await axios.get(productoJsUrl, {
+          const pJsRes = await httpGet(productoJsUrl, {
             headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
-            timeout: 5000
           });
           variants = pJsRes.data?.variants || [];
         } catch (eJs) {
           const productoJsonUrl = `${urlBase}/products/${handle}.json`;
-          const pRes = await axios.get(productoJsonUrl, {
+          const pRes = await httpGet(productoJsonUrl, {
             headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' },
-            timeout: 5000
           });
           variants = pRes.data?.product?.variants || [];
         }
@@ -356,7 +416,7 @@ async function buscarEnTiendaShopify(tienda, carta) {
     return null;
   } catch (error) {
     console.error(`❌ [${tienda.nombre}] Error API JSON: ${error.message}`);
-    return null;
+    return { temporalError: true, motivo: error.message };
   }
 }
 
@@ -385,7 +445,7 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
   console.log(`🔍 [LevelUp] URL de búsqueda: ${urlBusqueda}`);
 
   try {
-    const res = await axios.get(urlBusqueda, {
+    const res = await httpGet(urlBusqueda, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'Accept': 'text/html',
@@ -525,32 +585,29 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
         
         console.log(`✅ [${tienda.nombre}] VALIDACIÓN APROBADA`);
         
-        const existe = await urlExiste(urlCompleta);
-        console.log(`🔗 Verificando existencia: ${urlCompleta} → ${existe}`);
-        if (existe) {
-          console.log(`🎮 [LevelUp] Iniciando scraping de precio...`);
-          const infoCosto = await scrapearPrecioLevelUp(urlCompleta);
-          
-          if (!infoCosto) {
-            console.log(`❌ [LevelUp] No se pudo obtener el precio.`);
-            continue;
-          }
+        console.log(`🎮 [LevelUp] Iniciando scraping de precio...`);
+        const infoCosto = await scrapearPrecioLevelUp(urlCompleta);
 
-          console.log(`🎮 [LevelUp] Scraping completado, precio: ${infoCosto.precio}, disponible: ${infoCosto.disponible}`);
-          return { 
-            url: urlCompleta, 
-            verificada: true,
-            tipoProducto: 'html-levelup',
-            precio: infoCosto.precio,
-            disponible: infoCosto.disponible
-          };
+        if (!infoCosto) {
+          console.log(`❌ [LevelUp] No se pudo obtener el precio.`);
+          continue;
         }
+
+        console.log(`🎮 [LevelUp] Scraping completado, precio: ${infoCosto.precio}, disponible: ${infoCosto.disponible}`);
+        return {
+          url: urlCompleta,
+          verificada: true,
+          tipoProducto: 'html-levelup',
+          precio: infoCosto.precio,
+          disponible: infoCosto.disponible
+        };
       }
     }
 
     console.log(`⛔ No se encontró coincidencia exacta en ${tienda.nombre}`);
   } catch (error) {
     console.error(`❌ Error buscando en tienda ${tienda.nombre}:`, error.message);
+    return { temporalError: true, motivo: error.message };
   }
 
   return null;
@@ -559,19 +616,18 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
 async function buscarEnTiendaLevelUpJson(tienda, carta) {
   const termino = carta.nombre;
   const endpoints = [
-    `${tienda.urlBase}/wp-json/wc/store/v1/products?search=${encodeURIComponent(termino)}&per_page=20`,
-    `${tienda.urlBase}/wp-json/wp/v2/product?search=${encodeURIComponent(termino)}&per_page=20`
+    `${tienda.urlBase}/wp-json/wc/store/v1/products?search=${encodeURIComponent(termino)}&per_page=${SCRAPING_LEVELUP_LIMIT}`,
+    `${tienda.urlBase}/wp-json/wp/v2/product?search=${encodeURIComponent(termino)}&per_page=${SCRAPING_LEVELUP_LIMIT}`
   ];
 
   for (const endpoint of endpoints) {
     try {
       console.log(`🧩 [${tienda.nombre}] Probando endpoint JSON: ${endpoint}`);
-      const res = await axios.get(endpoint, {
+      const res = await httpGet(endpoint, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
           'Accept': 'application/json'
         },
-        timeout: 8000,
         validateStatus: () => true
       });
 
@@ -600,9 +656,6 @@ async function buscarEnTiendaLevelUpJson(tienda, carta) {
         const urlCompleta = permalink || (slug ? `${tienda.urlBase}/producto/${slug}` : '');
         if (!urlCompleta) continue;
 
-        const existe = await urlExiste(urlCompleta);
-        if (!existe) continue;
-
         const infoCosto = await scrapearPrecioLevelUp(urlCompleta);
         if (!infoCosto) continue;
 
@@ -627,12 +680,11 @@ async function scrapearPrecioShopify(url, nombreTienda) {
   try {
     console.log(`💰 Scrapeando precio Shopify en: ${url}`);
     
-    const res = await axios.get(url, {
+    const res = await httpGet(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'Accept': 'text/html',
       },
-      timeout: 4000 
     });
 
     const $ = cheerio.load(res.data);
@@ -744,12 +796,11 @@ async function scrapearPrecioLevelUp(url) {
   try {
     console.log(`💰 Scrapeando precio LevelUp en: ${url}`);
     
-    const res = await axios.get(url, {
+    const res = await httpGet(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'Accept': 'text/html',
       },
-      timeout: 4000 
     });
 
     const $ = cheerio.load(res.data);

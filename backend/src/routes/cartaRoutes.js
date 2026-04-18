@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { AppDataSource } = require('../data-source');
+const jwt = require('jsonwebtoken');
+const User = require('../entities/User');
 const { buscarCarta, buscarCartaAdmin } = require('../services/pokemonTCGService');
 const { guardarCartasDesdeAPI } = require('../services/actualizacionBDService');
 const { obtenerCartaDetalle } = require('../controllers/cartas.controller');
 const { obtenerTiendas, refrescarTiendas, obtenerTiendasAdmin } = require('../controllers/verificarTiendas');
-const { obtenerPreciosPriceCharting } = require('../controllers/priceChartingController');
+const { obtenerPreciosPriceCharting, obtenerHistorialPriceCharting } = require('../controllers/priceChartingController');
+const { obtenerHistorialPreciosCarta } = require('../controllers/historialPreciosController');
 
 
 
@@ -114,8 +117,10 @@ router.post('/actualizar-bd', async (req, res) => {
 
 router.get('/:id', obtenerCartaDetalle);
 router.get('/:id/tiendas', obtenerTiendas);
+router.get('/:id/precios-historial', obtenerHistorialPreciosCarta);
 router.post('/:id/tiendas/refresh', refrescarTiendas); 
 router.post('/:id/tiendas/admin-force-update', obtenerTiendasAdmin); // Nueva ruta para admin
+router.get('/:id/precios-pricecharting/historial', obtenerHistorialPriceCharting);
 router.get('/:id/precios-pricecharting', obtenerPreciosPriceCharting);
 
 // Borrar caché de precios de tiendas para una carta (solo admin)
@@ -124,25 +129,47 @@ router.delete('/:id/tiendas/cache', async (req, res) => {
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ message: 'No token provided' });
 
-  const jwt = require('jsonwebtoken');
   let decoded;
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_change_me');
   } catch {
     return res.status(403).json({ message: 'Token inválido' });
   }
-  if (decoded.role !== 'admin') return res.status(403).json({ message: 'Solo para admins' });
+
+  try {
+    const userRepo = AppDataSource.getRepository(User);
+    const currentUser = await userRepo.findOne({
+      where: [{ id: decoded.userId }, { email: decoded.email }]
+    });
+
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Solo para admins' });
+    }
+  } catch (error) {
+    console.error('Error validando rol de admin:', error);
+    return res.status(500).json({ error: 'Error validando permisos', detalle: error.message });
+  }
 
   const { id } = req.params;
   try {
     const CartaLink = require('../entities/CartaLink');
     const linkRepo = AppDataSource.getRepository(CartaLink);
-    const deleted = await linkRepo.delete({ carta: { id: parseInt(id) } });
-    console.log(`🗑️ [Admin] Caché borrada para carta ID ${id}: ${deleted.affected} links eliminados`);
-    res.json({ mensaje: `Caché borrada: ${deleted.affected} registros eliminados`, affected: deleted.affected });
+    const cartaId = parseInt(id);
+    const links = await linkRepo.find({
+      where: { carta: { id: cartaId } },
+      relations: ['carta', 'tienda']
+    });
+
+    if (links.length === 0) {
+      return res.json({ mensaje: 'No había caché de tiendas para borrar', affected: 0 });
+    }
+
+    await linkRepo.remove(links);
+    console.log(`🗑️ [Admin] Caché borrada para carta ID ${id}: ${links.length} links eliminados`);
+    res.json({ mensaje: `Caché borrada: ${links.length} registros eliminados`, affected: links.length });
   } catch (error) {
     console.error('Error borrando caché:', error);
-    res.status(500).json({ error: 'Error al borrar caché' });
+    res.status(500).json({ error: 'Error al borrar caché', detalle: error.message });
   }
 });
 

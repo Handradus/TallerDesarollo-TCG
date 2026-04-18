@@ -1,5 +1,35 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+
+const DATAIMPULSE_PROXY_ENABLED = String(process.env.DATAIMPULSE_PROXY_ENABLED || 'false').toLowerCase() === 'true';
+const DATAIMPULSE_HOST = process.env.DATAIMPULSE_HOST || '';
+const DATAIMPULSE_PORT = Number(process.env.DATAIMPULSE_PORT || 0);
+const DATAIMPULSE_USERNAME = process.env.DATAIMPULSE_USERNAME || '';
+const DATAIMPULSE_PASSWORD = process.env.DATAIMPULSE_PASSWORD || '';
+const DATAIMPULSE_PROXY_PROTOCOL = (process.env.DATAIMPULSE_PROXY_PROTOCOL || 'http').toLowerCase();
+const PRICECHARTING_HTTP_TIMEOUT_MS = Number(process.env.PRICECHARTING_HTTP_TIMEOUT_MS || 7000);
+const PRICECHARTING_HTTP_MAX_REDIRECTS = Math.max(1, Number(process.env.PRICECHARTING_HTTP_MAX_REDIRECTS || 8));
+const PRICECHARTING_PROXY_REDIRECT_FALLBACK = String(process.env.PRICECHARTING_PROXY_REDIRECT_FALLBACK || 'true').toLowerCase() === 'true';
+const PRICECHARTING_PROXY_HTTP_FALLBACK = String(process.env.PRICECHARTING_PROXY_HTTP_FALLBACK || 'true').toLowerCase() === 'true';
+
+function getProxyTransport() {
+  if (!DATAIMPULSE_PROXY_ENABLED || !DATAIMPULSE_HOST || !DATAIMPULSE_PORT) {
+    return undefined;
+  }
+
+  const user = encodeURIComponent(DATAIMPULSE_USERNAME || '');
+  const pass = encodeURIComponent(DATAIMPULSE_PASSWORD || '');
+  const auth = user || pass ? `${user}:${pass}@` : '';
+  const proxyUrl = `${DATAIMPULSE_PROXY_PROTOCOL}://${auth}${DATAIMPULSE_HOST}:${DATAIMPULSE_PORT}`;
+  const proxyAgent = new HttpsProxyAgent(proxyUrl);
+
+  return {
+    proxy: false,
+    httpAgent: proxyAgent,
+    httpsAgent: proxyAgent,
+  };
+}
 
 class PriceChartingService {
   constructor() {
@@ -8,10 +38,55 @@ class PriceChartingService {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.5',
-      'Accept-Encoding': 'gzip, deflate',
+      'Accept-Encoding': 'gzip, deflate, br',
       'Connection': 'keep-alive',
       'Upgrade-Insecure-Requests': '1',
     };
+    this.proxyTransport = getProxyTransport();
+    this.maxSearchRows = Math.max(1, Number(process.env.PRICECHARTING_MAX_SEARCH_ROWS || 20));
+  }
+
+  async httpGet(url, extraConfig = {}) {
+    const doRequest = async (usarProxy) => {
+      const config = {
+        headers: this.headers,
+        timeout: PRICECHARTING_HTTP_TIMEOUT_MS,
+        maxRedirects: PRICECHARTING_HTTP_MAX_REDIRECTS,
+        decompress: true,
+        maxContentLength: 1024 * 1024 * 2,
+        ...extraConfig,
+      };
+
+      if (usarProxy && this.proxyTransport && !extraConfig.httpAgent && !extraConfig.httpsAgent && typeof extraConfig.proxy === 'undefined') {
+        Object.assign(config, this.proxyTransport);
+      } else if (!usarProxy) {
+        config.proxy = false;
+      }
+
+      return axios.get(url, config);
+    };
+
+    try {
+      return await doRequest();
+    } catch (error) {
+      const esLoopRedirect = error?.code === 'ERR_FR_TOO_MANY_REDIRECTS' ||
+        String(error?.message || '').toLowerCase().includes('redirect');
+      const status = Number(error?.response?.status || 0);
+      const esErrorHttpProxyProbable = [400, 401, 403, 407, 429, 502, 503, 504].includes(status);
+      const puedeFallbackSinProxy = this.proxyTransport && typeof extraConfig.proxy === 'undefined';
+
+      if (PRICECHARTING_PROXY_REDIRECT_FALLBACK && puedeFallbackSinProxy && esLoopRedirect) {
+        console.warn(`⚠️ Redirect loop con proxy en PriceCharting para ${url}. Reintentando sin proxy...`);
+        return doRequest(false);
+      }
+
+      if (PRICECHARTING_PROXY_HTTP_FALLBACK && puedeFallbackSinProxy && esErrorHttpProxyProbable) {
+        console.warn(`⚠️ HTTP ${status} con proxy en PriceCharting para ${url}. Reintentando sin proxy...`);
+        return doRequest(false);
+      }
+
+      throw error;
+    }
   }
 
   normalizarParaBusqueda(texto) {
@@ -32,7 +107,35 @@ class PriceChartingService {
       query += ` ${numero}`;
     }
     const encodedQuery = encodeURIComponent(query);
-    return `${this.baseURL}/search-products?type=prices&q=${nombre}&console=pokemon-cards`;
+    return `${this.baseURL}/search-products?type=prices&q=${encodedQuery}&console=pokemon-cards`;
+  }
+
+  canonicalizarUrlPriceCharting(url) {
+    if (!url) return null;
+    try {
+      const urlObj = new URL(url, this.baseURL);
+      // Forzar host/base canónico
+      urlObj.protocol = 'https:';
+      urlObj.host = 'www.pricecharting.com';
+      // Eliminar query/hash para persistir URL estable
+      urlObj.search = '';
+      urlObj.hash = '';
+
+      // Normalizar prefijos de idioma en la ruta: /es/game/... -> /game/...
+      urlObj.pathname = (urlObj.pathname || '')
+        .replace(/^\/(de|es|fr|nl|pt|ru|it|ja)(?=\/)/i, '')
+        .replace(/\/+/g, '/');
+
+      return `${urlObj.origin}${urlObj.pathname}`;
+    } catch {
+      // Fallback defensivo cuando URL viene mal formada
+      return String(url)
+        .replace(/^https?:\/\/[^/]+/i, this.baseURL)
+        .replace(/^https:\/\/www\.pricechartting\.com/i, this.baseURL)
+        .replace(/\?.*$/, '')
+        .replace(/#.*$/, '')
+        .replace(/^https:\/\/www\.pricecharting\.com\/(de|es|fr|nl|pt|ru|it|ja)(?=\/)/i, this.baseURL);
+    }
   }
 
   verificarCoincidenciaCarta(resultadoHTML, carta) {
@@ -124,17 +227,37 @@ class PriceChartingService {
   async buscarCarta(carta) {
   try {
     const searchURL = this.construirURLBusqueda(carta);
-    const response = await axios.get(searchURL, { headers: this.headers, timeout: 10000 });
+    const response = await this.httpGet(searchURL);
     const $ = cheerio.load(response.data);
+    const finalURL = response?.request?.res?.responseUrl || searchURL;
+    const pageTitle = $('title').first().text().trim();
+
+    // PriceCharting puede redirigir directamente al detalle de la carta.
+    if (finalURL.includes('/game/') || /prices\s*\|/i.test(pageTitle)) {
+      const urlCanonica = this.canonicalizarUrlPriceCharting(finalURL);
+      console.log(`↪️ Redirección directa a ficha de carta en PriceCharting: ${urlCanonica}`);
+      return await this.obtenerPreciosDetallados(urlCanonica, carta);
+    }
 
     let mejorCoincidencia = null;
     let mejorPuntuacion = 0;
 
     console.log(`🔍 Buscando coincidencias para: ${carta.nombre} #${carta.numero} (${carta.set})`);
 
-    $('#games_table tbody tr').each((i, fila) => {
+    let filas = $('#games_table tbody tr');
+    // Fallback para layouts donde ya no existe #games_table
+    if (!filas || filas.length === 0) {
+      filas = $('table tbody tr').filter((_, tr) => {
+        const href = $(tr).find('a[href*="/game/"]').first().attr('href');
+        return !!href;
+      });
+    }
+
+    filas.slice(0, this.maxSearchRows).each((i, fila) => {
       const $fila = $(fila);
-      const enlaceCarta = $fila.find('td:first-child a').attr('href');
+      const enlaceCarta =
+        $fila.find('td:first-child a[href*="/game/"]').attr('href') ||
+        $fila.find('a[href*="/game/"]').first().attr('href');
       if (!enlaceCarta) return;
 
       const textoFila = $fila.text().trim();
@@ -161,7 +284,8 @@ class PriceChartingService {
     }
 
     const urlCompleta = mejorCoincidencia.startsWith('http') ? mejorCoincidencia : `${this.baseURL}${mejorCoincidencia}`;
-    return await this.obtenerPreciosDetallados(urlCompleta, carta);
+    const urlCanonica = this.canonicalizarUrlPriceCharting(urlCompleta);
+    return await this.obtenerPreciosDetallados(urlCanonica, carta);
 
   } catch (error) {
     console.error(`❌ Error al buscar en PriceCharting para ${carta.nombre}:`, error.message);
@@ -172,9 +296,10 @@ class PriceChartingService {
 
   async obtenerPreciosDetallados(url, carta) {
     try {
-      console.log(`📊 Obteniendo precio de: ${url}`);
+      const urlCanonica = this.canonicalizarUrlPriceCharting(url);
+      console.log(`📊 Obteniendo precio de: ${urlCanonica}`);
       
-      const response = await axios.get(url, { headers: this.headers, timeout: 10000 });
+      const response = await this.httpGet(urlCanonica);
       const $ = cheerio.load(response.data);
 
       // Buscar "Ungraded" en cualquier celda TD
@@ -203,11 +328,11 @@ class PriceChartingService {
         }
       });
 
-      return { ungraded: precioEncontrado, url };
+      return { ungraded: precioEncontrado, url: urlCanonica };
 
     } catch (error) {
       console.error(`❌ Error al obtener precio:`, error.message);
-      return { ungraded: null, url };
+      return { ungraded: null, url: this.canonicalizarUrlPriceCharting(url) };
     }
   }
 
@@ -271,7 +396,12 @@ class PriceChartingService {
         };
       } else {
         console.log(`❌ [DEBUG] No se pudo obtener precio para ${carta.nombre}`);
-        return null;
+        return {
+          precio: null,
+          url: carta.urlPriceCharting || null,
+          fechaActualizacion: new Date(),
+          noEncontrado: true
+        };
       }
       
     } catch (error) {

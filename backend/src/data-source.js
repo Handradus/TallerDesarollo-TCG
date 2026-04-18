@@ -16,8 +16,11 @@ const Carta = require('./entities/Carta');
 const ConsultaAPI = require('./entities/ConsultaAPI');
 const Tienda = require('./entities/Tienda');
 const CartaLink = require('./entities/CartaLink');
+const DailyScrapingQuota = require('./entities/DailyScrapingQuota');
 const HistorialCarta = require('./entities/HistorialCarta');
 const HistorialTienda = require('./entities/HistorialTienda');
+const HistorialPrecioTienda = require('./entities/HistorialPrecioTienda');
+const HistorialPrecioPriceCharting = require('./entities/HistorialPrecioPriceCharting');
 
 const AppDataSource = new DataSource({
   type: 'postgres',
@@ -30,7 +33,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: true,
   logging: true,
-  entities: [Carta, ConsultaAPI, Tienda, CartaLink, HistorialCarta, HistorialTienda, require('./entities/User'), require('./entities/UserCollection'), require('./entities/MarketItem'), require('./entities/Message'), require('./entities/CustomCollection'), require('./entities/UserComment'), require('./entities/Report')],
+  entities: [Carta, ConsultaAPI, Tienda, CartaLink, DailyScrapingQuota, HistorialCarta, HistorialTienda, HistorialPrecioTienda, HistorialPrecioPriceCharting, require('./entities/User'), require('./entities/UserCollection'), require('./entities/MarketItem'), require('./entities/Message'), require('./entities/CustomCollection'), require('./entities/UserComment'), require('./entities/Report')],
 });
 
 module.exports = { AppDataSource };
