@@ -40,8 +40,13 @@ export default function BuscarCartasAdmin() {
 
     try {
       console.log(`🔧 Buscando "${nombre}" en API (admin)...`);
-      const response = await fetch(`${apiUrl}/api/cartas/admin?nombre=${encodeURIComponent(nombre)}&tipo=${tipoBusqueda}`);
-      
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${apiUrl}/api/cartas/admin?nombre=${encodeURIComponent(nombre)}&tipo=${tipoBusqueda}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
       if (!response.ok) {
         throw new Error('Error en la búsqueda');
       }
@@ -72,10 +77,12 @@ export default function BuscarCartasAdmin() {
     try {
       console.log(`💾 Enviando ${cartasAPI.length} cartas para actualizar BD...`);
       
+      const token = localStorage.getItem('token');
       const response = await fetch(`${apiUrl}/api/cartas/actualizar-bd`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ cartas: cartasAPI })
       });

@@ -127,12 +127,15 @@ router.get('/:id/precios-pricecharting', obtenerPreciosPriceCharting);
 router.delete('/:id/tiendas/cache', async (req, res) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
+  console.log(`🔍 [DELETE cache] Token present: ${!!token}`);
   if (!token) return res.status(401).json({ message: 'No token provided' });
 
   let decoded;
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_change_me');
-  } catch {
+    console.log(`✅ [DELETE cache] Token válido, userId: ${decoded.userId}, email: ${decoded.email}`);
+  } catch (err) {
+    console.error(`❌ [DELETE cache] Token inválido:`, err.message);
     return res.status(403).json({ message: 'Token inválido' });
   }
 
@@ -142,9 +145,13 @@ router.delete('/:id/tiendas/cache', async (req, res) => {
       where: [{ id: decoded.userId }, { email: decoded.email }]
     });
 
+    console.log(`👤 [DELETE cache] User found: ${currentUser?.email}, role: ${currentUser?.role}`);
+    
     if (!currentUser || currentUser.role !== 'admin') {
+      console.warn(`❌ [DELETE cache] User is not admin. Role: ${currentUser?.role}`);
       return res.status(403).json({ message: 'Solo para admins' });
     }
+    console.log(`👑 [DELETE cache] Admin confirmed: ${currentUser.email}`);
   } catch (error) {
     console.error('Error validando rol de admin:', error);
     return res.status(500).json({ error: 'Error validando permisos', detalle: error.message });

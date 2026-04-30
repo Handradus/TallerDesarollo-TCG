@@ -12,6 +12,26 @@ async function consultarAPI(input, tipoBusqueda = 'carta') {
     'X-Api-Key': process.env.POKEMONTCG_API_KEY,
   };
 
+  // Helper: fetch all pages for /v2/cards queries
+  async function fetchAllCards(params) {
+    const pageSize = Math.max(1, Number(params.pageSize || 250));
+    let page = 1;
+    let acumulado = [];
+    while (true) {
+      const resp = await axios.get('https://api.pokemontcg.io/v2/cards', {
+        headers,
+        params: { ...params, page, pageSize }
+      });
+      const data = resp.data?.data || [];
+      acumulado = acumulado.concat(data);
+      if (data.length < pageSize) break;
+      page += 1;
+      // pequeña pausa para no golpear la API rápidamente
+      await new Promise(r => setTimeout(r, 150));
+    }
+    return acumulado;
+  }
+
   try {
     const cartaRepo = AppDataSource.getRepository(Carta);
     const consultaRepo = AppDataSource.getRepository('ConsultaAPI');
@@ -45,16 +65,10 @@ async function consultarAPI(input, tipoBusqueda = 'carta') {
         for (const setInfo of matches) {
           try {
             console.log(`📡 [API] Solicitando cartas del set id=${setInfo.id} name="${setInfo.name}"`);
-            const cardsResp = await axios.get('https://api.pokemontcg.io/v2/cards', {
-              headers,
-              params: { q: `set.id:"${setInfo.id}"`, pageSize: 250 }
-            });
+            const cards = await fetchAllCards({ q: `set.id:"${setInfo.id}"`, pageSize: 250 });
 
-            const cards = cardsResp.data?.data || [];
             console.log(`   • Cartas retornadas para ${setInfo.id}: ${cards.length}`);
             acumuladoCartas = acumuladoCartas.concat(cards);
-            // pequeña pausa
-            await new Promise(r => setTimeout(r, 150));
           } catch (errCards) {
             console.warn(`⚠️ [API] Error obteniendo cartas para set ${setInfo.id}: ${errCards.message}`);
           }
@@ -101,12 +115,8 @@ async function consultarAPI(input, tipoBusqueda = 'carta') {
       const queryAPI = `set.name:"*${inputOriginal}*"`;
       console.log(`📡 [API] Query construido para set especial: ${queryAPI}`);
       
-      const response = await axios.get(`https://api.pokemontcg.io/v2/cards`, {
-        headers,
-        params: { q: queryAPI, pageSize: 250 }
-      });
-
-      return await procesarRespuestaSetAPI(response.data.data, cartaRepo, consultaRepo, inputOriginal);
+      const cards = await fetchAllCards({ q: queryAPI, pageSize: 250 });
+      return await procesarRespuestaSetAPI(cards, cartaRepo, consultaRepo, inputOriginal);
     }
 
     // Construir query para la API
@@ -155,12 +165,7 @@ async function consultarAPI(input, tipoBusqueda = 'carta') {
     console.log(`📡 [API] Query construida: ${queryAPI}`);
 
     // Hacer petición a la API
-    const resFull = await axios.get(
-      `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queryAPI)}&pageSize=250`,
-      { headers, timeout: 10000 }
-    );
-
-    const cartasAPI = resFull.data.data || [];
+    const cartasAPI = await fetchAllCards({ q: queryAPI, pageSize: 250 });
     console.log(`📡 [API] Respuesta recibida: ${cartasAPI.length} cartas`);
 
     let resultadosAPI = [];

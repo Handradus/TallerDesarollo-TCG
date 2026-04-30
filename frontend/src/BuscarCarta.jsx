@@ -9,6 +9,7 @@ import CarouselTiendas from './CarouselTiendas';
 import tituloWebImg from './assets/tituloWeb.jpg';
 import { useAuth } from './context/AuthContext';
 import axios from 'axios';
+import AdBanner from './components/AdBanner';
 
 export default function BuscarCartas() {
   const [nombre, setNombre] = useState('');
@@ -629,6 +630,8 @@ export default function BuscarCartas() {
         <div className="carousels-section">
           <CarouselCartas />
           <CarouselTiendas />
+          {/* Banners publicitarios - inicio */}
+          <AdBanner layout="bottom" />
         </div>
       )}
 
@@ -893,6 +896,11 @@ export default function BuscarCartas() {
           </div>
         ))}
       </div>
+
+      {/* Banners publicitarios - resultados */}
+      {hasSearched && cartas.length > 0 && (
+        <AdBanner layout="bottom" />
+      )}
 
       {/* Botón de volver arriba */}
       {/* Binder Selection Modal */}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css/tiendas.css';
+import AdBanner from './components/AdBanner';
 
 export default function Tiendas() {
   const navigate = useNavigate();
@@ -211,6 +212,9 @@ export default function Tiendas() {
           </p>
         )}
       </div>
+
+      {/* Banners publicitarios */}
+      <AdBanner layout="bottom" />
 
       <div className="tiendas-grid">
         {tiendasList.length > 0 ? (

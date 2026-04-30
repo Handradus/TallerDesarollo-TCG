@@ -16,11 +16,7 @@ module.exports = new EntitySchema({
       type: 'varchar',
       length: 10,
     },
-    consultasNuevas: {
-      type: 'int',
-      default: 0,
-    },
-    actualizaciones: {
+    scrapingCount: {
       type: 'int',
       default: 0,
     },

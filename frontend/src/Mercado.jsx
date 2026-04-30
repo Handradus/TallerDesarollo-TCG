@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import './css/index.css';
 import './css/modules.css';
+import AdBanner from './components/AdBanner';
 
 export default function Mercado() {
     const [items, setItems] = useState([]);
@@ -156,6 +157,9 @@ export default function Mercado() {
                 <div className="collection-header">
                     <h1>🏪 Mercado de Entrenadores</h1>
                 </div>
+
+                {/* Banners publicitarios */}
+                <AdBanner layout="bottom" />
 
                 {loading ? <div className="loading-spinner">Cargando mercado...</div> : (
                     <div className="results-grid">

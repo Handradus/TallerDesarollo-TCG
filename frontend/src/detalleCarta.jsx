@@ -513,23 +513,39 @@ export default function CartaDetalle() {
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       fetch(`${apiUrl}/api/cartas/${id}/tiendas`, { headers })
-        .then(res => res.json())
+        .then(async res => {
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            console.warn('⚠️ Error al obtener tiendas:', errData.error || res.status);
+            setCarta(prev => ({
+              ...prev,
+              tiendasDisponibles: [],
+              tiendasError: errData.error || `Error ${res.status} al cargar tiendas`
+            }));
+            setHasFetchedTiendas(true);
+            return null;
+          }
+          return res.json();
+        })
         .then(tiendas => {
-          // Convertir objeto de tiendas a array para el frontend
+          if (!tiendas) return;
+          const hayExpirado = Object.values(tiendas).some(d => d.cache_expirado);
           const tiendasArray = Object.entries(tiendas)
-            .filter(([nombre, datos]) => datos.url && datos.disponible !== false) // Solo tiendas con URL válida y stock disponible
+            .filter(([nombre, datos]) => datos.url && datos.disponible !== false)
             .map(([nombre, datos]) => ({
-              id: datos.id, // ← Incluir ID de la tienda
+              id: datos.id,
               nombre,
               url: datos.url,
               verificada: datos.verificada,
               precio: datos.precio,
-              disponible: datos.disponible !== undefined ? datos.disponible : true
+              disponible: datos.disponible !== undefined ? datos.disponible : true,
+              cacheExpirado: datos.cache_expirado || false
             }));
-
           setCarta(prev => ({
             ...prev,
-            tiendasDisponibles: tiendasArray
+            tiendasDisponibles: tiendasArray,
+            tiendasError: null,
+            tiendasCacheExpirado: hayExpirado
           }));
           setHasFetchedTiendas(true);
         })
@@ -1027,7 +1043,43 @@ export default function CartaDetalle() {
                     ))}
                   </div>
                 ) : (
-                  <p className="no-tiendas">No hay tiendas disponibles para esta carta.</p>
+                  <>
+                    {carta.tiendasError && (
+                      <div style={{
+                        background: 'rgba(251, 191, 36, 0.15)',
+                        border: '1px solid rgba(251, 191, 36, 0.4)',
+                        borderRadius: '10px',
+                        padding: '12px 16px',
+                        marginBottom: '10px',
+                        fontSize: '0.9rem',
+                        color: '#92400e',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <span>⚠️</span>
+                        <span>{carta.tiendasError}. Los datos mostrados pueden estar desactualizados. Intenta de nuevo más tarde.</span>
+                      </div>
+                    )}
+                    {carta.tiendasCacheExpirado && !carta.tiendasError && (
+                      <div style={{
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        borderRadius: '10px',
+                        padding: '10px 14px',
+                        marginBottom: '10px',
+                        fontSize: '0.85rem',
+                        color: '#4338ca',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <span>🕐</span>
+                        <span>Los datos de algunas tiendas pueden estar desactualizados (cuota de actualización agotada por hoy).</span>
+                      </div>
+                    )}
+                    <p className="no-tiendas">No hay tiendas disponibles para esta carta.</p>
+                  </>
                 )}
               </div>
             </div>

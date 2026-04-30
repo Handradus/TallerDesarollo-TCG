@@ -6,7 +6,7 @@ const { verificarYBuscarLink } = require('../helpers/verificarYBuscarLink');
 const { consumeQuota } = require('../services/scrapingQuotaService');
 
 const enProceso = new Set(); 
-const CACHE_PRECIOS_POSITIVO_DIAS = Number(process.env.TIENDAS_CACHE_POSITIVO_DIAS || 7);
+const CACHE_PRECIOS_POSITIVO_DIAS = Number(process.env.TIENDAS_CACHE_POSITIVO_DIAS || 10);
 const CACHE_PRECIOS_NEGATIVO_HORAS = Number(process.env.TIENDAS_CACHE_NEGATIVO_HORAS || 72);
 
 async function obtenerTiendas(req, res) {
@@ -58,18 +58,45 @@ async function obtenerTiendas(req, res) {
     const tiendasPendientes = tiendas.filter(t => !idsTiendasConCacheReciente.has(t.id));
 
     if (tiendasPendientes.length > 0) {
-      const quotaResult = await consumeQuota(req, 'new', 1);
+      // Cualquier scraping (nueva o stale) cuenta como 1 consulta de scraping
+      // Cache válido NO cuenta
+      const quotaResult = await consumeQuota(req, 'scraping', 1);
       if (!quotaResult.ok) {
-        return res.status(quotaResult.status || 429).json({ error: quotaResult.message });
+        // Cuota agotada: devolver los datos en caché aunque estén vencidos, con flag de aviso
+        // (antes retornaba 429 y el frontend mostraba 0 tiendas sin explicación)
+        // Nota: Si es admin, nunca llega aquí porque adminBypass=true siempre
+        console.warn(`⚠️ Cuota de scraping agotada para carta "${carta.nombre}". Devolviendo datos en caché (posiblemente desactualizados).`);
+        const resultado = {};
+        for (const tienda of tiendas) {
+          const link = links.find(l => l.tienda.id === tienda.id);
+          resultado[tienda.nombre] = link
+            ? {
+                id: tienda.id,
+                url: link.url,
+                verificada: link.verificada,
+                precio: link.precio || null,
+                tipo: link.tipoProducto || null,
+                disponible: link.disponible !== undefined ? link.disponible : true,
+                cache_expirado: true
+              }
+            : {
+                id: tienda.id,
+                url: null,
+                verificada: false,
+                cache_expirado: true
+              };
+        }
+        enProceso.delete(id);
+        return res.json(resultado);
       }
 
       console.log(`🔍 Scraping de precios para carta "${carta.nombre}" (cache total: ${links.length}, recientes: ${linksRecientes.length}, pendientes: ${tiendasPendientes.length})`);
       console.log(`🎯 Iniciando búsqueda SOLO en ${tiendasPendientes.length} tiendas pendientes...`);
 
-      const linksStale = links.filter(l => tiendasPendientes.some(t => t.id === l.tienda.id));
-      if (linksStale.length > 0) {
-        await linkRepo.remove(linksStale);
-        console.log(`🧹 Limpiados ${linksStale.length} links stale de tiendas pendientes`);
+      const linksStaleExistentes = links.filter(l => tiendasPendientes.some(t => t.id === l.tienda.id));
+      if (linksStaleExistentes.length > 0) {
+        await linkRepo.remove(linksStaleExistentes);
+        console.log(`🧹 Limpiados ${linksStaleExistentes.length} links stale de tiendas pendientes`);
       }
 
       const promesasVerificacion = tiendasPendientes.map(async (tienda) => {
@@ -147,7 +174,7 @@ async function refrescarTiendas(req, res) {
     const carta = await cartaRepo.findOneBy({ id: parseInt(id) });
     if (!carta) return res.status(404).json({ error: "Carta no encontrada" });
 
-    const quotaResult = await consumeQuota(req, 'update', 1);
+    const quotaResult = await consumeQuota(req, 'scraping', 1);
     if (!quotaResult.ok) {
       return res.status(quotaResult.status || 429).json({ error: quotaResult.message });
     }
