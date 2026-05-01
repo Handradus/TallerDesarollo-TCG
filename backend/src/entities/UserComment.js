@@ -11,6 +11,7 @@ module.exports = new EntitySchema({
         rating: { type: 'int', default: 5 },
         isReported: { type: 'boolean', default: false },
         createdAt: { type: 'timestamp', createDate: true },
+        updatedAt: { type: 'timestamp', updateDate: true },
     },
     relations: {
         sender: {

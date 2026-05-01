@@ -15,6 +15,17 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
+import spriteFuego from './assets/sprites/fuego.png';
+import spriteAgua from './assets/sprites/agua.png';
+import spritePlanta from './assets/sprites/planta.png';
+import spriteElectrica from './assets/sprites/electrica.png';
+import spritePsiquica from './assets/sprites/psiquica.png';
+import spriteDragon from './assets/sprites/dragon.png';
+import spriteSiniestra from './assets/sprites/siniestra.png';
+import spriteHada from './assets/sprites/hada.png';
+import spriteLucha from './assets/sprites/lucha.png';
+import spriteMetal from './assets/sprites/metal.png';
+import spriteNormal from './assets/sprites/normal.png';
 
 export default function CartaDetalle() {
   const { id } = useParams();
@@ -254,17 +265,68 @@ export default function CartaDetalle() {
     };
     return colores[tipo] || '#6c757d';
   };
-
   const getTipoIcon = (tipos) => {
-    if (!tipos || tipos.length === 0) return '⭐';
+    if (!tipos || tipos.length === 0) return <span className="tipo-sprite-fallback">⭐</span>;
     const tipo = tipos[0].toLowerCase();
-    const iconos = {
-      fire: '🔥', water: '💧', grass: '🌿', electric: '⚡', psychic: '🔮',
-      ice: '❄️', dragon: '🐉', dark: '🌑', fairy: '🧚', normal: '⭐',
-      fighting: '👊', poison: '☠️', ground: '🌍', flying: '🌪️',
-      bug: '🐛', rock: '🗿', ghost: '👻', steel: '⚔️'
+
+    const map = {
+      // Primary mappings (english)
+      fire: spriteFuego,
+      water: spriteAgua,
+      grass: spritePlanta,
+      electric: spriteElectrica,
+      psychic: spritePsiquica,
+      dragon: spriteDragon,
+      dark: spriteSiniestra,
+      fairy: spriteHada,
+      normal: spriteNormal,
+      fighting: spriteLucha,
+      steel: spriteMetal,
+      // aliases and Spanish names
+      fuego: spriteFuego,
+      agua: spriteAgua,
+      planta: spritePlanta,
+      electrica: spriteElectrica,
+      electrico: spriteElectrica,
+      psiquica: spritePsiquica,
+      psíquica: spritePsiquica,
+      dragón: spriteDragon,
+      darknes: spriteSiniestra,
+      darkness: spriteSiniestra,
+      siniestra: spriteSiniestra,
+      siniestro: spriteSiniestra,
+      hada: spriteHada,
+      lucha: spriteLucha,
+      metal: spriteMetal,
+      // fallbacks for related types
+      bug: spritePlanta,
+      insecto: spritePlanta,
+      ice: spriteAgua,
+      hielo: spriteAgua,
+      poison: spritePlanta,
+      poisonous: spritePlanta,
+      tierra: spriteNormal,
+      ground: spriteNormal,
+      flying: spriteNormal,
+      rock: spriteNormal,
+      roca: spriteNormal,
+      ghost: spriteSiniestra,
+      fantasma: spriteSiniestra
     };
-    return iconos[tipo] || '⭐';
+
+    const src = map[tipo];
+    if (src) {
+      return (
+        <img
+          src={src}
+          alt={tipo}
+          className="tipo-sprite-icon"
+          style={{ width: '1em', height: '1em', verticalAlign: '-0.12em', marginRight: '0.4rem', objectFit: 'contain' }}
+        />
+      );
+    }
+
+    return <span className="tipo-sprite-fallback">⭐</span>;
   };
 
   const normalizarTextoComparacion = (valor) => {

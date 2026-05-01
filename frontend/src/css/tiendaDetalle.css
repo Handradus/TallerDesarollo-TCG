@@ -139,6 +139,11 @@
   font-size: 1.1rem;
 }
 
+.valoracion-total-main {
+  color: #6c757d;
+  font-weight: 600;
+}
+
 /* Grid de detalles */
 .tienda-details-grid {
   display: grid;
@@ -371,6 +376,125 @@
   background: #5a6268;
 }
 
+.reviews-section {
+  margin-top: 2rem;
+  border-top: 2px solid #e9ecef;
+  padding-top: 2rem;
+}
+
+.reviews-section h2 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+}
+
+.review-form-card {
+  background: #f8f9fa;
+  border: 1px solid #e3e6ea;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.review-form-card h3 {
+  margin-top: 0;
+  color: #2c3e50;
+}
+
+.review-form-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.review-form-row label {
+  font-weight: 600;
+}
+
+.review-form-row select {
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+}
+
+.review-textarea {
+  width: 100%;
+  min-height: 90px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  resize: vertical;
+}
+
+.btn-review-submit {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-review-submit:disabled {
+  background: #8ab4e6;
+  cursor: not-allowed;
+}
+
+.review-login-hint {
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  color: #664d03;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.review-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review-card {
+  border: 1px solid #e3e6ea;
+  border-left: 4px solid #ffc107;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  background: white;
+}
+
+.review-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.review-author {
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.review-date {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.review-stars {
+  margin-bottom: 0.35rem;
+}
+
+.review-content {
+  margin: 0;
+  color: #495057;
+  white-space: pre-wrap;
+}
+
+.review-empty {
+  color: #6c757d;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .tienda-detalle-container {
@@ -411,6 +535,16 @@
 
   .error-actions {
     flex-direction: column;
+  }
+
+  .review-form-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .review-card-header {
+    flex-direction: column;
+    gap: 0.25rem;
   }
 }
 

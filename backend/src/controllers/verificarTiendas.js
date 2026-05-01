@@ -1,13 +1,67 @@
 const { AppDataSource } = require('../data-source');
 const Carta = require('../entities/Carta');
 const CartaLink = require('../entities/CartaLink');
+const DailyCardScraping = require('../entities/DailyCardScraping');
 const Tienda = require('../entities/Tienda');
 const { verificarYBuscarLink } = require('../helpers/verificarYBuscarLink');
 const { consumeQuota } = require('../services/scrapingQuotaService');
+const jwt = require('jsonwebtoken');
+const User = require('../entities/User');
 
 const enProceso = new Set(); 
 const CACHE_PRECIOS_POSITIVO_DIAS = Number(process.env.TIENDAS_CACHE_POSITIVO_DIAS || 10);
 const CACHE_PRECIOS_NEGATIVO_HORAS = Number(process.env.TIENDAS_CACHE_NEGATIVO_HORAS || 72);
+
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function parseBearerToken(req) {
+  const authHeader = req.headers['authorization'];
+  return authHeader && authHeader.split(' ')[1];
+}
+
+async function resolveCurrentUser(req) {
+  const token = parseBearerToken(req);
+  if (!token) {
+    return { ok: false, status: 401, message: 'Debes iniciar sesion para generar consultas nuevas.' };
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_change_me');
+  } catch {
+    return { ok: false, status: 403, message: 'Token invalido o expirado.' };
+  }
+
+  const userRepo = AppDataSource.getRepository(User);
+  const user = await userRepo.findOne({
+    where: [{ id: decoded.userId }, { email: decoded.email }],
+  });
+
+  if (!user) {
+    return { ok: false, status: 403, message: 'Usuario no autorizado.' };
+  }
+
+  return { ok: true, user };
+}
+
+async function getDailyScrapingMarker(userId, cartaId) {
+  const markerRepo = AppDataSource.getRepository(DailyCardScraping);
+  const day = getTodayKey();
+  return markerRepo.findOne({ where: { userId, cartaId, day } });
+}
+
+async function saveDailyScrapingMarker(userId, cartaId) {
+  const markerRepo = AppDataSource.getRepository(DailyCardScraping);
+  const day = getTodayKey();
+  let marker = await markerRepo.findOne({ where: { userId, cartaId, day } });
+  if (!marker) {
+    marker = markerRepo.create({ userId, cartaId, day });
+  }
+  await markerRepo.save(marker);
+  return marker;
+}
 
 async function obtenerTiendas(req, res) {
   const { id } = req.params;
@@ -38,6 +92,15 @@ async function obtenerTiendas(req, res) {
     console.log(`📊 Total de tiendas activas encontradas: ${tiendas.length}`);
     tiendas.forEach(t => console.log(`   - ${t.nombre} (${t.tipoBusqueda})`));
 
+    const userResult = await resolveCurrentUser(req);
+    if (!userResult.ok) {
+      if (tiendas.length > 0 && links.length > 0) {
+        console.log(`⚠️ [obtenerTiendas] Sin usuario válido, pero hay caché. Devolviendo datos guardados para carta id=${carta.id}`);
+      } else {
+        return res.status(userResult.status).json({ error: userResult.message });
+      }
+    }
+
     
     const CACHE_PRECIOS_POSITIVO_DURACION = Math.max(1, CACHE_PRECIOS_POSITIVO_DIAS) * 24 * 60 * 60 * 1000;
     const CACHE_PRECIOS_NEGATIVO_DURACION = Math.max(1, CACHE_PRECIOS_NEGATIVO_HORAS) * 60 * 60 * 1000;
@@ -56,8 +119,13 @@ async function obtenerTiendas(req, res) {
 
     const idsTiendasConCacheReciente = new Set(linksRecientes.map(l => l.tienda.id));
     const tiendasPendientes = tiendas.filter(t => !idsTiendasConCacheReciente.has(t.id));
+    const currentUser = userResult.ok ? userResult.user : null;
+    const alreadyScrapedToday = currentUser ? await getDailyScrapingMarker(currentUser.id, carta.id) : null;
 
-    if (tiendasPendientes.length > 0) {
+    if (alreadyScrapedToday) {
+      console.log(`🛡️ [obtenerTiendas] Protección activa: carta "${carta.nombre}" ya fue scrapeada hoy por userId=${currentUser.id}. No se descuenta cuota.`);
+      links = linksRecientes.length > 0 ? linksRecientes : links;
+    } else if (tiendasPendientes.length > 0) {
       // Cualquier scraping (nueva o stale) cuenta como 1 consulta de scraping
       // Cache válido NO cuenta
       const quotaResult = await consumeQuota(req, 'scraping', 1);
@@ -111,6 +179,10 @@ async function obtenerTiendas(req, res) {
 
       
       await Promise.allSettled(promesasVerificacion);
+
+      if (currentUser) {
+        await saveDailyScrapingMarker(currentUser.id, carta.id);
+      }
 
      
       links = await linkRepo.find({
@@ -174,24 +246,101 @@ async function refrescarTiendas(req, res) {
     const carta = await cartaRepo.findOneBy({ id: parseInt(id) });
     if (!carta) return res.status(404).json({ error: "Carta no encontrada" });
 
+    const userResult = await resolveCurrentUser(req);
+    if (!userResult.ok) {
+      return res.status(userResult.status).json({ error: userResult.message });
+    }
+
+    const currentUser = userResult.user;
+
+    const linksExistentes = await linkRepo.find({
+      where: { carta: { id: carta.id } },
+      relations: ['tienda']
+    });
+
+    const tiendas = await tiendaRepo.find({ 
+      where: { activo: true }
+    });
+
+    const CACHE_PRECIOS_POSITIVO_DURACION = Math.max(1, CACHE_PRECIOS_POSITIVO_DIAS) * 24 * 60 * 60 * 1000;
+    const CACHE_PRECIOS_NEGATIVO_DURACION = Math.max(1, CACHE_PRECIOS_NEGATIVO_HORAS) * 60 * 60 * 1000;
+    const ahora = new Date();
+
+    const obtenerDuracionCacheLink = (link) => {
+      const esPositivo = Boolean(link.url) && link.verificada === true && link.disponible !== false;
+      return esPositivo ? CACHE_PRECIOS_POSITIVO_DURACION : CACHE_PRECIOS_NEGATIVO_DURACION;
+    };
+
+    const linksRecientes = linksExistentes.filter(link => {
+      const tiempoTranscurrido = ahora - new Date(link.fechaGuardado);
+      const duracionCache = obtenerDuracionCacheLink(link);
+      return tiempoTranscurrido < duracionCache;
+    });
+
+    const idsTiendasConCacheReciente = new Set(linksRecientes.map(l => l.tienda.id));
+    const tiendasPendientes = tiendas.filter(t => !idsTiendasConCacheReciente.has(t.id));
+    const alreadyScrapedToday = await getDailyScrapingMarker(currentUser.id, carta.id);
+
+    if (alreadyScrapedToday) {
+      console.log(`🛡️ [refrescarTiendas] Protección activa: carta "${carta.nombre}" ya fue scrapeada hoy por userId=${currentUser.id}. No se descuenta cuota.`);
+
+      const resultadoCacheProtegido = {};
+      for (const tienda of tiendas) {
+        const link = linksRecientes.find(l => l.tienda.id === tienda.id);
+        resultadoCacheProtegido[tienda.nombre] = link
+          ? {
+              id: tienda.id,
+              url: link.url,
+              verificada: link.verificada,
+              precio: link.precio || null,
+              tipo: link.tipoProducto || null,
+              disponible: link.disponible !== undefined ? link.disponible : true
+            }
+          : {
+              id: tienda.id,
+              url: null,
+              verificada: false
+            };
+      }
+
+      return res.json({ message: "Protección activa: ya se cobró hoy para esta carta. Usando caché.", tiendas: resultadoCacheProtegido });
+    }
+
+    if (tiendasPendientes.length === 0) {
+      console.log(`⚡ [refrescarTiendas] Carta "${carta.nombre}" ya tiene caché vigente en BD. No se descuenta cuota.`);
+
+      const resultadoCache = {};
+      for (const tienda of tiendas) {
+        const link = linksRecientes.find(l => l.tienda.id === tienda.id);
+        resultadoCache[tienda.nombre] = link
+          ? {
+              id: tienda.id,
+              url: link.url,
+              verificada: link.verificada,
+              precio: link.precio || null,
+              tipo: link.tipoProducto || null,
+              disponible: link.disponible !== undefined ? link.disponible : true
+            }
+          : {
+              id: tienda.id,
+              url: null,
+              verificada: false
+            };
+      }
+
+      return res.json({ message: "Datos vigentes en BD; no se consumió cuota.", tiendas: resultadoCache });
+    }
+
     const quotaResult = await consumeQuota(req, 'scraping', 1);
     if (!quotaResult.ok) {
       return res.status(quotaResult.status || 429).json({ error: quotaResult.message });
     }
 
     
-    const linksExistentes = await linkRepo.find({
-      where: { carta: { id: carta.id } }
-    });
-
     if (linksExistentes.length > 0) {
       await linkRepo.remove(linksExistentes);
       console.log(`🧹 Eliminados ${linksExistentes.length} links existentes para refresh`);
     }
-
-    const tiendas = await tiendaRepo.find({ 
-      where: { activo: true }
-    });
     console.log(`📊 [REFRESH] Total de tiendas activas encontradas: ${tiendas.length}`);
 
     
@@ -209,6 +358,8 @@ async function refrescarTiendas(req, res) {
     });
 
     await Promise.allSettled(promesasVerificacion);
+
+    await saveDailyScrapingMarker(currentUser.id, carta.id);
 
     
     const nuevosLinks = await linkRepo.find({

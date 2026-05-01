@@ -37,6 +37,11 @@ export default function PerfilPublico() {
         if (!commentText.trim()) return;
         try {
             const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Debes iniciar sesión para comentar');
+                return;
+            }
+
             const res = await axios.post(`${apiUrl}/api/profile/comment`, {
                 receiverId: userId,
                 content: commentText,
@@ -49,7 +54,8 @@ export default function PerfilPublico() {
             setRating(5);
         } catch (error) {
             console.error(error);
-            alert('Error al comentar');
+            const backendMessage = error?.response?.data?.message;
+            alert(backendMessage || 'Error al comentar');
         }
     };
 

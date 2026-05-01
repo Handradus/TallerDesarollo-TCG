@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import './css/tiendaDetalle.css';
 
 export default function TiendaDetalle() {
   const { nombreTienda } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [tienda, setTienda] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState({ promedio: null, cantidad: 0 });
+  const [reviewText, setReviewText] = useState('');
+  const [rating, setRating] = useState(5);
+  const [sendingReview, setSendingReview] = useState(false);
 
   const apiUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,6 +32,7 @@ export default function TiendaDetalle() {
       
       if (data.success) {
         setTienda(data.tienda);
+        await cargarResenas();
       } else {
         setError(data.error || 'Tienda no encontrada');
       }
@@ -33,6 +41,62 @@ export default function TiendaDetalle() {
       setError('Error de conexión al cargar la tienda');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const cargarResenas = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/tiendas-publicas/${nombreTienda}/resenas`);
+      const data = await response.json();
+
+      if (data.success) {
+        setReviews(data.reviews || []);
+        setReviewStats({ promedio: data.promedio ?? null, cantidad: data.cantidad ?? 0 });
+      }
+    } catch (err) {
+      console.error('Error al cargar reseñas:', err);
+    }
+  };
+
+  const publicarResena = async () => {
+    if (!user) {
+      alert('Debes iniciar sesión para comentar.');
+      return;
+    }
+
+    if (!reviewText.trim()) {
+      return;
+    }
+
+    try {
+      setSendingReview(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${apiUrl}/api/tiendas-publicas/${nombreTienda}/resenas`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          content: reviewText,
+          rating
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'No se pudo publicar la reseña');
+      }
+
+      setReviewText('');
+      setRating(5);
+      await cargarResenas();
+    } catch (err) {
+      console.error('Error al publicar reseña:', err);
+      alert(err.message || 'Error al publicar reseña');
+    } finally {
+      setSendingReview(false);
     }
   };
 
@@ -80,6 +144,10 @@ export default function TiendaDetalle() {
     );
   }
 
+  const valoracionVisible = reviewStats.promedio && reviewStats.promedio > 0
+    ? reviewStats.promedio
+    : tienda.valoracion;
+
   return (
     <div className="tienda-detalle-container">
       <div className="tienda-header">
@@ -124,19 +192,20 @@ export default function TiendaDetalle() {
             <div className="tienda-title-section">
               <h1 className="tienda-nombre-main">{tienda.nombre}</h1>
               
-              {tienda.valoracion && (
+              {valoracionVisible && (
                 <div className="valoracion-main">
                   <div className="estrellas-display">
                     {[...Array(5)].map((_, i) => (
                       <span 
                         key={i} 
-                        className={`estrella ${i < Math.floor(tienda.valoracion) ? 'filled' : ''}`}
+                        className={`estrella ${i < Math.floor(valoracionVisible) ? 'filled' : ''}`}
                       >
                         ⭐
                       </span>
                     ))}
                   </div>
-                  <span className="valoracion-numero-main">{tienda.valoracion}/5</span>
+                  <span className="valoracion-numero-main">{Number(valoracionVisible).toFixed(1)}/5</span>
+                  <span className="valoracion-total-main">({reviewStats.cantidad || 0} reseñas)</span>
                 </div>
               )}
             </div>
@@ -232,6 +301,66 @@ export default function TiendaDetalle() {
                 🗺️ Ver en Mapa
               </button>
             )}
+          </div>
+
+          <div className="reviews-section">
+            <h2>Reseñas de usuarios</h2>
+
+            {user ? (
+              <div className="review-form-card">
+                <h3>Valorar y comentar esta tienda</h3>
+                <div className="review-form-row">
+                  <label htmlFor="review-rating">Calificación:</label>
+                  <select
+                    id="review-rating"
+                    value={rating}
+                    onChange={(e) => setRating(parseInt(e.target.value, 10))}
+                  >
+                    <option value="5">⭐⭐⭐⭐⭐ Excelente</option>
+                    <option value="4">⭐⭐⭐⭐ Bueno</option>
+                    <option value="3">⭐⭐⭐ Regular</option>
+                    <option value="2">⭐⭐ Malo</option>
+                    <option value="1">⭐ Muy mala</option>
+                  </select>
+                </div>
+
+                <textarea
+                  className="review-textarea"
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  placeholder="Cuéntale a otros usuarios cómo fue tu experiencia con esta tienda..."
+                />
+
+                <button
+                  className="btn-review-submit"
+                  onClick={publicarResena}
+                  disabled={sendingReview || !reviewText.trim()}
+                >
+                  {sendingReview ? 'Publicando...' : 'Publicar reseña'}
+                </button>
+              </div>
+            ) : (
+              <div className="review-login-hint">
+                Inicia sesión para valorar y comentar esta tienda.
+              </div>
+            )}
+
+            <div className="review-list">
+              {reviews.length === 0 ? (
+                <p className="review-empty">Aún no hay reseñas para esta tienda.</p>
+              ) : (
+                reviews.map((review) => (
+                  <div key={review.id} className="review-card">
+                    <div className="review-card-header">
+                      <span className="review-author">{review.user?.name || 'Usuario'}</span>
+                      <span className="review-date">{new Date(review.createdAt).toLocaleDateString('es-ES')}</span>
+                    </div>
+                    <div className="review-stars">{'⭐'.repeat(review.rating || 5)}</div>
+                    <p className="review-content">{review.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

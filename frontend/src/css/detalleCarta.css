@@ -1098,6 +1098,27 @@
   .tiendas-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
+  .tipo-sprite-icon {
+    width: 1.05em; /* match emoji size inline with text */
+    height: 1.05em;
+    vertical-align: -0.12em; /* align with text baseline like an emoji */
+    margin-right: 0.4rem;
+    display: inline-block;
+    object-fit: contain;
+  }
+
+  /* Force a small fixed size for title and navbar contexts where H1/font-size is large */
+  .navbar-title .tipo-sprite-icon,
+  .carta-titulo-principal h1 .tipo-sprite-icon {
+    width: 1em !important;
+    height: 1em !important;
+    vertical-align: -0.12em;
+  }
+
+  .tipo-sprite-fallback {
+    display: inline-block;
+    margin-right: 0.4rem;
+  }
 }
 
 @media (max-width: 768px) {

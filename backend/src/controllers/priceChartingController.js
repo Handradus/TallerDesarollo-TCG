@@ -184,8 +184,9 @@ async function obtenerPreciosPriceCharting(req, res) {
     const haceUmbralCache = new Date(ahora.getTime() - cacheMs);
     const consultaReciente = carta.fechaActualizacionPrecios &&
       new Date(carta.fechaActualizacionPrecios) > haceUmbralCache;
+    const cacheTieneDatos = carta.precioPriceCharting !== null || Boolean(carta.urlPriceCharting);
 
-    if (consultaReciente && !forzar) {
+    if (consultaReciente && cacheTieneDatos && !forzar) {
       console.log(`✅ Devolviendo precios existentes para carta id=${id}`);
       return res.json({
         actualizado: false,

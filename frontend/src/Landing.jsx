@@ -48,10 +48,10 @@ export default function Landing() {
           style={{ width: '100%', maxWidth: '300px', marginBottom: '2rem' }} 
         />
         <h1 style={{ color: '#2d3748', marginBottom: '1rem', fontSize: '1.8rem' }}>
-          ¡Bienvenido al Centro de Entrenadores!
+          ¡Bienvenido a Cartateca!
         </h1>
         <p style={{ color: '#4a5568', marginBottom: '2rem', lineHeight: '1.6' }}>
-          Para mantener la calidad de nuestra comunidad y evitar tráfico no deseado, requerimos que inicies sesión para buscar, coleccionar o comprar cartas.
+          Para mantener la calidad de nuestra comunidad y evitar tráfico no deseado, requerimos que inicies sesión para buscar, coleccionar o ver el mercadillo.
         </p>
         
         <div style={{ display: 'flex', justifyContent: 'center' }}>

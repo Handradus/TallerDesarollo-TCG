@@ -103,6 +103,74 @@ class TiendaPublicaController {
       });
     }
   }
+
+  async obtenerResenasTienda(req, res) {
+    try {
+      const { nombreTienda } = req.params;
+
+      if (!nombreTienda) {
+        return res.status(400).json({
+          success: false,
+          error: 'Nombre de tienda requerido'
+        });
+      }
+
+      const resultado = await tiendaPublicaService.obtenerResenasTienda(nombreTienda);
+
+      if (resultado.success) {
+        res.status(200).json(resultado);
+      } else {
+        res.status(404).json(resultado);
+      }
+    } catch (error) {
+      console.error('Error en obtenerResenasTienda:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Error interno del servidor'
+      });
+    }
+  }
+
+  async agregarResenaTienda(req, res) {
+    try {
+      const { nombreTienda } = req.params;
+      const { content, rating } = req.body;
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          error: 'No autenticado'
+        });
+      }
+
+      if (!content || !content.trim()) {
+        return res.status(400).json({
+          success: false,
+          error: 'El comentario no puede estar vacío'
+        });
+      }
+
+      const resultado = await tiendaPublicaService.agregarResenaTienda(
+        nombreTienda,
+        userId,
+        content.trim(),
+        rating
+      );
+
+      if (resultado.success) {
+        res.status(200).json(resultado);
+      } else {
+        res.status(resultado.statusCode || 500).json(resultado);
+      }
+    } catch (error) {
+      console.error('Error en agregarResenaTienda:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Error interno del servidor'
+      });
+    }
+  }
 }
 
 module.exports = new TiendaPublicaController();

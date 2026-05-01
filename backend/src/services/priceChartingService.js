@@ -179,9 +179,9 @@ class PriceChartingService {
 
   calcularPuntuacionCoincidencia(textoResultado, carta) {
     let puntuacion = 0;
-    const textoLower = textoResultado.toLowerCase();
+    const textoLower = this.normalizarParaBusqueda(textoResultado).toLowerCase().replace(/-/g, ' ');
 
-    const nombreCarta = this.normalizarParaBusqueda(carta.nombre).toLowerCase();
+    const nombreCarta = this.normalizarParaBusqueda(carta.nombre).toLowerCase().replace(/-/g, ' ');
     const numeroCarta = carta.numero ? carta.numero.toString() : '';
     const setCarta = carta.set ? this.normalizarParaBusqueda(carta.set).toLowerCase() : '';
     const serieCarta = carta.serie ? this.normalizarParaBusqueda(carta.serie).toLowerCase() : '';
@@ -230,10 +230,17 @@ class PriceChartingService {
     const response = await this.httpGet(searchURL);
     const $ = cheerio.load(response.data);
     const finalURL = response?.request?.res?.responseUrl || searchURL;
-    const pageTitle = $('title').first().text().trim();
+    const finalPath = (() => {
+      try {
+        return new URL(finalURL, this.baseURL).pathname || '';
+      } catch {
+        return '';
+      }
+    })();
 
     // PriceCharting puede redirigir directamente al detalle de la carta.
-    if (finalURL.includes('/game/') || /prices\s*\|/i.test(pageTitle)) {
+    // Evitar falsos positivos con /search-products.
+    if (/^\/game\//i.test(finalPath)) {
       const urlCanonica = this.canonicalizarUrlPriceCharting(finalURL);
       console.log(`↪️ Redirección directa a ficha de carta en PriceCharting: ${urlCanonica}`);
       return await this.obtenerPreciosDetallados(urlCanonica, carta);
@@ -259,6 +266,25 @@ class PriceChartingService {
         $fila.find('td:first-child a[href*="/game/"]').attr('href') ||
         $fila.find('a[href*="/game/"]').first().attr('href');
       if (!enlaceCarta) return;
+
+      const tituloResultado = this.normalizarParaBusqueda(
+        $fila.find('td:first-child a[href*="/game/"]').first().text() ||
+        $fila.find('a[href*="/game/"]').first().text() ||
+        ''
+      ).replace(/-/g, ' ');
+      const nombreEsperado = this.normalizarParaBusqueda(carta.nombre || '').replace(/-/g, ' ');
+      const slugResultado = this.normalizarParaBusqueda(
+        String(enlaceCarta).split('/').pop()?.replace(/-/g, ' ') || ''
+      );
+      const tokensNombre = (nombreEsperado || '').split(' ').filter(t => t.length > 1);
+      const slugCoincideNombre = tokensNombre.length > 0 && tokensNombre.every(t => slugResultado.includes(t));
+      const tituloCoincideNombre = Boolean(nombreEsperado && tituloResultado && tituloResultado.includes(nombreEsperado));
+
+      // Evita falsos positivos donde el nombre aparece en columnas secundarias
+      // (ej: nombre del set), pero no en el título real de la carta.
+      if (nombreEsperado && !tituloCoincideNombre && !slugCoincideNombre) {
+        return;
+      }
 
       const textoFila = $fila.text().trim();
       const htmlFila = $fila.html();
@@ -307,6 +333,27 @@ class PriceChartingService {
       
       $('td').each((i, celda) => {
         const textoCelda = $(celda).text().trim();
+
+      if (precioEncontrado === null) {
+        const textoPlano = $('body').text().replace(/\s+/g, ' ').trim();
+        const coincidenciasFallback = [
+          /Ungraded\s*\$\s*([0-9][\d,]*(?:\.\d+)?)/i,
+          /Ungraded\s*([0-9][\d,]*(?:\.\d+)?)/i,
+          /Full Price Guide:.*?Ungraded\s*\$\s*([0-9][\d,]*(?:\.\d+)?)/i,
+        ];
+
+        for (const patron of coincidenciasFallback) {
+          const match = textoPlano.match(patron);
+          if (match) {
+            const precio = this.extraerPrecio(match[1]);
+            if (precio && precio > 0) {
+              console.log(`💰 Precio encontrado por fallback de texto: $${precio}`);
+              precioEncontrado = precio;
+              break;
+            }
+          }
+        }
+      }
         
         if (textoCelda.toLowerCase().includes('ungraded')) {
           console.log(`✅ Encontrado Ungraded: "${textoCelda}"`);
