@@ -16,6 +16,12 @@ export default function MiTienda() {
     const [deliveryType, setDeliveryType] = useState('ambos');
     const [region, setRegion] = useState('');
 
+    // Contador de palabras
+    const MAX_WORDS = 500;
+    const wordCount = description.trim().length > 0 ? description.trim().split(/\s+/).length : 0;
+    const wordsRemaining = MAX_WORDS - wordCount;
+    const isDescriptionTooLong = wordCount > MAX_WORDS;
+
     const regionesChile = [
         "Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", "Coquimbo",
         "Valparaíso", "Metropolitana", "O'Higgins", "Maule", "Ñuble",
@@ -75,7 +81,24 @@ export default function MiTienda() {
     };
 
     const handleList = async () => {
-        if (!selectedCardId || !price) return alert('Completa los campos');
+        // Validación de campos requeridos
+        if (!selectedCardId || !price) {
+            return alert('Por favor completa los campos: Carta y Precio');
+        }
+
+        // Validación de precio positivo
+        const priceNum = parseFloat(price);
+        if (isNaN(priceNum) || priceNum <= 0) {
+            return alert('❌ El precio debe ser un valor positivo. Evita valores negativos o cero.');
+        }
+
+        // Validación de límite de palabras en descripción
+        if (description.trim().length > 0) {
+            const wordCount = description.trim().split(/\s+/).length;
+            if (wordCount > 500) {
+                return alert(`❌ La descripción excede el límite de 500 palabras.\nActual: ${wordCount} palabras\nPor favor, acorta tu descripción.`);
+            }
+        }
 
         const formData = new FormData();
         formData.append('cartaId', selectedCardId);
@@ -92,19 +115,20 @@ export default function MiTienda() {
         try {
             const token = localStorage.getItem('token');
             // When sending FormData, axios automatically sets Content-Type to multipart/form-data
-            await axios.post(`${apiUrl}/api/market/list`, formData, {
+            const response = await axios.post(`${apiUrl}/api/market/list`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            alert('Carta publicada para venta');
+            alert('✅ Carta publicada para venta');
             setShowAddModal(false);
             fetchListings();
             setPrice(''); setDescription(''); setSelectedCardId(''); setFile(null); setDeliveryType('ambos'); setRegion('');
         } catch (error) {
             console.error(error);
-            alert('Error publicando carta');
+            const errorMessage = error.response?.data?.message || 'Error publicando carta';
+            alert(`❌ ${errorMessage}`);
         }
     }
 
@@ -252,7 +276,17 @@ export default function MiTienda() {
                                         onChange={e => setPrice(e.target.value)}
                                         className="text-input"
                                         placeholder="0.00"
+                                        style={{
+                                            width: '100%',
+                                            borderColor: price && parseFloat(price) <= 0 ? '#e74c3c' : '#ddd',
+                                            borderWidth: '2px'
+                                        }}
                                     />
+                                    {price && parseFloat(price) <= 0 && (
+                                        <small style={{ color: '#e74c3c', display: 'block', marginTop: '5px' }}>
+                                            ❌ El precio debe ser un valor positivo
+                                        </small>
+                                    )}
                                 </div>
 
                                 <div style={{ marginBottom: '15px' }}>
@@ -303,9 +337,24 @@ export default function MiTienda() {
                                         value={description}
                                         onChange={e => setDescription(e.target.value)}
                                         className="text-input"
-                                        style={{ height: '80px', fontFamily: 'inherit' }}
+                                        style={{
+                                            height: '80px',
+                                            fontFamily: 'inherit',
+                                            borderColor: isDescriptionTooLong ? '#e74c3c' : '#ddd',
+                                            borderWidth: isDescriptionTooLong ? '2px' : '1px'
+                                        }}
                                         placeholder="Estado, detalles extra..."
                                     ></textarea>
+                                    <small style={{
+                                        display: 'block',
+                                        marginTop: '5px',
+                                        color: isDescriptionTooLong ? '#e74c3c' : '#888',
+                                        fontWeight: isDescriptionTooLong ? 'bold' : 'normal'
+                                    }}>
+                                        {wordCount}/{MAX_WORDS} palabras
+                                        {isDescriptionTooLong && ` ❌ Excedido por ${wordCount - MAX_WORDS} palabras`}
+                                        {!isDescriptionTooLong && wordsRemaining <= 50 && wordsRemaining > 0 && ` ⚠️ (${wordsRemaining} restantes)`}
+                                    </small>
                                 </div>
 
                                 <div style={{ textAlign: 'right', marginTop: '20px' }}>

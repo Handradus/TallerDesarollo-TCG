@@ -18,6 +18,22 @@ const listForSale = async (req, res) => {
         return res.status(400).json({ message: 'Carta ID and Price are required' });
     }
 
+    // Validar que el precio sea positivo
+    const priceNum = parseFloat(price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+        return res.status(400).json({ message: 'El precio debe ser un valor positivo' });
+    }
+
+    // Validar límite de palabras en la descripción (máximo 500 palabras)
+    if (description) {
+        const wordCount = description.trim().split(/\s+/).length;
+        if (wordCount > 500) {
+            return res.status(400).json({ 
+                message: `La descripción excede el límite de 500 palabras (actual: ${wordCount} palabras)` 
+            });
+        }
+    }
+
     try {
         // Check removed to allow selling without adding to collection first
         // const owned = await collectionRepository.findOne({ where: { userId, cartaId } });
@@ -28,7 +44,7 @@ const listForSale = async (req, res) => {
         const item = marketRepository.create({
             userId,
             cartaId,
-            price,
+            price: priceNum,
             description,
             quantity: quantity || 1,
             active: true,
