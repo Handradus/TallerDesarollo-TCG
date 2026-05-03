@@ -122,7 +122,8 @@ export default function Coleccion() {
         setEditForm({
             condition: item.condition || 'NM',
             language: item.language || 'ES',
-            foilType: item.foilType || 'Normal'
+            foilType: item.foilType || 'Normal',
+            binderId: item.binderId || null
         });
     };
 
@@ -130,8 +131,13 @@ export default function Coleccion() {
         if (!editItem) return;
         try {
             const token = localStorage.getItem('token');
+            // Include binderId in update to allow moving between folders
+            const payload = { ...editForm };
+            // Normalize empty string to null
+            if (payload.binderId === '') payload.binderId = null;
+
             await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/collection/item/${editItem.collectionId}`,
-                editForm,
+                payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setEditItem(null);
@@ -440,6 +446,21 @@ export default function Coleccion() {
                                 <option value="Normal">Normal</option>
                                 <option value="Reverse">Reverse Holo</option>
                                 <option value="Holo">Holo</option>
+                            </select>
+                        </div>
+
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Carpeta</label>
+                            <select
+                                className="filter-select"
+                                style={{ width: '100%' }}
+                                value={editForm.binderId ?? ''}
+                                onChange={e => setEditForm({ ...editForm, binderId: e.target.value === '' ? null : e.target.value })}
+                            >
+                                <option value="">General (sin carpeta)</option>
+                                {binders.map(b => (
+                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                ))}
                             </select>
                         </div>
 

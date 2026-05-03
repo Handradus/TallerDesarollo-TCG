@@ -121,7 +121,7 @@ const getCollection = async (req, res) => {
 
         const collection = await collectionRepository.find({
             where: whereClause,
-            relations: ['carta'],
+            relations: ['carta', 'customCollection'],
             order: {
                 carta: {
                     set: 'ASC',
@@ -136,6 +136,8 @@ const getCollection = async (req, res) => {
             quantity: item.quantity,
             isOwned: item.isOwned,
             collectionId: item.id,
+            binderId: item.customCollection ? item.customCollection.id : null,
+            binderName: item.customCollection ? item.customCollection.name : null,
             addedAt: item.addedAt,
             condition: item.condition,
             language: item.language,
@@ -188,7 +190,7 @@ const getBinders = async (req, res) => {
 const updateCollectionItem = async (req, res) => {
     const userId = req.user.userId;
     const itemId = req.params.id;
-    const { condition, language, foilType } = req.body;
+    const { condition, language, foilType, binderId } = req.body;
 
     try {
         const item = await collectionRepository.findOne({
@@ -200,7 +202,51 @@ const updateCollectionItem = async (req, res) => {
             return res.status(404).json({ message: 'Item not found in your collection' });
         }
 
-        // Update current item in place WITHOUT merging
+        // If binderId is provided, attempt to move the item to another folder
+        if (typeof binderId !== 'undefined') {
+            // Check for duplicate in target binder
+            const targetWhere = {
+                userId,
+                cartaId: item.cartaId,
+                customCollection: binderId ? { id: binderId } : IsNull()
+            };
+
+            const duplicate = await collectionRepository.findOne({ where: targetWhere });
+
+            if (duplicate && duplicate.id !== item.id) {
+                // Both owned -> merge quantities
+                if (item.isOwned && duplicate.isOwned) {
+                    duplicate.quantity = (duplicate.quantity || 0) + (item.quantity || 0);
+                    await collectionRepository.save(duplicate);
+                    await collectionRepository.remove(item);
+                    return res.json({ message: 'Item moved and merged', item: duplicate });
+                }
+
+                // If moving an owned item into a wanted item, convert wanted -> owned
+                if (item.isOwned && !duplicate.isOwned) {
+                    duplicate.isOwned = true;
+                    duplicate.quantity = (item.quantity || 1);
+                    duplicate.condition = item.condition || duplicate.condition;
+                    duplicate.language = item.language || duplicate.language;
+                    duplicate.foilType = item.foilType || duplicate.foilType;
+                    await collectionRepository.save(duplicate);
+                    await collectionRepository.remove(item);
+                    return res.json({ message: 'Converted wanted to owned in target binder', item: duplicate });
+                }
+
+                // Otherwise, just move the item to target binder
+                item.customCollection = binderId ? { id: binderId } : null;
+                await collectionRepository.save(item);
+                return res.json({ message: 'Item moved', item });
+            } else {
+                // No duplicate found, safe to move
+                item.customCollection = binderId ? { id: binderId } : null;
+                await collectionRepository.save(item);
+                return res.json({ message: 'Item moved', item });
+            }
+        }
+
+        // Update other editable fields in place
         if (condition) item.condition = condition;
         if (language) item.language = language;
         if (foilType) item.foilType = foilType;
