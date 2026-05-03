@@ -113,4 +113,6 @@ const approveUser = async (req, res) => {
 
 module.exports = {
     googleLogin,
+    getPendingUsers,
+    approveUser,
 };
