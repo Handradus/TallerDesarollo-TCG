@@ -461,3 +461,107 @@ docker-compose run --rm certbot certonly \
 ---
 
 *Documento generado como referencia técnica. Para cambios en la arquitectura, actualizar este documento.*
+
+---
+
+## VAN_CLP — Valor Actual Neto (CLP)
+
+### Supuestos
+- Tasa anual: 8% (tasa mensual ≈ 0.006434)
+- Horizonte: 5 años (60 meses)
+- Factor VAN (mensual): 49.68 (PV factor = (1 - (1+r)^-60)/r)
+
+### Resultados (CLP)
+- Escenario Bajo (89.810 CLP/mes): VAN_CLP ≈ 4.462.000 CLP
+- Escenario Intermedio (112.310 CLP/mes): VAN_CLP ≈ 5.580.000 CLP
+- Escenario Alto (134.810 CLP/mes): VAN_CLP ≈ 6.697.000 CLP
+
+### Notas
+- VAN_CLP representa el valor presente de los costos operativos esperados durante 5 años, descontados al 8% anual (0,6434% mensual).
+- Para obtener el VAN neto, reste el valor presente de los ingresos esperados en el mismo horizonte y con la misma tasa.
+- Ajusta la tasa o la mensualidad si cambian la instancia, el tráfico o el costo del proxy.
+
+### Cálculo detallado
+
+1) Parámetros usados
+
+- Tasa anual (i) = 8% = 0.08
+- Tasa mensual (r) = (1 + i)^(1/12) - 1 = (1.08)^(1/12) - 1 ≈ 0.00643403
+- Periodos (N) = 60 meses
+
+2) Factor de descuento (factor PV)
+
+Factor PV = (1 - (1 + r)^-N) / r
+
+Cálculo numérico:
+
+- (1 + r)^-N = (1.00643403)^-60 ≈ 0.680485
+- 1 - (1 + r)^-N = 0.319515
+- Factor PV = 0.319515 / 0.00643403 ≈ 49.678
+
+3) Aplicación a los escenarios (multiplicación mensual × factor PV)
+
+- Escenario Bajo: 89.810 CLP/mes
+  - VAN_CLP = 89.810 * 49.678 ≈ 4.461.577 CLP
+
+- Escenario Intermedio: 112.310 CLP/mes
+  - VAN_CLP = 112.310 * 49.678 ≈ 5.579.330 CLP
+
+- Escenario Alto: 134.810 CLP/mes
+  - VAN_CLP = 134.810 * 49.678 ≈ 6.697.098 CLP
+
+4) Tabla resumen
+
+| Escenario | Mensual (CLP) | Factor PV | VAN_CLP (CLP) |
+|---|---:|---:|---:|
+| Bajo | 89.810 | 49.678 | 4.461.577 |
+| Intermedio | 112.310 | 49.678 | 5.579.330 |
+| Alto | 134.810 | 49.678 | 6.697.098 |
+
+5) Observaciones
+
+- Los valores están redondeados al peso más cercano. Para obtener el VAN neto reste el PV de los ingresos proyectados bajo la misma tasa y horizonte.
+- Si prefieres otra tasa de descuento o un horizonte distinto, puedo recalcular y actualizar esta tabla.
+
+---
+
+## Análisis: suscripción 2.000 CLP/mes (500 usuarios)
+
+### Supuestos
+- Precio por usuario: 2.000 CLP/mes
+- Usuarios activos: 500
+- Ingreso mensual total = 2.000 * 500 = 1.000.000 CLP
+- Factor PV (60 meses, 8% anual) = 49.678
+
+### PV de ingresos
+- PV_ingresos = 1.000.000 * 49.678 ≈ 49.678.000 CLP
+
+### VAN neto (PV_ingresos − PV_costos)
+
+PV_costos (desde VAN_CLP):
+- Escenario Bajo = 4.461.577 CLP
+- Escenario Intermedio = 5.579.330 CLP
+- Escenario Alto = 6.697.098 CLP
+
+VAN_neto calculado:
+- Escenario Bajo: 49.678.000 − 4.461.577 = 45.216.423 CLP
+- Escenario Intermedio: 49.678.000 − 5.579.330 = 44.098.670 CLP
+- Escenario Alto: 49.678.000 − 6.697.098 = 42.980.902 CLP
+
+### Margen mensual aproximado (ingreso − costo mensual)
+- Escenario Bajo: 1.000.000 − 89.810 = 910.190 CLP/mes
+- Escenario Intermedio: 1.000.000 − 112.310 = 887.690 CLP/mes
+- Escenario Alto: 1.000.000 − 134.810 = 865.190 CLP/mes
+
+### Efecto de comisiones de pago
+- Si usas un gateway con ~3% de comisión: 1.000.000 * 0.03 = 30.000 CLP/mes. Esto reduce el margen mensual y el VAN_neto marginalmente (ej. en escenario Alto, VAN_neto ≈ 42.950.902 CLP después de comisión simple).
+
+### Conclusión y recomendaciones
+- Con una suscripción de 2.000 CLP/mes para 500 usuarios obtienes un margen amplio en todos los escenarios (VAN_neto > 42 M CLP a 5 años). Esto da colchón frente a aumentos de egress, cambios de instancia o gastos de proxy.
+- Recomendaciones operativas:
+  - Implementar pagos recurrentes con Stripe y plan de prueba (7–14 días).
+  - Mantener banners estáticos o patrocinios en lugar de AdSense para controlar UX.
+  - Configurar alertas de presupuesto en AWS (Billing) y métricas de egress (CloudWatch).
+  - Considerar cobros anuales con descuento para retención.
+
+

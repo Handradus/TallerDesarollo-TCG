@@ -28,12 +28,14 @@ const googleLogin = async (req, res) => {
         let user = await userRepository.findOneBy({ googleId });
 
         if (!user) {
+            const isAdmin = email === 'softguaren@gmail.com';
             user = userRepository.create({
                 googleId,
                 email,
                 name,
                 picture,
-                role: email === 'softguaren@gmail.com' ? 'admin' : 'user'
+                role: isAdmin ? 'admin' : 'user',
+                approved: isAdmin ? true : false,
             });
             await userRepository.save(user);
         } else {
@@ -43,8 +45,14 @@ const googleLogin = async (req, res) => {
             // Ensure admin role is preserved or granted if matching email
             if (email === 'softguaren@gmail.com' && user.role !== 'admin') {
                 user.role = 'admin';
+                user.approved = true;
             }
             await userRepository.save(user);
+        }
+
+        // If user is not approved (and not admin), reject login and inform frontend
+        if (!user.approved && user.role !== 'admin') {
+            return res.status(403).json({ message: 'pending_approval', userId: user.id });
         }
 
         // Create JWT
@@ -67,6 +75,39 @@ const googleLogin = async (req, res) => {
     } catch (error) {
         console.error('Google Auth Error:', error);
         res.status(401).json({ message: 'Invalid token' });
+    }
+};
+
+// Admin: list pending users (not approved)
+const getPendingUsers = async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+        const users = await userRepository.find({ where: { approved: false } });
+        const minimal = users.map(u => ({ id: u.id, email: u.email, name: u.name, createdAt: u.createdAt }));
+        res.json({ pending: minimal });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal error' });
+    }
+};
+
+// Admin: approve a user by id
+const approveUser = async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+        const { id } = req.params;
+        const user = await userRepository.findOneBy({ id: parseInt(id) });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        user.approved = true;
+        await userRepository.save(user);
+        res.json({ success: true, user: { id: user.id, email: user.email, approved: user.approved } });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal error' });
     }
 };
 

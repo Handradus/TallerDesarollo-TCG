@@ -32,6 +32,10 @@ module.exports = new EntitySchema({
             type: 'varchar',
             default: 'user', // user, admin, tienda
         },
+        approved: {
+            type: 'boolean',
+            default: false,
+        },
         createdAt: {
             type: 'timestamp',
             createDate: true,
