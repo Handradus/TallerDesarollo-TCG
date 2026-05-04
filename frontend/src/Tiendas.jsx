@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css/tiendas.css';
 import AdBanner from './components/AdBanner';
+import Swal from 'sweetalert2';
 
 export default function Tiendas() {
   const navigate = useNavigate();
@@ -36,7 +37,11 @@ export default function Tiendas() {
   }, []);
 
   useEffect(() => {
-    cargarTiendas();
+    const timeoutId = setTimeout(() => {
+      cargarTiendas();
+    }, 400); // Debounce de 400ms para evitar demasiadas llamadas al servidor
+
+    return () => clearTimeout(timeoutId);
   }, [busqueda, regionFilter, typeFilter]); // Reload when filters change (server side filtering)
 
   // Old client side filtering removed in favor of server side + search
@@ -80,7 +85,13 @@ export default function Tiendas() {
   const handleSuggest = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return alert('Debes iniciar sesión para sugerir');
+      if (!token) {
+        return Swal.fire({
+          title: 'Atención',
+          text: 'Debes iniciar sesión para sugerir',
+          icon: 'warning'
+        });
+      }
 
       await fetch(`${apiUrl}/api/tiendas/sugerir`, {
         method: 'POST',
@@ -90,7 +101,11 @@ export default function Tiendas() {
         },
         body: JSON.stringify(suggestionData)
       });
-      alert('Sugerencia enviada a revisión!');
+      Swal.fire({
+        title: '¡Éxito!',
+        text: 'Sugerencia enviada a revisión!',
+        icon: 'success'
+      });
       setShowSuggestModal(false);
       setSuggestionData({
         nombre: '', urlBase: '', urlBusqueda: '', tipoBusqueda: 'shopify',
@@ -98,7 +113,11 @@ export default function Tiendas() {
       });
     } catch (e) {
       console.error(e);
-      alert('Error enviando sugerencia');
+      Swal.fire({
+        title: 'Error',
+        text: 'Error enviando sugerencia',
+        icon: 'error'
+      });
     }
   }
 
@@ -254,9 +273,6 @@ export default function Tiendas() {
                   </div>
                 )}
 
-                <div className="tienda-tipo">
-                  <span className="tipo-badge">{tienda.tipoBusqueda}</span>
-                </div>
 
                 <div className="ver-mas">
                   Ver detalles →

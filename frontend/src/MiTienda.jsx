@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import './css/modules.css';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 import { useLocation } from 'react-router-dom';
 export default function MiTienda() {
@@ -9,7 +13,7 @@ export default function MiTienda() {
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [collection, setCollection] = useState([]);
-    const [showAddModal, setShowAddModal] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false); // Can be removed eventually
     const [selectedCardId, setSelectedCardId] = useState('');
     const [price, setPrice] = useState('');
     const [description, setDescription] = useState('');
@@ -83,20 +87,23 @@ export default function MiTienda() {
     const handleList = async () => {
         // Validación de campos requeridos
         if (!selectedCardId || !price) {
-            return alert('Por favor completa los campos: Carta y Precio');
+            Swal.fire('Atención', 'Por favor completa los campos: Carta y Precio', 'warning');
+            return false;
         }
 
         // Validación de precio positivo
         const priceNum = parseFloat(price);
         if (isNaN(priceNum) || priceNum <= 0) {
-            return alert('❌ El precio debe ser un valor positivo. Evita valores negativos o cero.');
+            Swal.fire('Error', 'El precio debe ser un valor positivo. Evita valores negativos o cero.', 'error');
+            return false;
         }
 
         // Validación de límite de palabras en descripción
         if (description.trim().length > 0) {
             const wordCount = description.trim().split(/\s+/).length;
             if (wordCount > 500) {
-                return alert(`❌ La descripción excede el límite de 500 palabras.\nActual: ${wordCount} palabras\nPor favor, acorta tu descripción.`);
+                Swal.fire('Error', `La descripción excede el límite de 500 palabras.<br>Actual: ${wordCount} palabras<br>Por favor, acorta tu descripción.`, 'error');
+                return false;
             }
         }
 
@@ -114,26 +121,40 @@ export default function MiTienda() {
 
         try {
             const token = localStorage.getItem('token');
-            // When sending FormData, axios automatically sets Content-Type to multipart/form-data
             const response = await axios.post(`${apiUrl}/api/market/list`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            alert('✅ Carta publicada para venta');
+            Swal.fire('¡Éxito!', 'Carta publicada para venta', 'success');
             setShowAddModal(false);
+            if (directSellCard) setDirectSellCard(null);
             fetchListings();
             setPrice(''); setDescription(''); setSelectedCardId(''); setFile(null); setDeliveryType('ambos'); setRegion('');
+            return true;
         } catch (error) {
             console.error(error);
-            const errorMessage = error.response?.data?.message || 'Error publicando carta';
-            alert(`❌ ${errorMessage}`);
+            const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Error publicando carta';
+            Swal.fire('Error', errorMessage, 'error');
+            return false;
         }
     }
 
     const handleDelete = async (id) => {
-        if (!confirm('¿Borrar publicación?')) return;
+        const confirmResult = await Swal.fire({
+            title: '¿Borrar publicación?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, borrar',
+            cancelButtonText: 'Cancelar'
+        });
+        
+        if (!confirmResult.isConfirmed) return;
+        
         try {
             const token = localStorage.getItem('token');
             await axios.delete(`${apiUrl}/api/market/${id}`, {

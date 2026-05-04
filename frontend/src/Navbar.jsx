@@ -96,6 +96,7 @@ export default function Navbar() {
   const adminLinks = [
     { path: '/admin-buscar', label: '🔧 Búsqueda Admin' },
     { path: '/admin-precios', label: '🔥 Forzar Precios' },
+    { path: '/admin-usuarios', label: '👤 Aprobar Usuarios' },
     { path: '/agregar-tienda', label: '➕ Agregar Tienda' },
     { path: '/editar-tiendas', label: '✏️ Editar Tiendas' },
     { path: '/admin-moderacion', label: '⚖️ Moderación Tiendas' },

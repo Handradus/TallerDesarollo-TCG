@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import './css/index.css';
 import './css/modules.css';
 import AdBanner from './components/AdBanner';
+import Swal from 'sweetalert2';
 
 export default function Mercado() {
     const [items, setItems] = useState([]);
@@ -48,7 +49,10 @@ export default function Mercado() {
     };
 
     const contactSeller = async () => {
-        if (!messageText.trim()) return alert('Escribe un mensaje');
+        if (!messageText.trim()) {
+            Swal.fire('Atención', 'Escribe un mensaje', 'warning');
+            return;
+        }
         try {
             const token = localStorage.getItem('token');
             await axios.post(`${apiUrl}/api/messages/send`, {
@@ -58,17 +62,20 @@ export default function Mercado() {
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert('Mensaje enviado!');
+            Swal.fire('¡Éxito!', 'Mensaje enviado!', 'success');
             setSelectedItem(null);
             setMessageText('');
         } catch (error) {
             console.error(error);
-            alert('Error enviando mensaje');
+            Swal.fire('Error', 'Error enviando mensaje', 'error');
         }
     }
 
     const submitReport = async () => {
-        if (!reportReason.trim()) return alert('Por favor, ingresa un motivo');
+        if (!reportReason.trim()) {
+            Swal.fire('Atención', 'Por favor, ingresa un motivo', 'warning');
+            return;
+        }
         try {
             const token = localStorage.getItem('token');
             const res = await axios.post(`${apiUrl}/api/reports`, {
@@ -77,15 +84,15 @@ export default function Mercado() {
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert('Reporte enviado correctamente.');
+            Swal.fire('¡Gracias!', 'Reporte enviado correctamente.', 'success');
             setReportItem(null);
             setReportReason('');
         } catch (error) {
             console.error(error);
             if (error.response && error.response.data && error.response.data.error) {
-                alert(error.response.data.error);
+                Swal.fire('Error', error.response.data.error, 'error');
             } else {
-                alert('Error al enviar el reporte');
+                Swal.fire('Error', 'Error al enviar el reporte', 'error');
             }
         }
     }

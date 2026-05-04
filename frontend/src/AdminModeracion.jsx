@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './css/admin.css'; // Reusing admin styles or create new
+import Swal from 'sweetalert2';
 
 export default function AdminModeracion() {
     const [sugerencias, setSugerencias] = useState([]);
@@ -32,7 +33,18 @@ export default function AdminModeracion() {
     };
 
     const handleModeracion = async (id, accion) => {
-        if (!confirm(`¿Estás seguro de ${accion === 'approve' ? 'APROBAR' : 'RECHAZAR'} esta tienda?`)) return;
+        const confirmResult = await Swal.fire({
+            title: '¿Confirmar moderación?',
+            text: `¿Estás seguro de ${accion === 'approve' ? 'APROBAR' : 'RECHAZAR'} esta tienda?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: accion === 'approve' ? '#28a745' : '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, confirmar',
+            cancelButtonText: 'Cancelar'
+        });
+        
+        if (!confirmResult.isConfirmed) return;
 
         try {
             const token = localStorage.getItem('token');
@@ -41,10 +53,10 @@ export default function AdminModeracion() {
             });
             // Remove from list
             setSugerencias(sugerencias.filter(s => s.id !== id));
-            alert(`Sugerencia ${accion === 'approve' ? 'aprobada' : 'rechazada'} exitosamente`);
+            Swal.fire('¡Éxito!', `Sugerencia ${accion === 'approve' ? 'aprobada' : 'rechazada'} exitosamente`, 'success');
         } catch (e) {
             console.error(e);
-            alert('Error al moderar');
+            Swal.fire('Error', 'Error al moderar', 'error');
         }
     };
 

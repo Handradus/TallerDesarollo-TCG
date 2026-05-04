@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import { Link } from 'react-router-dom';
 import './css/modules.css';
+import Swal from 'sweetalert2';
 
 export default function MiPerfil() {
     const { user } = useAuth();
@@ -43,10 +44,10 @@ export default function MiPerfil() {
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert('Perfil actualizado correctamente');
+            Swal.fire('¡Éxito!', 'Perfil actualizado correctamente', 'success');
         } catch (error) {
             console.error(error);
-            alert('Error actualizando perfil');
+            Swal.fire('Error', 'Error actualizando perfil', 'error');
         }
     };
 

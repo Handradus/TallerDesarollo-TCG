@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import './css/tiendaDetalle.css';
+import Swal from 'sweetalert2';
 
 export default function TiendaDetalle() {
   const { nombreTienda } = useParams();
@@ -60,7 +61,11 @@ export default function TiendaDetalle() {
 
   const publicarResena = async () => {
     if (!user) {
-      alert('Debes iniciar sesión para comentar.');
+      Swal.fire({
+        title: 'Atención',
+        text: 'Debes iniciar sesión para comentar.',
+        icon: 'warning'
+      });
       return;
     }
 
@@ -94,7 +99,11 @@ export default function TiendaDetalle() {
       await cargarResenas();
     } catch (err) {
       console.error('Error al publicar reseña:', err);
-      alert(err.message || 'Error al publicar reseña');
+      Swal.fire({
+        title: 'Error',
+        text: err.message || 'Error al publicar reseña',
+        icon: 'error'
+      });
     } finally {
       setSendingReview(false);
     }

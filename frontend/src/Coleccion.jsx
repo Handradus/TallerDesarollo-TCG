@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import './css/index.css';
+
+const MySwal = withReactContent(Swal);
 
 export default function Coleccion() {
     const navigate = useNavigate();
@@ -77,7 +81,7 @@ export default function Coleccion() {
             fetchBinders();
         } catch (e) {
             console.error(e);
-            alert('Error creando carpeta');
+            Swal.fire('Error', 'Error creando carpeta', 'error');
         }
     }
 
@@ -95,7 +99,17 @@ export default function Coleccion() {
     }
 
     const addCopy = async (card) => {
-        if (!window.confirm(`¿Deseas agregar otra copia exacta de ${card.nombre}?`)) return;
+        const confirmResult = await Swal.fire({
+            title: '¿Confirmar copia?',
+            text: `¿Deseas agregar otra copia exacta de ${card.nombre}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, agregar',
+            cancelButtonText: 'Cancelar'
+        });
+        
+        if (!confirmResult.isConfirmed) return;
+        
         try {
             const token = localStorage.getItem('token');
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/collection/add`,
@@ -110,42 +124,109 @@ export default function Coleccion() {
                 },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+            Swal.fire('¡Éxito!', 'Copia agregada correctamente', 'success');
             fetchCollection();
         } catch (error) {
             console.error('Error adding copy:', error);
-            alert('Error al agregar copia');
+            Swal.fire('Error', 'Error al agregar copia', 'error');
         }
     };
 
     const openEditModal = (item) => {
-        setEditItem(item);
-        setEditForm({
+        let localEditForm = {
             condition: item.condition || 'NM',
             language: item.language || 'ES',
             foilType: item.foilType || 'Normal',
             binderId: item.binderId || null
+        };
+
+        MySwal.fire({
+            title: <h3>Editar Carta: {item.nombre}</h3>,
+            html: (
+                <div style={{ textAlign: 'left', marginTop: '15px' }}>
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Estado (Condition)</label>
+                        <select 
+                            className="filter-select" 
+                            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                            defaultValue={localEditForm.condition} 
+                            onChange={e => localEditForm.condition = e.target.value}
+                        >
+                            <option value="NM">Near Mint (NM)</option>
+                            <option value="LP">Lightly Played (LP)</option>
+                            <option value="MP">Moderately Played (MP)</option>
+                            <option value="HP">Heavily Played (HP)</option>
+                            <option value="DM">Damaged (DM)</option>
+                        </select>
+                    </div>
+
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Idioma</label>
+                        <select 
+                            className="filter-select" 
+                            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                            defaultValue={localEditForm.language} 
+                            onChange={e => localEditForm.language = e.target.value}
+                        >
+                            <option value="ES">Español (ES)</option>
+                            <option value="EN">Inglés (EN)</option>
+                            <option value="JP">Japonés (JP)</option>
+                        </select>
+                    </div>
+
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Tipo (Foil)</label>
+                        <select 
+                            className="filter-select" 
+                            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                            defaultValue={localEditForm.foilType} 
+                            onChange={e => localEditForm.foilType = e.target.value}
+                        >
+                            <option value="Normal">Normal</option>
+                            <option value="Reverse">Reverse Holo</option>
+                            <option value="Holo">Holo</option>
+                        </select>
+                    </div>
+
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Carpeta</label>
+                        <select
+                            className="filter-select"
+                            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                            defaultValue={localEditForm.binderId ?? ''}
+                            onChange={e => localEditForm.binderId = e.target.value === '' ? null : e.target.value}
+                        >
+                            <option value="">General (sin carpeta)</option>
+                            {binders.map(b => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            ),
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => localEditForm
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const payload = { ...result.value };
+                    if (payload.binderId === '') payload.binderId = null;
+
+                    await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/collection/item/${item.collectionId}`,
+                        payload,
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    fetchCollection(); // Refresh
+                    Swal.fire('¡Actualizado!', 'La carta ha sido actualizada.', 'success');
+                } catch (e) {
+                    console.error('Error updating item:', e);
+                    Swal.fire('Error', 'Error al actualizar la carta', 'error');
+                }
+            }
         });
-    };
-
-    const submitEditItem = async () => {
-        if (!editItem) return;
-        try {
-            const token = localStorage.getItem('token');
-            // Include binderId in update to allow moving between folders
-            const payload = { ...editForm };
-            // Normalize empty string to null
-            if (payload.binderId === '') payload.binderId = null;
-
-            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/collection/item/${editItem.collectionId}`,
-                payload,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setEditItem(null);
-            fetchCollection(); // Refresh
-        } catch (e) {
-            console.error('Error updating item:', e);
-            alert('Error al actualizar la carta');
-        }
     };
 
     // Derived lists for dropdowns based on CURRENT view

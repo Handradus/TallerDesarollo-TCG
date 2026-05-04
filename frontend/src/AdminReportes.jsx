@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './css/admin.css';
+import Swal from 'sweetalert2';
 
 export default function AdminReportes() {
     const [reportes, setReportes] = useState([]);
@@ -30,8 +31,18 @@ export default function AdminReportes() {
     };
 
     const handleResolucion = async (id, accion) => {
-        const confirmar = confirm(`¿Estás seguro de que deseas ${accion === 'ignore' ? 'IGNORAR este reporte' : 'ELIMINAR la publicación reportada'}?`);
-        if (!confirmar) return;
+        const confirmResult = await Swal.fire({
+            title: '¿Confirmar resolución?',
+            text: `¿Estás seguro de que deseas ${accion === 'ignore' ? 'IGNORAR este reporte' : 'ELIMINAR la publicación reportada'}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: accion === 'ignore' ? '#3085d6' : '#d33',
+            cancelButtonColor: '#aaa',
+            confirmButtonText: 'Sí, confirmar',
+            cancelButtonText: 'Cancelar'
+        });
+        
+        if (!confirmResult.isConfirmed) return;
 
         try {
             const token = localStorage.getItem('token');
@@ -48,10 +59,10 @@ export default function AdminReportes() {
             } else {
                 setReportes(reportes.filter(r => r.id !== id));
             }
-            alert(`Reporte ${accion === 'ignore' ? 'ignorado' : 'y publicación eliminada'} exitosamente`);
+            Swal.fire('¡Éxito!', `Reporte ${accion === 'ignore' ? 'ignorado' : 'y publicación eliminada'} exitosamente`, 'success');
         } catch (e) {
             console.error(e);
-            alert('Error al resolver el reporte');
+            Swal.fire('Error', 'Error al resolver el reporte', 'error');
         }
     };
 

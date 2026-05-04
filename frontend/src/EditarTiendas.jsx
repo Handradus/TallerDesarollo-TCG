@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css/editarTiendas.css';
+import Swal from 'sweetalert2';
 
 export default function EditarTiendas() {
   const navigate = useNavigate();
@@ -323,7 +324,16 @@ export default function EditarTiendas() {
       ? `¿Estás seguro de que quieres desactivar la tienda "${nombre}"?`
       : `¿Estás seguro de que quieres activar la tienda "${nombre}"?`;
     
-    if (!confirm(mensaje)) {
+    const confirmResult = await Swal.fire({
+      title: '¿Confirmar acción?',
+      text: mensaje,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, continuar',
+      cancelButtonText: 'Cancelar'
+    });
+    
+    if (!confirmResult.isConfirmed) {
       return;
     }
 

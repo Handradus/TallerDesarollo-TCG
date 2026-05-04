@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import axios from 'axios';
 import { useAuth } from './context/AuthContext';
+import Swal from 'sweetalert2';
 import {
   ResponsiveContainer,
   LineChart,
@@ -34,8 +35,12 @@ export default function CartaDetalle() {
   const [carta, setCarta] = useState({});
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mostrarModalColeccion, setMostrarModalColeccion] = useState(false);
+  const [mostrarModalDeseado, setMostrarModalDeseado] = useState(false);
   const [binders, setBinders] = useState([]);
   const [selectedBinder, setSelectedBinder] = useState('');
+  const [selectedBinderDeseado, setSelectedBinderDeseado] = useState('');
+  const [newBinderName, setNewBinderName] = useState('');
+  const [newBinderNameDeseado, setNewBinderNameDeseado] = useState('');
   const [cargandoTiendas, setCargandoTiendas] = useState(false);
   const [hasFetchedTiendas, setHasFetchedTiendas] = useState(false);
   const [seccionActiva, setSeccionActiva] = useState('tiendas');
@@ -70,79 +75,148 @@ export default function CartaDetalle() {
   };
 
   const abrirModalColeccion = () => {
-    if (!user) return alert('Debes iniciar sesión');
+    if (!user) {
+      Swal.fire('Atención', 'Debes iniciar sesión', 'warning');
+      return;
+    }
+    setNewBinderName('');
+    setSelectedBinder('');
     fetchBinders();
     setMostrarModalColeccion(true);
+  };
+
+  const abrirModalDeseado = () => {
+    if (!user) {
+      Swal.fire('Atención', 'Debes iniciar sesión', 'warning');
+      return;
+    }
+    setNewBinderNameDeseado('');
+    setSelectedBinderDeseado('');
+    fetchBinders();
+    setMostrarModalDeseado(true);
   };
 
   const confirmarAgregarColeccion = async (forceAdd = false) => {
     try {
       const token = localStorage.getItem('token');
-      const payload = { cartaId: carta.id, isOwned: true, forceAdd };
-      if (selectedBinder) {
-        payload.binderId = selectedBinder;
+      let finalBinderId = selectedBinder;
+
+      // Si eligió crear nueva carpeta
+      if (selectedBinder === 'NEW') {
+        if (!newBinderName.trim()) {
+          Swal.fire('Atención', 'Ingresa un nombre para la carpeta', 'warning');
+          return;
+        }
+        const res = await axios.post(`${apiUrl}/api/collection/binders`, { name: newBinderName.trim() }, { headers: { Authorization: `Bearer ${token}` } });
+        finalBinderId = res.data.id;
+        setBinders(prev => [...prev, res.data]);
+        setNewBinderName('');
       }
+
+      const payload = { cartaId: carta.id, isOwned: true, forceAdd };
+      if (finalBinderId && finalBinderId !== 'NEW') payload.binderId = finalBinderId;
       
       await axios.post(`${apiUrl}/api/collection/add`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert('Carta agregada a tu colección!');
+      Swal.fire('¡Éxito!', 'Carta agregada a tu colección!', 'success');
       setMostrarModalColeccion(false);
       setSelectedBinder('');
     } catch (error) {
       console.error(error);
       if (error.response?.status === 409) {
-        if (window.confirm(error.response.data.error || 'Ya tienes esta carta. ¿Deseas agregarla de todas formas?')) {
+        const confirmResult = await Swal.fire({
+          title: '¿Confirmar?',
+          text: error.response.data.error || 'Ya tienes esta carta. ¿Deseas agregarla de todas formas?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, agregar',
+          cancelButtonText: 'Cancelar'
+        });
+        if (confirmResult.isConfirmed) {
           confirmarAgregarColeccion(true);
         }
       } else if (error.response?.data?.error) {
-        alert(error.response.data.error);
+        Swal.fire('Error', error.response.data.error, 'error');
       } else {
-        alert('Error al agregar carta');
+        Swal.fire('Error', 'Error al agregar carta', 'error');
       }
     }
   };
 
-  const agregarDeseado = async () => {
-    if (!user) return alert('Debes iniciar sesión');
+  const agregarDeseado = () => abrirModalDeseado();
+
+  const confirmarDeseado = async () => {
     try {
       const token = localStorage.getItem('token');
+      let finalBinderId = selectedBinderDeseado;
+
+      // Si eligió crear nueva carpeta
+      if (selectedBinderDeseado === 'NEW') {
+        if (!newBinderNameDeseado.trim()) {
+          Swal.fire('Atención', 'Ingresa un nombre para la carpeta', 'warning');
+          return;
+        }
+        const res = await axios.post(`${apiUrl}/api/collection/binders`, { name: newBinderNameDeseado.trim() }, { headers: { Authorization: `Bearer ${token}` } });
+        finalBinderId = res.data.id;
+        setBinders(prev => [...prev, res.data]);
+        setNewBinderNameDeseado('');
+      }
+
+      const payload = { cartaId: carta.id, isOwned: false };
+      if (finalBinderId && finalBinderId !== 'NEW') payload.binderId = finalBinderId;
+
       await axios.post(`${apiUrl}/api/collection/add`,
-        { cartaId: carta.id, isOwned: false },
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert('Carta agregada a tus deseados!');
+      Swal.fire('¡Éxito!', 'Carta agregada a tus deseados!', 'success');
+      setMostrarModalDeseado(false);
+      setSelectedBinderDeseado('');
     } catch (error) {
       console.error(error);
-      if (error.response && error.response.data && error.response.data.message === 'Item already owned') {
-        alert('Ya tienes esta carta en tu colección.');
+      if (error.response?.status === 409) {
+        Swal.fire('Atención', 'Ya tienes esta carta en tu lista de deseados.', 'warning');
       } else {
-        alert('Error al agregar a deseados');
+        Swal.fire('Error', 'Error al agregar a deseados', 'error');
       }
     }
   };
 
   const venderCarta = () => {
-    if (!user) return alert('Debes iniciar sesión');
+    if (!user) {
+      Swal.fire('Atención', 'Debes iniciar sesión', 'warning');
+      return;
+    }
     navigate('/mi-tienda', { state: { sellCard: carta } });
   };
 
   const limpiarCacheTiendas = async () => {
-    if (!window.confirm('\u00bfBorrar el caché de tiendas para esta carta? Se volverá a scrapear la próxima vez que alguien la consulte.')) return;
+    const confirmResult = await Swal.fire({
+      title: '¿Borrar caché?',
+      text: '\u00bfBorrar el caché de tiendas para esta carta? Se volverá a scrapear la próxima vez que alguien la consulte.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, borrar',
+      cancelButtonText: 'Cancelar'
+    });
+    
+    if (!confirmResult.isConfirmed) return;
+    
     try {
       const token = localStorage.getItem('token');
       const res = await axios.delete(`${apiUrl}/api/cartas/${id}/tiendas/cache`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert(`\u2705 ${res.data.mensaje}`);
+      Swal.fire('¡Éxito!', `\u2705 ${res.data.mensaje}`, 'success');
       // Forzar re-fetch de tiendas
       setHasFetchedTiendas(false);
       setCarta(prev => ({ ...prev, tiendasDisponibles: undefined }));
     } catch (error) {
       console.error(error);
       const detalle = error?.response?.data?.detalle || error?.response?.data?.error || error.message;
-      alert(`Error al borrar caché: ${detalle}`);
+      Swal.fire('Error', `Error al borrar caché: ${detalle}`, 'error');
     }
   };
 
@@ -1396,13 +1470,24 @@ export default function CartaDetalle() {
               <select 
                 value={selectedBinder} 
                 onChange={e => setSelectedBinder(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem' }}
+                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem', marginBottom: selectedBinder === 'NEW' ? '10px' : '0' }}
               >
-                <option value="">Colección General</option>
+                <option value="">🗂️ Colección General</option>
                 {binders.map(b => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
+                  <option key={b.id} value={b.id}>📁 {b.name}</option>
                 ))}
+                <option value="NEW">➕ Crear nueva carpeta...</option>
               </select>
+              {selectedBinder === 'NEW' && (
+                <input
+                  type="text"
+                  placeholder="Nombre de la nueva carpeta"
+                  value={newBinderName}
+                  onChange={e => setNewBinderName(e.target.value)}
+                  autoFocus
+                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem', boxSizing: 'border-box' }}
+                />
+              )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -1419,6 +1504,59 @@ export default function CartaDetalle() {
                 style={{ padding: '8px 15px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
               >
                 ✅ Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para elegir carpeta al marcar como 'Lo Quiero' */}
+      {mostrarModalDeseado && (
+        <div className="modal-overlay" onClick={() => setMostrarModalDeseado(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <button className="modal-close" onClick={() => setMostrarModalDeseado(false)}>✕</button>
+            <h2 style={{ marginTop: 0, color: '#333' }}>❤️ Lo Quiero</h2>
+            <p style={{ color: '#666', marginBottom: '15px' }}>La carta se guardará como "deseada" en tu colección.</p>
+
+            <div style={{ margin: '20px 0' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Elige dónde guardar:</label>
+              <select
+                value={selectedBinderDeseado}
+                onChange={e => setSelectedBinderDeseado(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem', marginBottom: selectedBinderDeseado === 'NEW' ? '10px' : '0' }}
+              >
+                <option value="">🗂️ Colección General</option>
+                {binders.map(b => (
+                  <option key={b.id} value={b.id}>📁 {b.name}</option>
+                ))}
+                <option value="NEW">➕ Crear nueva carpeta...</option>
+              </select>
+              {selectedBinderDeseado === 'NEW' && (
+                <input
+                  type="text"
+                  placeholder="Nombre de la nueva carpeta"
+                  value={newBinderNameDeseado}
+                  onChange={e => setNewBinderNameDeseado(e.target.value)}
+                  autoFocus
+                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem', boxSizing: 'border-box' }}
+                />
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                className="btn-secondary"
+                onClick={() => setMostrarModalDeseado(false)}
+                style={{ padding: '8px 15px', border: '1px solid #ccc', background: '#f5f5f5', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn-primary"
+                onClick={confirmarDeseado}
+                style={{ padding: '8px 15px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                ❤️ Confirmar
               </button>
             </div>
           </div>

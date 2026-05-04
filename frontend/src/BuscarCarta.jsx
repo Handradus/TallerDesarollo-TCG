@@ -10,6 +10,7 @@ import tituloWebImg from './assets/tituloWeb.jpg';
 import { useAuth } from './context/AuthContext';
 import axios from 'axios';
 import AdBanner from './components/AdBanner';
+import Swal from 'sweetalert2';
 
 export default function BuscarCartas() {
   const [nombre, setNombre] = useState('');
@@ -46,24 +47,20 @@ export default function BuscarCartas() {
 
   const initiateAddToCollection = async (e, carta) => {
     e.stopPropagation();
-    if (!user) return alert('Debes iniciar sesión');
+    if (!user) {
+      Swal.fire('Atención', 'Debes iniciar sesión', 'warning');
+      return;
+    }
 
-    // Fetch binders first
+    // Fetch binders first, then always show the modal
     try {
       const token = localStorage.getItem('token');
       const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/collection/binders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const userBinders = res.data;
-
-      if (userBinders.length === 0) {
-        // No binders, immediate add
-        addToCollection(carta.id, null);
-      } else {
-        setBinders(userBinders);
-        setSelectedCardForBind(carta.id);
-        setShowBinderModal(true);
-      }
+      setBinders(res.data);
+      setSelectedCardForBind(carta.id);
+      setShowBinderModal(true);
     } catch (e) { console.error(e); }
   };
 
@@ -73,18 +70,21 @@ export default function BuscarCartas() {
       await axios.post(`${apiUrl}/api/collection/add`, { cartaId, binderId }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert('Carta agregada a tu colección!');
+      Swal.fire('¡Éxito!', 'Carta agregada a tu colección!', 'success');
       setShowBinderModal(false);
       setTargetBinderId('');
     } catch (error) {
       console.error(error);
-      alert('Error al agregar carta');
+      Swal.fire('Error', 'Error al agregar carta', 'error');
     }
   };
 
   const venderCarta = (e, carta) => {
     e.stopPropagation();
-    if (!user) return alert('Debes iniciar sesión');
+    if (!user) {
+      Swal.fire('Atención', 'Debes iniciar sesión', 'warning');
+      return;
+    }
     navigate('/mi-tienda', { state: { sellCard: carta } });
   };
 
@@ -116,17 +116,13 @@ export default function BuscarCartas() {
       const res = await axios.get(`${apiUrl}/api/collection/binders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const userBinders = res.data;
-
-      if (userBinders.length === 0) {
-        ejecutarBulkAdd('');
-      } else {
-        setBinders(userBinders);
-        setShowBulkBinderModal(true);
-      }
+      setBinders(res.data);
+      setShowBulkBinderModal(true);
     } catch (e) {
       console.error(e);
-      ejecutarBulkAdd('');
+      // Fallback: show modal anyway with empty binders list
+      setBinders([]);
+      setShowBulkBinderModal(true);
     }
   };
 
@@ -145,7 +141,7 @@ export default function BuscarCartas() {
       );
       
       await Promise.all(requests);
-      alert(`${selectedCards.size} cartas agregadas a tu lista de deseados (Lo Quiero)${binderId ? ' en la carpeta seleccionada' : ''}.`);
+      Swal.fire('¡Éxito!', `${selectedCards.size} cartas agregadas a tu lista de deseados (Lo Quiero)${binderId ? ' en la carpeta seleccionada' : ''}.`, 'success');
       
       setSelectedCards(new Set());
       setIsMultiSelectMode(false);
@@ -153,7 +149,7 @@ export default function BuscarCartas() {
       setTargetBinderId('');
     } catch (error) {
        console.error(error);
-       alert("Ocurrió un error al agregar algunas cartas.");
+       Swal.fire('Error', 'Ocurrió un error al agregar algunas cartas.', 'error');
     } finally {
       setIsAddingBulk(false);
     }
@@ -162,14 +158,21 @@ export default function BuscarCartas() {
   const handleConfirmSingleAdd = async () => {
     let finalBinderId = targetBinderId;
     if (targetBinderId === 'NEW') {
-      if (!newBinderName.trim()) return alert('Ingresa un nombre para la carpeta');
+      if (!newBinderName.trim()) {
+        Swal.fire('Atención', 'Ingresa un nombre para la carpeta', 'warning');
+        return;
+      }
       try {
         const token = localStorage.getItem('token');
         const res = await axios.post(`${apiUrl}/api/collection/binders`, { name: newBinderName }, { headers: { Authorization: `Bearer ${token}` } });
         finalBinderId = res.data.id;
         setBinders([...binders, res.data]);
         setNewBinderName('');
-      } catch (e) { console.error(e); return alert("Error al crear la carpeta"); }
+      } catch (e) {
+        console.error(e);
+        Swal.fire('Error', 'Error al crear la carpeta', 'error');
+        return;
+      }
     }
     addToCollection(selectedCardForBind, finalBinderId || null);
   };
@@ -177,14 +180,21 @@ export default function BuscarCartas() {
   const handleConfirmBulkAdd = async () => {
     let finalBinderId = targetBinderId;
     if (targetBinderId === 'NEW') {
-      if (!newBinderName.trim()) return alert('Ingresa un nombre para la carpeta');
+      if (!newBinderName.trim()) {
+        Swal.fire('Atención', 'Ingresa un nombre para la carpeta', 'warning');
+        return;
+      }
       try {
         const token = localStorage.getItem('token');
         const res = await axios.post(`${apiUrl}/api/collection/binders`, { name: newBinderName }, { headers: { Authorization: `Bearer ${token}` } });
         finalBinderId = res.data.id;
         setBinders([...binders, res.data]);
         setNewBinderName('');
-      } catch (e) { console.error(e); return alert("Error al crear la carpeta"); }
+      } catch (e) {
+        console.error(e);
+        Swal.fire('Error', 'Error al crear la carpeta', 'error');
+        return;
+      }
     }
     ejecutarBulkAdd(finalBinderId);
   };

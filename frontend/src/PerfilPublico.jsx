@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import './css/modules.css';
+import Swal from 'sweetalert2';
 
 export default function PerfilPublico() {
     const { userId } = useParams();
@@ -38,7 +39,7 @@ export default function PerfilPublico() {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                alert('Debes iniciar sesión para comentar');
+                Swal.fire('Atención', 'Debes iniciar sesión para comentar', 'warning');
                 return;
             }
 
@@ -55,7 +56,7 @@ export default function PerfilPublico() {
         } catch (error) {
             console.error(error);
             const backendMessage = error?.response?.data?.message;
-            alert(backendMessage || 'Error al comentar');
+            Swal.fire('Error', backendMessage || 'Error al comentar', 'error');
         }
     };
 

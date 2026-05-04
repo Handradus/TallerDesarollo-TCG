@@ -35,11 +35,39 @@ const listForSale = async (req, res) => {
     }
 
     try {
-        // Check removed to allow selling without adding to collection first
-        // const owned = await collectionRepository.findOne({ where: { userId, cartaId } });
-        // if (!owned || owned.quantity < (quantity || 1)) {
-        //     // Validation logic here
-        // }
+        const activeListingsCount = await marketRepository.count({ 
+            where: { userId, active: true } 
+        });
+        
+        if (activeListingsCount >= 50) {
+            return res.status(400).json({ 
+                message: 'Has alcanzado el límite máximo de 50 publicaciones activas en el Mercado. Elimina algunas ventas antiguas para publicar nuevas cartas.' 
+            });
+        }
+
+        // Validar que el usuario tenga la carta en su colección y que tenga suficientes copias
+        const ownedItems = await collectionRepository.find({
+            where: { userId, cartaId: Number(cartaId), isOwned: true }
+        });
+        
+        const totalOwned = ownedItems.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
+        
+        if (totalOwned === 0) {
+            return res.status(400).json({ 
+                message: 'No tienes esta carta en tu colección. Debes agregarla a tu colección antes de poder publicarla en el Mercado.' 
+            });
+        }
+
+        const activeListingsForCard = await marketRepository.count({
+            where: { userId, cartaId: Number(cartaId), active: true }
+        });
+
+        const requestedQuantity = quantity || 1;
+        if (activeListingsForCard + requestedQuantity > totalOwned) {
+            return res.status(400).json({ 
+                message: `Solo tienes ${totalOwned} copias de esta carta en tu colección. Actualmente tienes ${activeListingsForCard} publicadas y quieres publicar ${requestedQuantity} más, excediendo tu cantidad total.` 
+            });
+        }
 
         const item = marketRepository.create({
             userId,

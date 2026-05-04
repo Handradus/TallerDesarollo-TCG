@@ -254,8 +254,8 @@ class TiendaService {
         // Validar longitud de URL
         if (datos[field].length > 500) {
           errores.push(`${name} no puede exceder 500 caracteres`);
-        } else if (!this.esUrlValidaConWww(datos[field])) {
-          errores.push(`${name} debe ser una URL válida que contenga "www."`);
+        } else if (!this.esUrlValida(datos[field])) {
+          errores.push(`${name} debe ser una URL válida`);
         }
       }
     });
@@ -379,8 +379,8 @@ class TiendaService {
       // Crear la tienda real
       return await this.crearTienda({
         nombre: suggestion.nombre,
-        urlBusqueda: suggestion.urlBusqueda,
-        tipoBusqueda: suggestion.tipoBusqueda,
+        urlBusqueda: suggestion.urlBusqueda || (suggestion.urlBase ? `${suggestion.urlBase}/search?q=` : 'https://example.com/search?q='),
+        tipoBusqueda: suggestion.tipoBusqueda || 'custom',
         urlBase: suggestion.urlBase,
         region: suggestion.region,
         tipo: suggestion.tipo,
