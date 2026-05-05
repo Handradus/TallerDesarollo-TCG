@@ -156,6 +156,7 @@
 .ad-placeholder-bg {
   position: absolute;
   inset: 0;
+  background: #1a1a2e; /* Fallback for browsers without color-mix support */
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--ad-accent, #667eea) 30%, #1a1a2e),
