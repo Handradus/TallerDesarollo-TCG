@@ -1,0 +1,145 @@
+.contacto-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.contacto-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.contacto-main-title {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 20px;
+  background-color: #efedf4;
+  padding: 15px 30px;
+  border-radius: 15px;
+  color: #6b52ae;
+  margin: 0 20px;
+  flex: 1;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.contacto-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.contacto-info h2 {
+  color: #6b52ae;
+  margin-bottom: 1rem;
+}
+
+.contacto-info p {
+  color: #4a5568;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  font-size: 1.05rem;
+}
+
+.beneficios-lista {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+.beneficios-lista li {
+  margin-bottom: 0.8rem;
+  font-size: 1.05rem;
+  color: #2c3e50;
+}
+
+.info-extra {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  border-left: 4px solid #6b52ae;
+}
+
+.info-extra p {
+  margin: 0.5rem 0;
+}
+
+.contacto-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 10px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #6b52ae;
+  box-shadow: 0 0 0 3px rgba(107, 82, 174, 0.1);
+}
+
+.btn-enviar {
+  background: #6b52ae;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 10px;
+}
+
+.btn-enviar:hover:not(:disabled) {
+  background: #553c9a;
+}
+
+.btn-enviar:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .contacto-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .contacto-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+}

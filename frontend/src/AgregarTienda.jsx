@@ -91,10 +91,11 @@ export default function AgregarTienda() {
     // Validar URLs si están presentes
     const urlFields = ['urlBusqueda', 'urlBase', 'logo'];
     urlFields.forEach(field => {
-      if (formData[field] && formData[field].trim()) {
-        if (formData[field].length > 500) {
+      if (formData[field] && String(formData[field]).trim()) {
+        const valorLimpio = String(formData[field]).trim();
+        if (valorLimpio.length > 500) {
           newErrors[field] = `${field} no puede exceder 500 caracteres`;
-        } else if (!esUrlValidaConWww(formData[field])) {
+        } else if (!esUrlValidaConWww(valorLimpio)) {
           newErrors[field] = `${field} debe ser una URL válida que contenga "www."`;
         }
       }
@@ -148,6 +149,13 @@ export default function AgregarTienda() {
     try {
       const dataToSend = { ...formData };
       
+      const urlFields = ['urlBusqueda', 'urlBase', 'logo'];
+      urlFields.forEach(field => {
+        if (dataToSend[field] && dataToSend[field].trim() !== '' && !/^https?:\/\//i.test(dataToSend[field])) {
+          dataToSend[field] = 'https://' + dataToSend[field].trim();
+        }
+      });
+
       // Convertir valoración a número si está presente
       if (dataToSend.valoracion) {
         dataToSend.valoracion = parseFloat(dataToSend.valoracion);

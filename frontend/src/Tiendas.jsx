@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './css/tiendas.css';
 import AdBanner from './components/AdBanner';
 import Swal from 'sweetalert2';
+import tiendaLogo from './assets/Tienda_logo.png';
 
 export default function Tiendas() {
   const navigate = useNavigate();
@@ -169,7 +170,10 @@ export default function Tiendas() {
         >
           ← Volver al inicio
         </button>
-        <h1>🏪 Tiendas Disponibles</h1>
+        <h1 className="tiendas-main-title">
+          <img src={tiendaLogo} alt="Logo Tiendas" className="tiendas-header-logo" />
+          Tiendas Disponibles
+        </h1>
         <div className="header-spacer"></div>
       </div>
 

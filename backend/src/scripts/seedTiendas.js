@@ -288,9 +288,8 @@ async function seedTiendas() {
       await tiendaRepo.save(tienda);
       console.log(`✅ Insertada tienda: ${tienda.nombre}`);
     } else {
-      Object.assign(yaExiste, tienda);
-      await tiendaRepo.save(yaExiste);
-      console.log(`🔄 Actualizada tienda: ${tienda.nombre}`);
+      // No sobreescribir la tienda si ya existe para evitar perder cambios del usuario (como logos)
+      console.log(`⏩ Tienda ya existe, conservando datos actuales: ${tienda.nombre}`);
     }
   }
 }

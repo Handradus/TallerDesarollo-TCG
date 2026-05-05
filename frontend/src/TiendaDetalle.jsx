@@ -110,7 +110,12 @@ export default function TiendaDetalle() {
   };
 
   const abrirEnGoogleMaps = (direccion) => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccion)}`;
+    let query = direccion;
+    if (tienda && tienda.region) {
+      query += `, ${tienda.region}`;
+    }
+    query += `, Chile`;
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
     window.open(url, '_blank');
   };
 
@@ -245,7 +250,7 @@ export default function TiendaDetalle() {
               </div>
             )}
 
-            {tienda.direccion && (
+            {tienda.direccion && tienda.tipo !== 'online' && (
               <div className="detail-card clickable" onClick={() => abrirEnGoogleMaps(tienda.direccion)}>
                 <div className="detail-header">
                   <span className="detail-icon">📍</span>
@@ -302,7 +307,7 @@ export default function TiendaDetalle() {
               </button>
             )}
             
-            {tienda.direccion && (
+            {tienda.direccion && tienda.tipo !== 'online' && (
               <button 
                 className="btn-accion-secundaria"
                 onClick={() => abrirEnGoogleMaps(tienda.direccion)}

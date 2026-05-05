@@ -115,11 +115,16 @@ export default function EditarTiendas() {
   
   const obtenerCambios = () => {
     const cambios = {};
+    const urlFields = ['urlBusqueda', 'urlBase', 'logo'];
     
     for (const campo in datosOriginales) {
       const valorOriginal = datosOriginales[campo];
-      const valorActual = formData[campo];
+      let valorActual = formData[campo];
       
+      // Auto-completar https:// para campos de URL
+      if (urlFields.includes(campo) && valorActual && valorActual.trim() !== '' && !/^https?:\/\//i.test(valorActual)) {
+        valorActual = 'https://' + valorActual.trim();
+      }
       
       const normalizar = (valor) => {
         if (valor === null || valor === undefined || valor === '') {
@@ -207,10 +212,11 @@ export default function EditarTiendas() {
     ];
     
     urlFields.forEach(({ field, name }) => {
-      if (datos[field] && datos[field].trim()) {
-        if (datos[field].length > 500) {
+      if (datos[field] && String(datos[field]).trim()) {
+        const valorLimpio = String(datos[field]).trim();
+        if (valorLimpio.length > 500) {
           errores.push(`${name} no puede exceder 500 caracteres`);
-        } else if (!esUrlValida(datos[field])) {
+        } else if (!esUrlValida(valorLimpio)) {
           errores.push(`${name} debe ser una URL válida`);
         }
       }

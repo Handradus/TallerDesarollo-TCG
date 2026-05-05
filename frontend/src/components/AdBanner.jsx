@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import AdSenseSlot from './AdSenseSlot';
 import '../css/adBanner.css';
 
@@ -18,7 +19,7 @@ const DEFAULT_BANNERS = [
   {
     id: 'banner-1',
     imageUrl: null,
-    linkUrl: '#',
+    linkUrl: '/contacto',
     altText: 'Publicidad 1',
     label: 'Tu anuncio aquí',
     sublabel: 'Banner 300 × 100 px',
@@ -28,7 +29,7 @@ const DEFAULT_BANNERS = [
   {
     id: 'banner-2',
     imageUrl: null,
-    linkUrl: '#',
+    linkUrl: '/contacto',
     altText: 'Publicidad 2',
     label: 'Tu anuncio aquí',
     sublabel: 'Banner 300 × 100 px',
@@ -60,18 +61,31 @@ export default function AdBanner({
         </div>
         <div className="ad-bottom-grid">
           {/* Banner 1 */}
-          <a
-            href={banners[0]?.linkUrl || '#'}
-            className={`ad-slot ad-bottom-slot ${hovered === 'b0' ? 'ad-slot--hovered' : ''}`}
-            style={{ '--ad-accent': banners[0]?.accentColor || '#667eea' }}
-            target={banners[0]?.linkUrl && banners[0]?.linkUrl !== '#' ? '_blank' : '_self'}
-            rel="noopener noreferrer"
-            aria-label={banners[0]?.altText}
-            onMouseEnter={() => setHovered('b0')}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <BannerPlaceholder ad={banners[0]} />
-          </a>
+          {banners[0]?.linkUrl?.startsWith('/') ? (
+            <Link
+              to={banners[0]?.linkUrl}
+              className={`ad-slot ad-bottom-slot ${hovered === 'b0' ? 'ad-slot--hovered' : ''}`}
+              style={{ '--ad-accent': banners[0]?.accentColor || '#667eea' }}
+              aria-label={banners[0]?.altText}
+              onMouseEnter={() => setHovered('b0')}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <BannerPlaceholder ad={banners[0]} />
+            </Link>
+          ) : (
+            <a
+              href={banners[0]?.linkUrl || '#'}
+              className={`ad-slot ad-bottom-slot ${hovered === 'b0' ? 'ad-slot--hovered' : ''}`}
+              style={{ '--ad-accent': banners[0]?.accentColor || '#667eea' }}
+              target={banners[0]?.linkUrl?.startsWith('http') ? '_blank' : '_self'}
+              rel="noopener noreferrer"
+              aria-label={banners[0]?.altText}
+              onMouseEnter={() => setHovered('b0')}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <BannerPlaceholder ad={banners[0]} />
+            </a>
+          )}
 
           {/* AdSense 1 */}
           <div className="ad-bottom-slot ad-bottom-adsense">
@@ -85,18 +99,31 @@ export default function AdBanner({
           </div>
 
           {/* Banner 2 */}
-          <a
-            href={banners[1]?.linkUrl || '#'}
-            className={`ad-slot ad-bottom-slot ${hovered === 'b1' ? 'ad-slot--hovered' : ''}`}
-            style={{ '--ad-accent': banners[1]?.accentColor || '#43e97b' }}
-            target={banners[1]?.linkUrl && banners[1]?.linkUrl !== '#' ? '_blank' : '_self'}
-            rel="noopener noreferrer"
-            aria-label={banners[1]?.altText}
-            onMouseEnter={() => setHovered('b1')}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <BannerPlaceholder ad={banners[1]} />
-          </a>
+          {banners[1]?.linkUrl?.startsWith('/') ? (
+            <Link
+              to={banners[1]?.linkUrl}
+              className={`ad-slot ad-bottom-slot ${hovered === 'b1' ? 'ad-slot--hovered' : ''}`}
+              style={{ '--ad-accent': banners[1]?.accentColor || '#43e97b' }}
+              aria-label={banners[1]?.altText}
+              onMouseEnter={() => setHovered('b1')}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <BannerPlaceholder ad={banners[1]} />
+            </Link>
+          ) : (
+            <a
+              href={banners[1]?.linkUrl || '#'}
+              className={`ad-slot ad-bottom-slot ${hovered === 'b1' ? 'ad-slot--hovered' : ''}`}
+              style={{ '--ad-accent': banners[1]?.accentColor || '#43e97b' }}
+              target={banners[1]?.linkUrl?.startsWith('http') ? '_blank' : '_self'}
+              rel="noopener noreferrer"
+              aria-label={banners[1]?.altText}
+              onMouseEnter={() => setHovered('b1')}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <BannerPlaceholder ad={banners[1]} />
+            </a>
+          )}
 
           {/* AdSense 2 */}
           <div className="ad-bottom-slot ad-bottom-adsense">
@@ -124,21 +151,35 @@ export default function AdBanner({
         <span className="ad-label-text">Publicidad</span>
       </div>
       <div className={`ad-slots ad-slots-${layout}`}>
-        {all4Banners.map((ad, i) => (
-          <a
-            key={`${ad.id}-${i}`}
-            href={ad.linkUrl || '#'}
-            className={`ad-slot ad-slot-${i + 1} ${hovered === i ? 'ad-slot--hovered' : ''}`}
-            style={{ '--ad-accent': ad.accentColor || '#667eea' }}
-            target={ad.linkUrl && ad.linkUrl !== '#' ? '_blank' : '_self'}
-            rel="noopener noreferrer"
-            aria-label={ad.altText}
-            onMouseEnter={() => setHovered(i)}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <BannerPlaceholder ad={ad} />
-          </a>
-        ))}
+        {all4Banners.map((ad, i) => 
+          ad.linkUrl?.startsWith('/') ? (
+            <Link
+              key={`${ad.id}-${i}`}
+              to={ad.linkUrl}
+              className={`ad-slot ad-slot-${i + 1} ${hovered === i ? 'ad-slot--hovered' : ''}`}
+              style={{ '--ad-accent': ad.accentColor || '#667eea' }}
+              aria-label={ad.altText}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <BannerPlaceholder ad={ad} />
+            </Link>
+          ) : (
+            <a
+              key={`${ad.id}-${i}`}
+              href={ad.linkUrl || '#'}
+              className={`ad-slot ad-slot-${i + 1} ${hovered === i ? 'ad-slot--hovered' : ''}`}
+              style={{ '--ad-accent': ad.accentColor || '#667eea' }}
+              target={ad.linkUrl?.startsWith('http') ? '_blank' : '_self'}
+              rel="noopener noreferrer"
+              aria-label={ad.altText}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <BannerPlaceholder ad={ad} />
+            </a>
+          )
+        )}
       </div>
     </section>
   );

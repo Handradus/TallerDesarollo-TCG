@@ -12,16 +12,28 @@
   align-items: center;
   margin-bottom: 2rem;
   padding: 1rem 0;
-  border-bottom: 2px solid #e9ecef;
 }
 
-.tiendas-header h1 {
-  color: #2c3e50;
-  margin: 0;
-  font-size: 2.2rem;
-  font-weight: 700;
-  text-align: center;
+.tiendas-main-title {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 20px;
+  background-color: #efedf4;
+  padding: 15px 30px;
+  border-radius: 15px;
+  color: #6b52ae;
+  margin: 0 20px;
   flex: 1;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.tiendas-header-logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
 .header-spacer {

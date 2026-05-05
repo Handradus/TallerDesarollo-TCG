@@ -19,6 +19,7 @@ import PerfilPublico from './PerfilPublico';
 import AdminModeracion from './AdminModeracion';
 import AdminReportes from './AdminReportes';
 import AdminUsuarios from './AdminUsuarios';
+import Contacto from './Contacto';
 
 export default function AppRoutes() {
   const { user, loading } = useAuth();
@@ -35,6 +36,7 @@ export default function AppRoutes() {
     return (
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/contacto" element={<Contacto />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
@@ -43,6 +45,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/buscar" replace />} />
+      <Route path="/contacto" element={<Contacto />} />
       <Route path="/buscar" element={<BuscarCartas />} />
       <Route path="/admin-buscar" element={<BuscarCartaAdmin />} />
       <Route path="/admin-precios" element={<AdminPrecios />} />
