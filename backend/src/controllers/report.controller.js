@@ -4,35 +4,34 @@ const MarketItem = require('../entities/MarketItem');
 
 const createReport = async (req, res) => {
     try {
-        const reporterId = req.user.id;
-        const { marketItemId, reason } = req.body;
+        const reporterId = req.user.userId || req.user.id;
+        const { marketItemId, reason, reportedUserId } = req.body;
 
-        if (!marketItemId || !reason) {
-            return res.status(400).json({ error: 'El ID de la publicación y la razón son obligatorios' });
+        if (!reason || (!marketItemId && !reportedUserId)) {
+            return res.status(400).json({ error: 'Debes proporcionar una razón y seleccionar qué reportar' });
         }
 
         const reportRepo = AppDataSource.getRepository(Report);
         const marketItemRepo = AppDataSource.getRepository(MarketItem);
 
-        // Verificar si la publicación existe y está activa
-        const marketItem = await marketItemRepo.findOne({ where: { id: marketItemId, active: true } });
-        if (!marketItem) {
-            return res.status(404).json({ error: 'Publicación no encontrada' });
-        }
-
-        // Verificar si el usuario ya reportó esta publicación
-        const existingReport = await reportRepo.findOne({
-            where: { reporterId, marketItemId }
-        });
-
-        if (existingReport) {
-            return res.status(400).json({ error: 'Ya has reportado esta publicación anteriormente.' });
+        // Si es reporte de publicación
+        if (marketItemId) {
+            const marketItemRepo = AppDataSource.getRepository(MarketItem);
+            const marketItem = await marketItemRepo.findOne({ where: { id: marketItemId, active: true } });
+            if (!marketItem) return res.status(404).json({ error: 'Publicación no encontrada' });
+            
+            const existingReport = await reportRepo.findOne({ where: { reporterId, marketItemId } });
+            if (existingReport) return res.status(400).json({ error: 'Ya has reportado esta publicación anteriormente.' });
+        } else if (reportedUserId) {
+            const existingReport = await reportRepo.findOne({ where: { reporterId, reportedUserId, status: 'pending' } });
+            if (existingReport) return res.status(400).json({ error: 'Ya tienes un reporte pendiente para este usuario.' });
         }
 
         // Crear el nuevo reporte
         const report = reportRepo.create({
             reporterId,
-            marketItemId,
+            marketItemId: marketItemId || null,
+            reportedUserId: reportedUserId || null,
             reason
         });
 
@@ -59,7 +58,7 @@ const getPendingReports = async (req, res) => {
         
         const reports = await reportRepo.find({
             where: { status: 'pending' },
-            relations: ['reporter', 'marketItem', 'marketItem.user', 'marketItem.carta'],
+            relations: ['reporter', 'marketItem', 'marketItem.user', 'marketItem.carta', 'reportedUser'],
             order: { createdAt: 'DESC' }
         });
 
@@ -93,24 +92,18 @@ const resolveReport = async (req, res) => {
 
         if (action === 'delete_post') {
             if (report.marketItem) {
-                // Remove the market item entirely
                 await marketItemRepo.remove(report.marketItem);
-                
-                // Note: The report itself might get deleted due to CASCADE,
-                // but if not, we should mark it as resolved.
-                // It will be deleted if ON DELETE CASCADE is working properly, 
-                // but let's check if we still need to update status if it exists.
             }
         }
 
-        if (action === 'ignore') {
-            report.status = 'resolved';
-            await reportRepo.save(report);
-        }
+        // We handle banning the user via auth.controller.js /api/auth/ban/:id
+        // from the frontend, but we still mark the report as resolved here.
+        
+        report.status = 'resolved';
+        await reportRepo.save(report);
 
         // Si eliminamos la publicación, eliminamos todos los reportes asociados a esa publicación
-        // Esto está manejado automáticamente por ON DELETE CASCADE de TypeORM
-        if (action === 'delete_post') {
+        if (action === 'delete_post' && report.marketItemId) {
             await reportRepo.delete({ marketItemId: report.marketItemId });
         }
 

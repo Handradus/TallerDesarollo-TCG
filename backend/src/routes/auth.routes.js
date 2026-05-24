@@ -9,4 +9,8 @@ router.post('/google', authController.googleLogin);
 router.get('/pending-users', verifyToken, authController.getPendingUsers);
 router.post('/approve/:id', verifyToken, authController.approveUser);
 
+router.get('/banned-users', verifyToken, authController.getBannedUsers);
+router.post('/ban/:id', verifyToken, authController.banUser);
+router.post('/unban/:id', verifyToken, authController.unbanUser);
+
 module.exports = router;

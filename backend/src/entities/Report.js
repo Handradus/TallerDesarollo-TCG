@@ -27,7 +27,11 @@ module.exports = new EntitySchema({
         },
         marketItemId: {
             type: 'int',
-            nullable: false,
+            nullable: true,
+        },
+        reportedUserId: {
+            type: 'int',
+            nullable: true,
         }
     },
     relations: {
@@ -43,11 +47,11 @@ module.exports = new EntitySchema({
             joinColumn: { name: 'marketItemId' },
             onDelete: 'CASCADE',
         },
-    },
-    uniques: [
-        {
-            name: 'UNIQUE_REPORTER_MARKET_ITEM',
-            columns: ['reporterId', 'marketItemId']
+        reportedUser: {
+            target: 'User',
+            type: 'many-to-one',
+            joinColumn: { name: 'reportedUserId' },
+            onDelete: 'CASCADE',
         }
-    ]
+    }
 });

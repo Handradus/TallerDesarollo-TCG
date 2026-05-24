@@ -3,7 +3,7 @@
  * Basado en términos de búsqueda previamente guardados
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 /**
  * Obtener sugerencias desde el backend basadas en términos guardados

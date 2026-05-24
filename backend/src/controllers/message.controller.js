@@ -1,9 +1,11 @@
 const { AppDataSource } = require('../data-source');
 const Message = require('../entities/Message');
 const User = require('../entities/User');
+const BlockedUser = require('../entities/BlockedUser');
 
 const messageRepository = AppDataSource.getRepository(Message);
 const userRepository = AppDataSource.getRepository(User);
+const blockRepository = AppDataSource.getRepository(BlockedUser);
 
 const sendMessage = async (req, res) => {
     const { receiverId, content, marketItemId } = req.body;
@@ -14,6 +16,17 @@ const sendMessage = async (req, res) => {
     }
 
     try {
+        // Check for block
+        const block = await blockRepository.findOne({
+            where: [
+                { blockerId: senderId, blockedId: receiverId },
+                { blockerId: receiverId, blockedId: senderId }
+            ]
+        });
+
+        if (block) {
+            return res.status(403).json({ message: 'No puedes enviar mensajes a este usuario.' });
+        }
         const msg = messageRepository.create({
             senderId,
             receiverId,

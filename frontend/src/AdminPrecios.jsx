@@ -7,7 +7,8 @@ export default function AdminPrecios() {
   const [tipoResultado, setTipoResultado] = useState('');
   const [cargando, setCargando] = useState(false);
 
-  const API_BASE = 'http://localhost:3000/api';
+  const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const API_BASE = `${apiUrl}/api`;
 
   const mostrarResultado = (contenido, tipo = 'success') => {
     setResultado(contenido);

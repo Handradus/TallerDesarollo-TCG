@@ -156,13 +156,19 @@
 .ad-placeholder-bg {
   position: absolute;
   inset: 0;
-  background: #1a1a2e; /* Fallback for browsers without color-mix support */
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ad-accent, #667eea) 30%, #1a1a2e),
-    color-mix(in srgb, var(--ad-accent, #667eea) 15%, #16213e)
-  );
+  background: #1a1a2e; /* Fallback 100% seguro */
   z-index: 0;
+}
+
+/* Solo aplicamos el gradiente si el navegador soporta color-mix */
+@supports (color: color-mix(in srgb, red, blue)) {
+  .ad-placeholder-bg {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ad-accent, #667eea) 30%, #1a1a2e),
+      color-mix(in srgb, var(--ad-accent, #667eea) 15%, #16213e)
+    );
+  }
 }
 
 /* Patrón de puntos decorativo */

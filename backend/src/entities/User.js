@@ -36,6 +36,10 @@ module.exports = new EntitySchema({
             type: 'boolean',
             default: false,
         },
+        banned: {
+            type: 'boolean',
+            default: false,
+        },
         createdAt: {
             type: 'timestamp',
             createDate: true,

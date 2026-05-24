@@ -115,7 +115,7 @@ export default function CartaDetalle() {
 
       const payload = { cartaId: carta.id, isOwned: true, forceAdd };
       if (finalBinderId && finalBinderId !== 'NEW') payload.binderId = finalBinderId;
-      
+
       await axios.post(`${apiUrl}/api/collection/add`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -201,9 +201,9 @@ export default function CartaDetalle() {
       confirmButtonText: 'Sí, borrar',
       cancelButtonText: 'Cancelar'
     });
-    
+
     if (!confirmResult.isConfirmed) return;
-    
+
     try {
       const token = localStorage.getItem('token');
       const res = await axios.delete(`${apiUrl}/api/cartas/${id}/tiendas/cache`, {
@@ -865,180 +865,180 @@ export default function CartaDetalle() {
             <div className="precios">
               <h3>💰 Precios estimados</h3>
 
-                {/* Precios TCGPlayer */}
-                {(carta.precioNormal || carta.precioHolofoil) && (
-                  <div className="precio-section">
-                    <div className="precio-source">
-                      <span className="tcgplayer-badge">📊 Precios de TCGPlayer</span>
-                    </div>
-                    <div className="precio-grid">
-                      {carta.precioNormal && (
-                        <div className="precio-item">
-                          <strong>Normal:</strong> ${carta.precioNormal}
-                        </div>
-                      )}
-                      {carta.precioHolofoil && (
-                        <div className="precio-item">
-                          <strong>Holofoil:</strong> ${carta.precioHolofoil}
-                        </div>
-                      )}
-                    </div>
+              {/* Precios TCGPlayer */}
+              {(carta.precioNormal || carta.precioHolofoil) && (
+                <div className="precio-section">
+                  <div className="precio-source">
+                    <span className="tcgplayer-badge">📊 Precios de TCGPlayer</span>
+                  </div>
+                  <div className="precio-grid">
+                    {carta.precioNormal && (
+                      <div className="precio-item">
+                        <strong>Normal:</strong> ${carta.precioNormal}
+                      </div>
+                    )}
+                    {carta.precioHolofoil && (
+                      <div className="precio-item">
+                        <strong>Holofoil:</strong> ${carta.precioHolofoil}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Precios PriceCharting */}
+              <div className="precio-section">
+                <div className="precio-source">
+                  {(() => {
+                    console.log('🔍 Debug PriceCharting:', {
+                      preciosPriceCharting,
+                      url: preciosPriceCharting?.url,
+                      hasUrl: !!preciosPriceCharting?.url
+                    });
+                    return null;
+                  })()}
+                  {preciosPriceCharting?.url ? (
+                    <a
+                      href={preciosPriceCharting.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pricecharting-badge pricecharting-link"
+                      title="Ver en PriceCharting (abre en nueva pestaña)"
+                    >
+                      📈 PriceCharting
+                    </a>
+                  ) : (
+                    <span className="pricecharting-badge">📈 PriceCharting</span>
+                  )}
+                  {!cargandoPreciosPriceCharting && preciosPriceCharting && !preciosPriceCharting.error && user?.role === 'admin' && (
+                    <button
+                      className="btn-actualizar-precios"
+                      onClick={() => obtenerPreciosPriceCharting(true)}
+                      title="Actualizar precio de PriceCharting"
+                    >
+                      🔄
+                    </button>
+                  )}
+                </div>
+
+                <div className="pricecharting-toggle-row">
+                  <button
+                    type="button"
+                    className={`pricecharting-toggle ${vistaPriceCharting === 'actual' ? 'active' : ''}`}
+                    onClick={() => setVistaPriceCharting('actual')}
+                  >
+                    Precio actual
+                  </button>
+                  <button
+                    type="button"
+                    className={`pricecharting-toggle ${vistaPriceCharting === 'historial' ? 'active' : ''}`}
+                    onClick={() => setVistaPriceCharting('historial')}
+                  >
+                    Historial
+                  </button>
+                </div>
+
+                {cargandoPreciosPriceCharting && (
+                  <div className="loading-precios">
+                    <div className="spinner"></div>
+                    <span>Consultando PriceCharting...</span>
                   </div>
                 )}
 
-                {/* Precios PriceCharting */}
-                <div className="precio-section">
-                  <div className="precio-source">
-                    {(() => {
-                      console.log('🔍 Debug PriceCharting:', {
-                        preciosPriceCharting,
-                        url: preciosPriceCharting?.url,
-                        hasUrl: !!preciosPriceCharting?.url
-                      });
-                      return null;
-                    })()}
-                    {preciosPriceCharting?.url ? (
-                      <a
-                        href={preciosPriceCharting.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="pricecharting-badge pricecharting-link"
-                        title="Ver en PriceCharting (abre en nueva pestaña)"
-                      >
-                        📈 PriceCharting
-                      </a>
+                {!cargandoPreciosPriceCharting && vistaPriceCharting === 'actual' && preciosPriceCharting && (
+                  <>
+                    {preciosPriceCharting.error ? (
+                      <div className="precio-error">
+                        ⚠️ {preciosPriceCharting.error}
+                        {user?.role === 'admin' && (
+                          <button
+                            className="btn-reintentar"
+                            onClick={() => obtenerPreciosPriceCharting(true)}
+                          >
+                            Reintentar
+                          </button>
+                        )}
+                      </div>
                     ) : (
-                      <span className="pricecharting-badge">📈 PriceCharting</span>
+                      <>
+                        {preciosPriceCharting.precioPriceCharting ? (
+                          <div className="precio-grid">
+                            <div className="precio-item">
+                              <strong>Precio actual:</strong> ${preciosPriceCharting.precioPriceCharting}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="precio-no-disponible">
+                            📭 No se encontró precio en PriceCharting
+                            {preciosPriceCharting.url && (
+                              <a
+                                href={preciosPriceCharting.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn-ver-en-sitio"
+                              >
+                                Ver en PriceCharting
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {preciosPriceCharting.fechaActualizacion && (
+                          <div className="precio-timestamp">
+                            🕒 Actualizado: {new Date(preciosPriceCharting.fechaActualizacion).toLocaleString()}
+                            {preciosPriceCharting.desde_cache && " (desde caché)"}
+                          </div>
+                        )}
+                      </>
                     )}
-                    {!cargandoPreciosPriceCharting && preciosPriceCharting && !preciosPriceCharting.error && user?.role === 'admin' && (
-                      <button
-                        className="btn-actualizar-precios"
-                        onClick={() => obtenerPreciosPriceCharting(true)}
-                        title="Actualizar precio de PriceCharting"
-                      >
-                        🔄
-                      </button>
+                  </>
+                )}
+
+                {!cargandoPreciosPriceCharting && vistaPriceCharting === 'historial' && (
+                  <div className="pricecharting-history-wrap">
+                    {cargandoHistorialPriceCharting ? (
+                      <div className="loading-precios">
+                        <div className="spinner"></div>
+                        <span>Cargando historial de PriceCharting...</span>
+                      </div>
+                    ) : dataPriceCharting.length > 0 ? (
+                      <div className="pricecharting-history-card">
+                        <div className="grafico-card-header">
+                          <h4>Evolución del precio en PriceCharting</h4>
+                          <span className="grafico-badge">{dataPriceCharting.length} puntos</span>
+                        </div>
+                        <div className="grafico-chart-area">
+                          <ResponsiveContainer width="100%" height={280}>
+                            <LineChart data={dataPriceCharting}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                              <XAxis dataKey="fecha" stroke="#64748b" />
+                              <YAxis stroke="#64748b" tickFormatter={(value) => `$${formatearPrecioCLP(value)}`} />
+                              <Tooltip formatter={(value) => [`$${formatearPrecioCLP(value)}`, 'PriceCharting']} />
+                              <Legend />
+                              <Line type="monotone" dataKey="precioPromedio" name="PriceCharting" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="precio-no-disponible">
+                        📭 Todavía no hay historial de PriceCharting para esta carta.
+                      </div>
                     )}
                   </div>
+                )}
 
-                  <div className="pricecharting-toggle-row">
+                {!cargandoPreciosPriceCharting && !preciosPriceCharting && (
+                  <div className="precio-no-consultado">
                     <button
-                      type="button"
-                      className={`pricecharting-toggle ${vistaPriceCharting === 'actual' ? 'active' : ''}`}
-                      onClick={() => setVistaPriceCharting('actual')}
+                      className="btn-consultar-precios"
+                      onClick={() => obtenerPreciosPriceCharting(false)}
                     >
-                      Precio actual
-                    </button>
-                    <button
-                      type="button"
-                      className={`pricecharting-toggle ${vistaPriceCharting === 'historial' ? 'active' : ''}`}
-                      onClick={() => setVistaPriceCharting('historial')}
-                    >
-                      Historial
+                      🔍 Consultar precio en PriceCharting
                     </button>
                   </div>
-
-                  {cargandoPreciosPriceCharting && (
-                    <div className="loading-precios">
-                      <div className="spinner"></div>
-                      <span>Consultando PriceCharting...</span>
-                    </div>
-                  )}
-
-                  {!cargandoPreciosPriceCharting && vistaPriceCharting === 'actual' && preciosPriceCharting && (
-                    <>
-                      {preciosPriceCharting.error ? (
-                        <div className="precio-error">
-                          ⚠️ {preciosPriceCharting.error}
-                          {user?.role === 'admin' && (
-                            <button
-                              className="btn-reintentar"
-                              onClick={() => obtenerPreciosPriceCharting(true)}
-                            >
-                              Reintentar
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <>
-                          {preciosPriceCharting.precioPriceCharting ? (
-                            <div className="precio-grid">
-                              <div className="precio-item">
-                                <strong>Precio actual:</strong> ${preciosPriceCharting.precioPriceCharting}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="precio-no-disponible">
-                              📭 No se encontró precio en PriceCharting
-                              {preciosPriceCharting.url && (
-                                <a
-                                  href={preciosPriceCharting.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="btn-ver-en-sitio"
-                                >
-                                  Ver en PriceCharting
-                                </a>
-                              )}
-                            </div>
-                          )}
-
-                          {preciosPriceCharting.fechaActualizacion && (
-                            <div className="precio-timestamp">
-                              🕒 Actualizado: {new Date(preciosPriceCharting.fechaActualizacion).toLocaleString()}
-                              {preciosPriceCharting.desde_cache && " (desde caché)"}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </>
-                  )}
-
-                  {!cargandoPreciosPriceCharting && vistaPriceCharting === 'historial' && (
-                    <div className="pricecharting-history-wrap">
-                      {cargandoHistorialPriceCharting ? (
-                        <div className="loading-precios">
-                          <div className="spinner"></div>
-                          <span>Cargando historial de PriceCharting...</span>
-                        </div>
-                      ) : dataPriceCharting.length > 0 ? (
-                        <div className="pricecharting-history-card">
-                          <div className="grafico-card-header">
-                            <h4>Evolución del precio en PriceCharting</h4>
-                            <span className="grafico-badge">{dataPriceCharting.length} puntos</span>
-                          </div>
-                          <div className="grafico-chart-area">
-                            <ResponsiveContainer width="100%" height={280}>
-                              <LineChart data={dataPriceCharting}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                <XAxis dataKey="fecha" stroke="#64748b" />
-                                <YAxis stroke="#64748b" tickFormatter={(value) => `$${formatearPrecioCLP(value)}`} />
-                                <Tooltip formatter={(value) => [`$${formatearPrecioCLP(value)}`, 'PriceCharting']} />
-                                <Legend />
-                                <Line type="monotone" dataKey="precioPromedio" name="PriceCharting" stroke="#f59e0b" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 6 }} />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="precio-no-disponible">
-                          📭 Todavía no hay historial de PriceCharting para esta carta.
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {!cargandoPreciosPriceCharting && !preciosPriceCharting && (
-                    <div className="precio-no-consultado">
-                      <button
-                        className="btn-consultar-precios"
-                        onClick={() => obtenerPreciosPriceCharting(false)}
-                      >
-                        🔍 Consultar precio en PriceCharting
-                      </button>
-                    </div>
-                  )}
-                </div>
+                )}
+              </div>
 
               <p className="precio-disclaimer">
                 💡 Los precios son referenciales y pueden variar según la condición y disponibilidad.
@@ -1319,73 +1319,73 @@ export default function CartaDetalle() {
                 </div>
               </div>
             ) : (
-            <div className="tiendas-seccion-completa">
-              <div className="precios">
-                <h3>🛒 Mercado de la página</h3>
-                <p style={{ marginTop: '-0.5rem', color: '#4b5563' }}>
-                  Publicaciones activas para esta carta dentro del mercado.
-                </p>
+              <div className="tiendas-seccion-completa">
+                <div className="precios">
+                  <h3>🛒 Mercado de la página</h3>
+                  <p style={{ marginTop: '-0.5rem', color: '#4b5563' }}>
+                    Publicaciones activas para esta carta dentro del mercado.
+                  </p>
 
-                {cargandoMarket ? (
-                  <p>Cargando publicaciones del mercado...</p>
-                ) : marketItems.length > 0 ? (
-                  <div className="mercado-grid-detalle">
-                    {marketItems.map((item) => {
-                      const cartaMercado = item.carta || carta;
-                      return (
-                        <article key={item.id} className="mercado-card-detalle">
-                          <div className="mercado-card-imagen">
-                            <img
-                              src={item.realImage ? `${apiUrl}${item.realImage}` : (cartaMercado.imagenPequena || carta.imagenPequena)}
-                              alt={cartaMercado.nombre || carta.nombre}
-                              onError={(e) => {
-                                e.target.src = cartaMercado.imagenPequena || carta.imagenPequena || '/placeholder-card.png';
-                              }}
-                            />
-                          </div>
-
-                          <div className="mercado-card-body">
-                            <div className="mercado-card-topline">
-                              <span className="mercado-card-price">${formatearPrecioCLP(item.price)}</span>
-                              <span className="mercado-card-qty">x{item.quantity || 1}</span>
+                  {cargandoMarket ? (
+                    <p>Cargando publicaciones del mercado...</p>
+                  ) : marketItems.length > 0 ? (
+                    <div className="mercado-grid-detalle">
+                      {marketItems.map((item) => {
+                        const cartaMercado = item.carta || carta;
+                        return (
+                          <article key={item.id} className="mercado-card-detalle">
+                            <div className="mercado-card-imagen">
+                              <img
+                                src={item.realImage ? `${apiUrl}${item.realImage}` : (cartaMercado.imagenPequena || carta.imagenPequena)}
+                                alt={cartaMercado.nombre || carta.nombre}
+                                onError={(e) => {
+                                  e.target.src = cartaMercado.imagenPequena || carta.imagenPequena || '/placeholder-card.png';
+                                }}
+                              />
                             </div>
 
-                            <h4>{cartaMercado.nombre || carta.nombre}</h4>
+                            <div className="mercado-card-body">
+                              <div className="mercado-card-topline">
+                                <span className="mercado-card-price">${formatearPrecioCLP(item.price)}</span>
+                                <span className="mercado-card-qty">x{item.quantity || 1}</span>
+                              </div>
 
-                            <div className="mercado-card-meta">
-                              <span>🧾 Nº {cartaMercado.numero || carta.numero}</span>
-                              <span>📚 {cartaMercado.set || carta.set}</span>
-                              <span>👤 {item.user?.name || 'Vendedor'}</span>
+                              <h4>{cartaMercado.nombre || carta.nombre}</h4>
+
+                              <div className="mercado-card-meta">
+                                <span>🧾 Nº {cartaMercado.numero || carta.numero}</span>
+                                <span>📚 {cartaMercado.set || carta.set}</span>
+                                <span>👤 {item.user?.name || 'Vendedor'}</span>
+                              </div>
+
+                              <div className="mercado-card-meta">
+                                {item.deliveryType && <span>🚚 {item.deliveryType}</span>}
+                                {item.region && <span>📍 {item.region}</span>}
+                              </div>
+
+                              {item.description && (
+                                <p className="mercado-card-description">{item.description}</p>
+                              )}
+
+                              <div className="mercado-card-footer">
+                                <small>📅 {new Date(item.createdAt).toLocaleDateString()}</small>
+                                <button
+                                  className="btn-mercado-ver-completo"
+                                  onClick={() => navigate('/mercado')}
+                                >
+                                  Ver mercado completo
+                                </button>
+                              </div>
                             </div>
-
-                            <div className="mercado-card-meta">
-                              {item.deliveryType && <span>🚚 {item.deliveryType}</span>}
-                              {item.region && <span>📍 {item.region}</span>}
-                            </div>
-
-                            {item.description && (
-                              <p className="mercado-card-description">{item.description}</p>
-                            )}
-
-                            <div className="mercado-card-footer">
-                              <small>📅 {new Date(item.createdAt).toLocaleDateString()}</small>
-                              <button
-                                className="btn-mercado-ver-completo"
-                                onClick={() => navigate('/mercado')}
-                              >
-                                Ver mercado completo
-                              </button>
-                            </div>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="no-tiendas">No hay publicaciones activas para esta carta.</p>
-                )}
+                          </article>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="no-tiendas">No hay publicaciones activas para esta carta.</p>
+                  )}
+                </div>
               </div>
-            </div>
             )
           )}
 
@@ -1464,11 +1464,11 @@ export default function CartaDetalle() {
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
             <button className="modal-close" onClick={() => setMostrarModalColeccion(false)}>&times;</button>
             <h2 style={{ marginTop: 0, color: '#333' }}>Agregar a Colección</h2>
-            
+
             <div style={{ margin: '20px 0' }}>
               <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Elige dónde guardar esta carta:</label>
-              <select 
-                value={selectedBinder} 
+              <select
+                value={selectedBinder}
                 onChange={e => setSelectedBinder(e.target.value)}
                 style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem', marginBottom: selectedBinder === 'NEW' ? '10px' : '0' }}
               >
@@ -1491,15 +1491,15 @@ export default function CartaDetalle() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button 
-                className="btn-secondary" 
+              <button
+                className="btn-secondary"
                 onClick={() => setMostrarModalColeccion(false)}
                 style={{ padding: '8px 15px', border: '1px solid #ccc', background: '#f5f5f5', borderRadius: '4px', cursor: 'pointer' }}
               >
                 Cancelar
               </button>
-              <button 
-                className="btn-primary" 
+              <button
+                className="btn-primary"
                 onClick={() => confirmarAgregarColeccion(false)}
                 style={{ padding: '8px 15px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
               >

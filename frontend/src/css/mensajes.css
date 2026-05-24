@@ -1,0 +1,334 @@
+/* ==========================================================================
+   Estilos para la Interfaz de Mensajería (Chat y Tablón)
+   ========================================================================== */
+
+.mensajes-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100%;
+    height: calc(100vh - 140px); /* Ajustar según altura del header */
+    min-height: 600px;
+    background-color: var(--card-bg, #ffffff);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+/* ==========================================================================
+   Pestañas (Tabs)
+   ========================================================================== */
+.mensajes-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    background: var(--bg-alt, #f8f9fa);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-secondary, #666);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+    color: var(--primary-color, #6a11cb);
+}
+
+.tab-btn.active {
+    color: var(--primary-color, #6a11cb);
+    border-bottom-color: var(--primary-color, #6a11cb);
+    background-color: #fff;
+}
+
+/* ==========================================================================
+   Layout Principal del Chat (Split View)
+   ========================================================================== */
+.chat-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* --- Panel Izquierdo: Lista de Conversaciones --- */
+.conversations-sidebar {
+    width: 320px;
+    border-right: 1px solid var(--border-color, #e0e0e0);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-alt, #f9f9f9);
+    overflow-y: auto;
+}
+
+.conversation-item {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color, #eaeaea);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.conversation-item:hover {
+    background-color: #f1f1f1;
+}
+
+.conversation-item.active {
+    background-color: rgba(106, 17, 203, 0.08);
+    border-left: 4px solid var(--primary-color, #6a11cb);
+}
+
+.conv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.conv-name {
+    font-weight: 600;
+    color: var(--text-color, #333);
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.conv-time {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.conv-snippet {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.snippet-text {
+    font-size: 0.85rem;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+
+.unread-badge {
+    background-color: #ff3b30;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+/* --- Panel Derecho: Historial del Chat --- */
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+}
+
+.chat-empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-size: 1.1rem;
+    background: #fdfdfd;
+}
+
+.chat-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    display: flex;
+    align-items: center;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    z-index: 2;
+}
+
+.chat-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-color, #333);
+}
+
+.chat-log {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background-color: #f5f7fb;
+}
+
+/* --- Burbujas de Mensaje --- */
+.message-bubble-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 75%;
+}
+
+.message-bubble-container.own {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.message-bubble-container.other {
+    align-self: flex-start;
+    align-items: flex-start;
+}
+
+.message-bubble {
+    padding: 10px 15px;
+    border-radius: 15px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    word-break: break-word;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.message-bubble.own {
+    background-color: var(--primary-color, #6a11cb);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message-bubble.other {
+    background-color: #ffffff;
+    color: #333;
+    border: 1px solid #eaeaea;
+    border-bottom-left-radius: 4px;
+}
+
+/* Referencia al mercado (dentro de la burbuja) */
+.market-ref {
+    font-size: 0.75rem;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    font-weight: 600;
+}
+
+.message-bubble.other .market-ref {
+    border-bottom-color: #eee;
+    color: #555;
+}
+
+.bubble-time {
+    font-size: 0.65rem;
+    margin-top: 4px;
+    opacity: 0.7;
+    display: block;
+    text-align: right;
+}
+
+/* --- Área de Entrada (Responder) --- */
+.chat-input-area {
+    padding: 15px 20px;
+    background: #fff;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input-area textarea {
+    flex: 1;
+    resize: none;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    height: 60px;
+}
+
+.chat-input-area textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #6a11cb);
+}
+
+.btn-send-reply {
+    padding: 0 25px;
+    background-color: var(--primary-color, #6a11cb);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-send-reply:hover:not(:disabled) {
+    background-color: #580ebd;
+}
+
+.btn-send-reply:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn-send-reply:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Tablón de Contacto (Vista Simple)
+   ========================================================================== */
+.tablon-contacto-layout {
+    padding: 20px;
+    overflow-y: auto;
+    background: #fdfdfd;
+}
+
+.contacto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.contacto-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border-top: 4px solid #2575fc;
+    transition: transform 0.2s;
+}
+
+.contacto-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.contacto-card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 0.85rem;
+    color: #777;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.contacto-body {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #444;
+    white-space: pre-wrap; /* Respeta los saltos de línea del mensaje de contacto */
+}

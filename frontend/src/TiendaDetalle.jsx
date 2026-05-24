@@ -250,7 +250,7 @@ export default function TiendaDetalle() {
               </div>
             )}
 
-            {tienda.direccion && tienda.tipo !== 'online' && (
+            {tienda.direccion && tienda.tipo !== 'online' && !tienda.direccion.toLowerCase().includes('online') && (
               <div className="detail-card clickable" onClick={() => abrirEnGoogleMaps(tienda.direccion)}>
                 <div className="detail-header">
                   <span className="detail-icon">📍</span>
@@ -307,7 +307,7 @@ export default function TiendaDetalle() {
               </button>
             )}
             
-            {tienda.direccion && tienda.tipo !== 'online' && (
+            {tienda.direccion && tienda.tipo !== 'online' && !tienda.direccion.toLowerCase().includes('online') && (
               <button 
                 className="btn-accion-secundaria"
                 onClick={() => abrirEnGoogleMaps(tienda.direccion)}

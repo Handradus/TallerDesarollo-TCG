@@ -62,6 +62,7 @@ AppDataSource.initialize()
     app.use('/api/contact', require('./routes/contact.routes'));
     app.use('/api/profile', require('./routes/profile.routes'));
     app.use('/api/reports', require('./routes/report.routes'));
+    app.use('/api/blocks', require('./routes/block.routes'));
 
 
     // Create HTTP Server

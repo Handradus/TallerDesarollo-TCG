@@ -131,3 +131,31 @@
     margin-bottom: 1rem;
     border: 1px solid #f5c6cb;
 }
+
+/* Tabs */
+.mensajes-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: #2575fc;
+}
+
+.tab-btn.active {
+    color: #2575fc;
+    border-bottom-color: #2575fc;
+}

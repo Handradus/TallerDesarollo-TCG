@@ -28,11 +28,10 @@ export default function Contacto() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // Ajustar URL base según entorno (asumiendo que las otras llamadas usan fetch a /api o API URL)
-      // Como no se importa API_URL aquí, usar endpoint relativo si Vite hace proxy, o usar el estándar de tu app
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
-      const response = await fetch(`${apiUrl}/contact`, {
+      // Usar la variable de entorno correcta para la base de la API
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+      
+      const response = await fetch(`${baseUrl}/api/contact`, {
         method: 'POST',
         headers,
         body: JSON.stringify(formData)
