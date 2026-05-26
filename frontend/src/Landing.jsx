@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import LoginButton from './components/LoginButton';
-import tituloWebImg from './assets/tituloWeb.jpg';
+import tituloWebImg from './assets/tituloWeb.png';
 import './css/Landing.css'; // Optional: Can add specific styles or reuse global ones
 
 export default function Landing() {

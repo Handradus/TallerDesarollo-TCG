@@ -6,7 +6,7 @@ import { normalizarTexto } from './utils/sugerencias';
 import { ordenarCartas } from './utils/ordenarCartas';
 import CarouselCartas from './CarouselCartas';
 import CarouselTiendas from './CarouselTiendas';
-import tituloWebImg from './assets/tituloWeb.jpg';
+import tituloWebImg from './assets/tituloWeb.png';
 import { useAuth } from './context/AuthContext';
 import axios from 'axios';
 import AdBanner from './components/AdBanner';

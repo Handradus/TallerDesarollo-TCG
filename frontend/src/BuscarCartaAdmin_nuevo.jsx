@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css/BuscarCarta.css';
 import './css/BuscarCartaAdmin.css';
-import tituloWebImg from './assets/tituloWeb.jpg';
+import tituloWebImg from './assets/tituloWeb.png';
 
 export default function BuscarCartasAdmin() {
   const [nombre, setNombre] = useState('');
