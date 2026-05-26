@@ -25,6 +25,9 @@ export default function Coleccion() {
     const [selectedSet, setSelectedSet] = useState('');
     const [selectedRarity, setSelectedRarity] = useState('');
     const [showPrices, setShowPrices] = useState(false);
+    const [groupBySet, setGroupBySet] = useState(true);
+    const [sortCriteria, setSortCriteria] = useState('none');
+    const [sortOrder, setSortOrder] = useState('asc');
 
     // Edit Item Modal States
     const [editItem, setEditItem] = useState(null);
@@ -240,8 +243,34 @@ export default function Coleccion() {
         return true;
     });
 
+    // Sorting Logic
+    const sortedCards = [...filteredCards].sort((a, b) => {
+        if (sortCriteria === 'none') return 0;
+        
+        let comparison = 0;
+        if (sortCriteria === 'name') {
+            comparison = (a.nombre || '').localeCompare(b.nombre || '');
+        } else if (sortCriteria === 'price') {
+            const priceA = parseFloat(a.precioPriceCharting || a.precioNormal || 0);
+            const priceB = parseFloat(b.precioPriceCharting || b.precioNormal || 0);
+            comparison = priceA - priceB;
+        } else if (sortCriteria === 'quantity') {
+            comparison = (a.quantity || 0) - (b.quantity || 0);
+        } else if (sortCriteria === 'number') {
+            const numA = parseInt(a.numero) || 0;
+            const numB = parseInt(b.numero) || 0;
+            comparison = numA - numB;
+        } else if (sortCriteria === 'set') {
+            comparison = (a.set || '').localeCompare(b.set || '');
+        } else if (sortCriteria === 'date') {
+            comparison = new Date(a.addedAt || 0) - new Date(b.addedAt || 0);
+        }
+        
+        return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
     // Group cards by Set
-    const cardsBySet = filteredCards.reduce((acc, card) => {
+    const cardsBySet = sortedCards.reduce((acc, card) => {
         const setName = card.set || 'Sin Set';
         if (!acc[setName]) {
             acc[setName] = [];
@@ -256,6 +285,111 @@ export default function Coleccion() {
         const price = parseFloat(card.precioPriceCharting || card.precioNormal || 0);
         return sum + (price * (card.quantity || 1));
     }, 0);
+
+    const renderCardItem = (card) => (
+        <div key={card.collectionId} className={`card-item collection-card ${(!card.isOwned || card.quantity === 0) ? 'is-wanted' : ''}`}>
+            <div
+                style={{ cursor: 'pointer', position: 'relative' }}
+                onClick={() => navigate(`/carta/${card.id}`)}
+                title="Ver detalles de la carta"
+            >
+                <img
+                    src={card.imagenPequena}
+                    alt={card.nombre}
+                    loading="lazy"
+                    style={(!card.isOwned || card.quantity === 0) ? { filter: 'grayscale(100%) opacity(0.7)' } : {}}
+                />
+                {(!card.isOwned || card.quantity === 0) && (
+                    <div style={{
+                        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                        background: 'rgba(0,0,0,0.7)', color: 'white', padding: '5px 10px', borderRadius: '5px',
+                        fontWeight: 'bold', pointerEvents: 'none', fontSize: '0.8rem'
+                    }}>
+                        LO QUIERO
+                    </div>
+                )}
+            </div>
+            <div className="card-info">
+                <h4>
+                    {card.nombre}{' '}
+                    {card.numero && <span style={{fontSize: '0.8rem', color: '#666', fontWeight: 'normal'}}>#{card.numero}</span>}
+                </h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className="card-qty">
+                        {(!card.isOwned || card.quantity === 0) ? 'Deseada' : `x${card.quantity}`}
+                    </span>
+                    {showPrices && (card.isOwned || card.quantity > 0) && (
+                        <span style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                            ${(parseFloat(card.precioPriceCharting || card.precioNormal || 0)).toFixed(2)}
+                        </span>
+                    )}
+                </div>
+                
+                {/* Custom Properties Badges */}
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '5px' }}>
+                    {card.condition && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.condition}</span>}
+                    {card.language && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.language}</span>}
+                    {card.foilType && card.foilType !== 'Normal' && <span style={{fontSize: '0.7rem', background: 'linear-gradient(45deg, #ffd700, #ff8c00)', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{card.foilType}</span>}
+                </div>
+
+                <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
+                    {(!card.isOwned || card.quantity === 0) ? (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const addToCollection = async () => {
+                                    try {
+                                        const token = localStorage.getItem('token');
+                                        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/collection/add`,
+                                            { cartaId: card.id, isOwned: true, binderId: card.binderId },
+                                            { headers: { Authorization: `Bearer ${token}` } }
+                                        );
+                                        fetchCollection();
+                                    } catch (e) { console.error(e); }
+                                };
+                                addToCollection();
+                            }}
+                            className="btn-primary btn-sm"
+                            style={{ fontSize: '0.8rem', padding: '2px 8px', backgroundColor: '#4CAF50' }}
+                            title="Ya la conseguí (Marcar como obtenida)"
+                        >
+                            ✅ Conseguí
+                        </button>
+                    ) : (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); navigate('/mi-tienda', { state: { sellCard: card } }); }}
+                            className="btn-secondary btn-sm"
+                            style={{ fontSize: '0.8rem', padding: '2px 8px' }}
+                            title="Vender en Mercado"
+                        >
+                            💰
+                        </button>
+                    )}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); openEditModal(card); }}
+                        className="btn-secondary btn-sm"
+                        title="Editar detalles (Estado, Idioma...)"
+                    >
+                        ✏️
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); addCopy(card); }}
+                        className="btn-secondary btn-sm"
+                        title="Agregar otra copia"
+                    >
+                        ➕
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); removeFromCollection(card.id); }}
+                        className="btn-danger btn-sm"
+                        title="Eliminar de la colección"
+                    >
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 
     if (!user) return <div className="container"><h2>Debes iniciar sesión para ver tu colección.</h2></div>;
 
@@ -332,128 +466,66 @@ export default function Coleccion() {
                             />
                             <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>Mostrar Precios (USD)</span>
                         </label>
+
+                        <select
+                            value={groupBySet ? 'grouped' : 'flat'}
+                            onChange={e => setGroupBySet(e.target.value === 'grouped')}
+                            className="filter-select"
+                            title="Agrupar cartas por Set"
+                        >
+                            <option value="grouped">🗂️ Agrupar por Set</option>
+                            <option value="flat">📋 Mostrar todas juntas</option>
+                        </select>
+
+                        <select
+                            value={sortCriteria}
+                            onChange={e => setSortCriteria(e.target.value)}
+                            className="filter-select"
+                            title="Ordenar por"
+                        >
+                            <option value="none">Orden por defecto</option>
+                            <option value="name">Nombre (A-Z)</option>
+                            <option value="price">Precio</option>
+                            <option value="quantity">Cantidad</option>
+                            <option value="number">Número de carta</option>
+                            <option value="set">Nombre del Set</option>
+                            <option value="date">Fecha agregado</option>
+                        </select>
+
+                        {sortCriteria !== 'none' && (
+                            <select
+                                value={sortOrder}
+                                onChange={e => setSortOrder(e.target.value)}
+                                className="filter-select"
+                                title="Dirección de ordenamiento"
+                            >
+                                <option value="asc">Ascendente</option>
+                                <option value="desc">Descendente</option>
+                            </select>
+                        )}
                     </div>
                 </div>
 
                 {loading ? <div className="loading-spinner">Cargando colección...</div> : (
                     <>
-                        {Object.keys(cardsBySet).length === 0 ? (
+                        {sortedCards.length === 0 ? (
                             <div className="empty-state">
                                 <p>No hay cartas en esta vista.</p>
                                 {!selectedBinderId && <p>¡Ve al buscador para agregar cartas!</p>}
                             </div>
-                        ) : (
+                        ) : groupBySet ? (
                             Object.keys(cardsBySet).sort().map(setName => (
                                 <div key={setName} className="set-group">
                                     <h2 className="set-title">{setName}</h2>
                                     <div className="results-grid">
-                                        {cardsBySet[setName].map(card => (
-                                            <div key={card.collectionId} className={`card-item collection-card ${(!card.isOwned || card.quantity === 0) ? 'is-wanted' : ''}`}>
-                                                <div
-                                                    style={{ cursor: 'pointer', position: 'relative' }}
-                                                    onClick={() => window.open(`/carta/${card.id}`, '_blank')}
-                                                    title="Ver detalles de la carta"
-                                                >
-                                                    <img
-                                                        src={card.imagenPequena}
-                                                        alt={card.nombre}
-                                                        loading="lazy"
-                                                        style={(!card.isOwned || card.quantity === 0) ? { filter: 'grayscale(100%) opacity(0.7)' } : {}}
-                                                    />
-                                                    {(!card.isOwned || card.quantity === 0) && (
-                                                        <div style={{
-                                                            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                                                            background: 'rgba(0,0,0,0.7)', color: 'white', padding: '5px 10px', borderRadius: '5px',
-                                                            fontWeight: 'bold', pointerEvents: 'none', fontSize: '0.8rem'
-                                                        }}>
-                                                            LO QUIERO
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="card-info">
-                                                    <h4>
-                                                        {card.nombre}{' '}
-                                                        {card.numero && <span style={{fontSize: '0.8rem', color: '#666', fontWeight: 'normal'}}>#{card.numero}</span>}
-                                                    </h4>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <span className="card-qty">
-                                                            {(!card.isOwned || card.quantity === 0) ? 'Deseada' : `x${card.quantity}`}
-                                                        </span>
-                                                        {showPrices && (card.isOwned || card.quantity > 0) && (
-                                                            <span style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                                                                ${(parseFloat(card.precioPriceCharting || card.precioNormal || 0)).toFixed(2)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    
-                                                    {/* Custom Properties Badges */}
-                                                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '5px' }}>
-                                                        {card.condition && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.condition}</span>}
-                                                        {card.language && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.language}</span>}
-                                                        {card.foilType && card.foilType !== 'Normal' && <span style={{fontSize: '0.7rem', background: 'linear-gradient(45deg, #ffd700, #ff8c00)', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{card.foilType}</span>}
-                                                    </div>
-
-                                                    <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-                                                        {(!card.isOwned || card.quantity === 0) ? (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    const addToCollection = async () => {
-                                                                        try {
-                                                                            const token = localStorage.getItem('token');
-                                                                            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/collection/add`,
-                                                                                { cartaId: card.id, isOwned: true, binderId: selectedBinderId },
-                                                                                { headers: { Authorization: `Bearer ${token}` } }
-                                                                            );
-                                                                            fetchCollection();
-                                                                        } catch (e) { console.error(e); }
-                                                                    };
-                                                                    addToCollection();
-                                                                }}
-                                                                className="btn-primary btn-sm"
-                                                                style={{ fontSize: '0.8rem', padding: '2px 8px', backgroundColor: '#4CAF50' }}
-                                                                title="Ya la conseguí (Marcar como obtenida)"
-                                                            >
-                                                                ✅ Conseguí
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); navigate('/mi-tienda', { state: { sellCard: card } }); }}
-                                                                className="btn-secondary btn-sm"
-                                                                style={{ fontSize: '0.8rem', padding: '2px 8px' }}
-                                                                title="Vender en Mercado"
-                                                            >
-                                                                💰
-                                                            </button>
-                                                        )}
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); openEditModal(card); }}
-                                                            className="btn-secondary btn-sm"
-                                                            title="Editar detalles (Estado, Idioma...)"
-                                                        >
-                                                            ✏️
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); addCopy(card); }}
-                                                            className="btn-secondary btn-sm"
-                                                            title="Agregar otra copia"
-                                                        >
-                                                            ➕
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => { e.stopPropagation(); removeFromCollection(card.id); }}
-                                                            className="btn-danger btn-sm"
-                                                            title="Eliminar de la colección"
-                                                        >
-                                                            🗑️
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                        {cardsBySet[setName].map(card => renderCardItem(card))}
                                     </div>
                                 </div>
                             ))
+                        ) : (
+                            <div className="results-grid">
+                                {sortedCards.map(card => renderCardItem(card))}
+                            </div>
                         )}
                     </>
                 )}

@@ -25,7 +25,8 @@ const addToCollection = async (req, res) => {
                 where: {
                     userId,
                     cartaId,
-                    customCollection: binderId ? { id: binderId } : IsNull()
+                    customCollection: binderId ? { id: binderId } : IsNull(),
+                    isOwned: true
                 }
             });
             if (duplicateCheck) {

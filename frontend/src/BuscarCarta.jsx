@@ -36,6 +36,7 @@ export default function BuscarCartas() {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [selectedCards, setSelectedCards] = useState(new Set());
   const [isAddingBulk, setIsAddingBulk] = useState(false);
+  const [bulkIsOwned, setBulkIsOwned] = useState(false);
 
   // Binder State
   const [binders, setBinders] = useState([]);
@@ -108,9 +109,9 @@ export default function BuscarCartas() {
     }
   };
 
-  const initiateBulkAdd = async () => {
+  const initiateBulkAdd = async (isOwned = false) => {
     if (selectedCards.size === 0) return;
-    
+    setBulkIsOwned(isOwned);
     try {
       const token = localStorage.getItem('token');
       const res = await axios.get(`${apiUrl}/api/collection/binders`, {
@@ -133,7 +134,7 @@ export default function BuscarCartas() {
       const token = localStorage.getItem('token');
       const requests = Array.from(selectedCards).map(id => 
         axios.post(`${apiUrl}/api/collection/add`, 
-          { cartaId: id, isOwned: false, binderId: binderId || null }, 
+          { cartaId: id, isOwned: bulkIsOwned, binderId: binderId || null }, 
           { headers: { Authorization: `Bearer ${token}` } }
         ).catch(err => {
            console.log("Error agregando carta (posiblemente ya existe)", id, err);
@@ -141,7 +142,10 @@ export default function BuscarCartas() {
       );
       
       await Promise.all(requests);
-      Swal.fire('¡Éxito!', `${selectedCards.size} cartas agregadas a tu lista de deseados (Lo Quiero)${binderId ? ' en la carpeta seleccionada' : ''}.`, 'success');
+      const textSuccess = bulkIsOwned 
+        ? `${selectedCards.size} cartas agregadas a tu colección${binderId ? ' en la carpeta seleccionada' : ''}.`
+        : `${selectedCards.size} cartas agregadas a tu lista de deseados (Lo Quiero)${binderId ? ' en la carpeta seleccionada' : ''}.`;
+      Swal.fire('¡Éxito!', textSuccess, 'success');
       
       setSelectedCards(new Set());
       setIsMultiSelectMode(false);
@@ -713,7 +717,7 @@ export default function BuscarCartas() {
                       </button>
 
                       <button
-                        onClick={initiateBulkAdd}
+                        onClick={() => initiateBulkAdd(false)}
                         disabled={selectedCards.size === 0 || isAddingBulk}
                         style={{
                           padding: '8px 16px',
@@ -722,10 +726,27 @@ export default function BuscarCartas() {
                           border: 'none',
                           borderRadius: '6px',
                           cursor: selectedCards.size > 0 ? 'pointer' : 'not-allowed',
+                          fontWeight: 'bold',
+                          marginRight: '8px'
+                        }}
+                      >
+                        {isAddingBulk && !bulkIsOwned ? 'Agregando...' : `❤️ Agregar a Lo Quiero (${selectedCards.size})`}
+                      </button>
+
+                      <button
+                        onClick={() => initiateBulkAdd(true)}
+                        disabled={selectedCards.size === 0 || isAddingBulk}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: selectedCards.size > 0 ? '#4CAF50' : '#d1d5db',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: selectedCards.size > 0 ? 'pointer' : 'not-allowed',
                           fontWeight: 'bold'
                         }}
                       >
-                        {isAddingBulk ? 'Agregando...' : `❤️ Agregar a Lo Quiero (${selectedCards.size})`}
+                        {isAddingBulk && bulkIsOwned ? 'Agregando...' : `✅ Agregar a Colección (${selectedCards.size})`}
                       </button>
                     </>
                   )}
@@ -954,7 +975,7 @@ export default function BuscarCartas() {
       {showBulkBinderModal && (
         <div className="modal-overlay" onClick={() => setShowBulkBinderModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>Agregar {selectedCards.size} cartas a "Lo Quiero" en...</h3>
+            <h3>Agregar {selectedCards.size} cartas a {bulkIsOwned ? 'Mi Colección' : '"Lo Quiero"'} en...</h3>
             <select
               className="filter-select"
               value={targetBinderId}
