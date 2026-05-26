@@ -37,7 +37,7 @@ const LoginButton = () => {
         <GoogleLogin
             onSuccess={onSuccess}
             onError={onError}
-            useOneTap
+            ux_mode="popup"
         />
     );
 };
