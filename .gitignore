@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-
+*.env.docker
 # Node backend
 /backend/node_modules/
 /backend/.env

@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import LoginButton from './components/LoginButton';
 import tituloWebImg from './assets/tituloWeb.png';
 import './css/Landing.css'; // Optional: Can add specific styles or reuse global ones
 
@@ -54,9 +53,6 @@ export default function Landing() {
           Para mantener la calidad de nuestra comunidad y evitar tráfico no deseado, requerimos que inicies sesión para buscar, coleccionar o ver el mercadillo.
         </p>
         
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <LoginButton />
-        </div>
       </div>
     </div>
   );
