@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import Swal from 'sweetalert2';
 
 const LoginButton = () => {
-    const { login, register } = useAuth();
+    const { login, register, logout } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [isRegisterMode, setIsRegisterMode] = useState(false);
     const [email, setEmail] = useState('');
@@ -73,50 +73,58 @@ const LoginButton = () => {
                     return;
                 }
 
-                // Check if EULA is accepted for this email
-                const hasAcceptedEula = localStorage.getItem('eula_accepted_' + email) === 'true';
+                try {
+                    // Attempt login first
+                    await login({ email, password });
 
-                if (!hasAcceptedEula) {
-                    setIsLoading(false);
-                    const eulaResult = await Swal.fire({
-                        title: 'Acuerdo de Licencia de Usuario Final (EULA)',
-                        html: `
-                            <div style="text-align: left; max-height: 300px; overflow-y: auto; font-size: 0.9rem; padding: 10px; color: #334155; line-height: 1.5;">
-                                <p><strong>1. Aceptación de los Términos</strong><br/>Al iniciar sesión y usar CARTATECA, aceptas cumplir con esta Licencia de Usuario Final.</p>
-                                <p><strong>2. Conducta del Usuario</strong><br/>No se tolerará ningún tipo de contenido inapropiado, abusivo, acosador o fraudulento. Los usuarios son responsables por las cartas que publican y venden.</p>
-                                <p><strong>3. Moderación y Sanciones</strong><br/>Los administradores de CARTATECA se reservan el derecho de suspender o eliminar cualquier cuenta que infrinja estas normas de convivencia o realice actividades sospechosas.</p>
-                                <p><strong>4. Exclusión de Responsabilidad</strong><br/>CARTATECA actúa únicamente como intermediario técnico de exhibición. No nos responsabilizamos por las transacciones financieras o físicas realizadas entre usuarios.</p>
-                            </div>
-                        `,
-                        showCancelButton: true,
-                        confirmButtonText: 'Aceptar y Entrar',
-                        cancelButtonText: 'Cancelar',
-                        confirmButtonColor: '#6366f1',
-                        cancelButtonColor: '#d33',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false
-                    });
+                    // After successful login, check EULA acceptance
+                    const hasAcceptedEula = localStorage.getItem('eula_accepted_' + email) === 'true';
 
-                    if (eulaResult.isConfirmed) {
-                        localStorage.setItem('eula_accepted_' + email, 'true');
-                        setIsLoading(true);
-                    } else {
-                        setErrorMessage('Debes aceptar el EULA / Términos de Servicio para poder ingresar.');
-                        return;
+                    if (!hasAcceptedEula) {
+                        const eulaResult = await Swal.fire({
+                            title: 'Acuerdo de Licencia de Usuario Final (EULA)',
+                            html: `
+                                <div style="text-align: left; max-height: 300px; overflow-y: auto; font-size: 0.9rem; padding: 10px; color: #334155; line-height: 1.5;">
+                                    <p><strong>1. Aceptación de los Términos</strong><br/>Al iniciar sesión y usar CARTATECA, aceptas cumplir con esta Licencia de Usuario Final.</p>
+                                    <p><strong>2. Conducta del Usuario</strong><br/>No se tolerará ningún tipo de contenido inapropiado, abusivo, acosador o fraudulento. Los usuarios son responsables por las cartas que publican y venden.</p>
+                                    <p><strong>3. Moderación y Sanciones</strong><br/>Los administradores de CARTATECA se reservan el derecho de suspender o eliminar cualquier cuenta que infrinja estas normas de convivencia o realice actividades sospechosas.</p>
+                                    <p><strong>4. Exclusión de Responsabilidad</strong><br/>CARTATECA actúa únicamente como intermediario técnico de exhibición. No nos responsabilizamos por las transacciones financieras o físicas realizadas entre usuarios.</p>
+                                </div>
+                            `,
+                            showCancelButton: true,
+                            confirmButtonText: 'Aceptar y Entrar',
+                            cancelButtonText: 'Cancelar',
+                            confirmButtonColor: '#6366f1',
+                            cancelButtonColor: '#d33',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false
+                        });
+
+                        if (eulaResult.isConfirmed) {
+                            localStorage.setItem('eula_accepted_' + email, 'true');
+                        } else {
+                            // If the user declines the EULA after logging in, log them out immediately
+                            logout();
+                            setErrorMessage('Debes aceptar el EULA / Términos de Servicio para poder ingresar.');
+                            setIsLoading(false);
+                            return;
+                        }
                     }
-                }
 
-                await login({ email, password });
-                toggleModal();
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: '¡Sesión iniciada!',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true,
-                });
+                    toggleModal();
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: '¡Sesión iniciada!',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                    });
+                } catch (err) {
+                    // Re-throw to be handled by outer catch
+                    throw err;
+                }
             }
         } catch (error) {
             console.error(error);
