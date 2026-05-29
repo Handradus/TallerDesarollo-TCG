@@ -287,6 +287,11 @@ async function manejarUnaPalabra(input, cartaRepo) {
 async function manejarVariasPalabras(palabras, posiblesNombre, cartaRepo) {
   console.log(`🎯 VARIAS PALABRAS: Analizando "${posiblesNombre}"`);
   
+  if (!posiblesNombre || !posiblesNombre.trim()) {
+    console.log(`⚠️ manejarVariasPalabras invocado sin nombre válido, abortando para evitar coincidencia completa`);
+    return [];
+  }
+  
   const tiposCartasEspeciales = ['ex', 'gx', 'v', 'vmax', 'vstar', 'tag', 'break', 'prime', 'legend', 'mega'];
   const setsConocidos = obtenerSetsConocidos();
   const cartasConocidas = obtenerCartasConocidas();
@@ -359,6 +364,10 @@ async function manejarVariasPalabras(palabras, posiblesNombre, cartaRepo) {
 
 // Buscar por nombre completo (con variaciones)
 async function buscarPorNombreCompleto(nombre, cartaRepo) {
+  if (!nombre || !nombre.trim()) {
+    console.log(`⚠️ buscarPorNombreCompleto invocado con nombre vacío, abortando`);
+    return [];
+  }
   const nombreConGuiones = nombre.replace(/ /g, '-');
   
   // Generar variaciones para "and" <-> "&"
@@ -395,6 +404,10 @@ async function buscarPorNombreCompleto(nombre, cartaRepo) {
 
 // Buscar nombre específico en set específico
 async function buscarNombreEnSet(nombrePokemon, setName, cartaRepo) {
+  if (!nombrePokemon || !nombrePokemon.trim()) {
+    console.log(`⚠️ buscarNombreEnSet invocado con nombre vacío, abortando`);
+    return [];
+  }
   const nombreGuiones = nombrePokemon.replace(/ /g, '-');
   
   // Generar variaciones para "and" <-> "&" en el nombre del Pokémon
@@ -428,7 +441,7 @@ async function buscarNombreEnSet(nombrePokemon, setName, cartaRepo) {
 async function busquedaFlexible(nombre, cartaRepo) {
   console.log(`🔄 BÚSQUEDA FLEXIBLE para: "${nombre}"`);
   
-  if (!nombre) return [];
+  if (!nombre || !nombre.trim()) return [];
   
   // Intentar búsqueda por set
   const cartasBD = await cartaRepo.find({ where: { set: ILike(`%${nombre}%`) } });

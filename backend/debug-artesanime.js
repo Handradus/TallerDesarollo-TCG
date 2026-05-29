@@ -1,9 +1,12 @@
 const { AppDataSource } = require('./src/data-source');
 const Tienda = require('./src/entities/Tienda');
+const { buscarEnTiendaJumpseller } = require('./src/helpers/buscadores');
 
-async function verificarArtesanime() {
+async function testJumpsellerScraper() {
   try {
+    console.log('🔄 Initializing database source...');
     await AppDataSource.initialize();
+    
     const tiendaRepo = AppDataSource.getRepository(Tienda);
     
     const artesanime = await tiendaRepo.findOne({ 
@@ -11,30 +14,33 @@ async function verificarArtesanime() {
     });
     
     if (!artesanime) {
-      console.log('❌ Artesanime no encontrada');
+      console.log('❌ Artesanime not found.');
+      await AppDataSource.destroy();
       return;
     }
     
-    console.log('🏪 CONFIGURACIÓN DE ARTESANIME:');
-    console.log('='.repeat(40));
-    console.log('Nombre:', artesanime.nombre);
-    console.log('Tipo de búsqueda:', artesanime.tipoBusqueda);
-    console.log('URL Base:', artesanime.urlBase);
-    console.log('Patrón de búsqueda:', artesanime.patronBusqueda);
-    console.log('Activa:', artesanime.activo);
+    // We search for card 91/98. On Jumpseller we can query "91 98" or "91/98"
+    // Since we now normalize the query, we can mock it here
+    const mockupCard = {
+      nombre: '', // Searching just by number is common
+      numero: '91',
+      printedTotal: 98,
+      set: ''
+    };
     
-    // Generar URL de ejemplo para Pikachu
-    if (artesanime.urlBase && artesanime.patronBusqueda) {
-      const urlEjemplo = artesanime.urlBase + artesanime.patronBusqueda.replace('BUSQUEDA', 'pikachu');
-      console.log('\n🔍 URL que se generaría para "pikachu":');
-      console.log(urlEjemplo);
-    }
+    console.log(`🔍 Scraping for card 91/98...`);
+    
+    const result = await buscarEnTiendaJumpseller(artesanime, mockupCard);
+    
+    console.log('\n📊 SCRAPING RESULT:');
+    console.log('='.repeat(40));
+    console.log(result);
+    console.log('='.repeat(40));
     
     await AppDataSource.destroy();
   } catch (error) {
-    console.error('Error:', error.message);
-    process.exit(1);
+    console.error('💥 Error running diagnostic:', error.message);
   }
 }
 
-verificarArtesanime();
+testJumpsellerScraper();

@@ -13,9 +13,16 @@ const { obtenerHistorialPreciosCarta } = require('../controllers/historialPrecio
 
 
 router.get('/', async (req, res) => {
-  const nombreRaw = req.query.nombre;
+  let nombreRaw = req.query.nombre;
   const tipoBusqueda = req.query.tipo || 'carta'; // 'carta' por defecto
-  console.log(`🟢 Llegó una búsqueda a /api/cartas con input: "${nombreRaw}" tipo: "${tipoBusqueda}"`);
+  
+  if (nombreRaw) {
+    // Normalizar separadores de fracciones: si hay dos números separados por espacio(s) o guion(es), convertirlos en fracción con barra "/"
+    // Ej: "060 072" o "060-072" -> "060/072"
+    nombreRaw = nombreRaw.trim().replace(/\b(\d{1,4})[\s-]+(\d{1,4})\b/g, '$1/$2');
+  }
+
+  console.log(`🟢 Llegó una búsqueda a /api/cartas con input normalizado: "${nombreRaw}" tipo: "${tipoBusqueda}"`);
 
   if (!AppDataSource.isInitialized) {
     console.error('La conexión a la base de datos no está inicializada');
@@ -42,21 +49,30 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/admin', async (req, res) => {
-  const nombreRaw = req.query.nombre;
+  let nombreRaw = req.query.nombre;
   const tipoBusqueda = req.query.tipo || 'carta'; // 'carta' por defecto
-  console.log(`🔧 Llegó una búsqueda ADMIN a /api/cartas/admin con input: "${nombreRaw}" tipo: "${tipoBusqueda}"`);
+  const supertipo = req.query.supertipo;
+  const origenBusqueda = req.query.origen || 'api'; // 'api' por defecto, 'bd' o 'ambos'
+
+  if (nombreRaw) {
+    // Normalizar separadores de fracciones: si hay dos números separados por espacio(s) o guion(es), convertirlos en fracción con barra "/"
+    // Ej: "060 072" o "060-072" -> "060/072"
+    nombreRaw = nombreRaw.trim().replace(/\b(\d{1,4})[\s-]+(\d{1,4})\b/g, '$1/$2');
+  }
+
+  console.log(`🔧 Llegó una búsqueda ADMIN a /api/cartas/admin con input normalizado: "${nombreRaw}" tipo: "${tipoBusqueda}" supertipo: "${supertipo}" origen: "${origenBusqueda}"`);
 
   if (!AppDataSource.isInitialized) {
     console.error('La conexión a la base de datos no está inicializada');
     return res.status(500).json({ error: 'Base de datos no disponible' });
   }
 
-  if (!nombreRaw) {
-    return res.status(400).json({ error: 'Falta el parámetro ?nombre=' });
+  if (!nombreRaw && !supertipo) {
+    return res.status(400).json({ error: 'Falta el parámetro ?nombre= o ?supertipo=' });
   }
 
   try {
-    const resultadoFinal = await buscarCartaAdmin(nombreRaw, tipoBusqueda);
+    const resultadoFinal = await buscarCartaAdmin(nombreRaw || '', tipoBusqueda, supertipo, origenBusqueda);
 
     console.log(`✅ Admin Search - Resultado final: ${resultadoFinal.length} cartas`);
     if (resultadoFinal.length === 0) {

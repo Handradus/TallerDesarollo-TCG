@@ -40,6 +40,14 @@ module.exports = new EntitySchema({
             type: 'boolean',
             default: false,
         },
+        acceptedTerms: {
+            type: 'boolean',
+            default: false,
+        },
+        termsAcceptedAt: {
+            type: 'timestamp',
+            nullable: true,
+        },
         createdAt: {
             type: 'timestamp',
             createDate: true,

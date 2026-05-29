@@ -36,6 +36,8 @@ const googleLogin = async (req, res) => {
                 picture,
                 role: isAdmin ? 'admin' : 'user',
                 approved: isAdmin ? true : false,
+                acceptedTerms: true,
+                termsAcceptedAt: new Date(),
             });
             await userRepository.save(user);
         } else {
@@ -75,6 +77,7 @@ const googleLogin = async (req, res) => {
                 email: user.email,
                 picture: user.picture,
                 role: user.role,
+                acceptedTerms: user.acceptedTerms,
             },
         });
     } catch (error) {
@@ -176,11 +179,41 @@ const unbanUser = async (req, res) => {
     }
 };
 
+// User: accept EULA
+const acceptEula = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const user = await userRepository.findOneBy({ id: userId });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        user.acceptedTerms = true;
+        user.termsAcceptedAt = new Date();
+        await userRepository.save(user);
+
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                picture: user.picture,
+                role: user.role,
+                acceptedTerms: user.acceptedTerms
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal error' });
+    }
+};
+
 module.exports = {
     googleLogin,
     getPendingUsers,
     approveUser,
     getBannedUsers,
     banUser,
-    unbanUser
+    unbanUser,
+    acceptEula
 };

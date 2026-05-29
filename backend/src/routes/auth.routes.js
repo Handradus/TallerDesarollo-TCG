@@ -4,6 +4,7 @@ const authController = require('../controllers/auth.controller');
 const verifyToken = require('../middleware/auth.middleware');
 
 router.post('/google', authController.googleLogin);
+router.post('/accept-eula', verifyToken, authController.acceptEula);
 
 // Admin routes for approval flow
 router.get('/pending-users', verifyToken, authController.getPendingUsers);

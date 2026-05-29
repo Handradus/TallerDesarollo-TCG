@@ -1,7 +1,7 @@
 const { AppDataSource } = require('../data-source');
 const CartaLink = require('../entities/CartaLink');
 const HistorialPrecioTienda = require('../entities/HistorialPrecioTienda');
-const { buscarEnTiendaShopify, buscarEnTiendaLevelUp } = require('./buscadores');
+const { buscarEnTiendaShopify, buscarEnTiendaLevelUp, buscarEnTiendaJumpseller } = require('./buscadores');
 
 async function verificarYBuscarLink(carta, tienda) {
   const linkRepo = AppDataSource.getRepository(CartaLink);
@@ -39,6 +39,9 @@ async function verificarYBuscarLink(carta, tienda) {
   } else if (tienda.tipoBusqueda === 'levelup') {
     console.log(`🎮 [ADMIN DEBUG] Llamando buscarEnTiendaLevelUp...`);
     resultado = await buscarEnTiendaLevelUp(tienda, carta);
+  } else if (tienda.tipoBusqueda === 'jumpseller') {
+    console.log(`🛍️ [ADMIN DEBUG] Llamando buscarEnTiendaJumpseller...`);
+    resultado = await buscarEnTiendaJumpseller(tienda, carta);
   } else {
     console.log(`❌ [${tienda.nombre}] Tipo de búsqueda desconocido: ${tienda.tipoBusqueda}`);
     return null;

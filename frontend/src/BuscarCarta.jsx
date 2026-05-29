@@ -11,6 +11,7 @@ import { useAuth } from './context/AuthContext';
 import axios from 'axios';
 import AdBanner from './components/AdBanner';
 import Swal from 'sweetalert2';
+import { getSpellingSuggestion } from './utils/similarity';
 
 export default function BuscarCartas() {
   const [nombre, setNombre] = useState('');
@@ -836,7 +837,78 @@ export default function BuscarCartas() {
         }}
       >
         {!loading && !hasSearched && <p className="no-search-message">Busca una carta para ver los resultados</p>}
-        {!loading && hasSearched && cartas.length === 0 && <p className="no-results-message">No se encontraron cartas para "{lastSearchTerm}"</p>}
+        {!loading && hasSearched && cartas.length === 0 && (
+          <div className="no-results-warning" style={{
+            gridColumn: '1 / -1',
+            background: 'white',
+            borderLeft: '5px solid #ff9800',
+            padding: '25px',
+            borderRadius: '12px',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+            textAlign: 'left',
+            maxWidth: '600px',
+            margin: '20px auto',
+            color: '#4a5568'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#e65100', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem' }}>
+              ⚠️ Búsqueda sin resultados o formato incorrecto
+            </h3>
+            <p style={{ margin: '0 0 15px 0', fontSize: '0.95rem', lineHeight: '1.5' }}>
+              No encontramos cartas para "<strong>{lastSearchTerm}</strong>".
+            </p>
+
+            {(() => {
+              const sugerencia = getSpellingSuggestion(lastSearchTerm);
+              if (sugerencia) {
+                return (
+                  <div style={{
+                    margin: '15px 0',
+                    padding: '12px 20px',
+                    background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
+                    borderRadius: '8px',
+                    borderLeft: '4px solid #0284c7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    flexWrap: 'wrap'
+                  }}>
+                    <span style={{ color: '#0369a1', fontWeight: 'bold' }}>🔮 ¿Quizás quisiste decir:</span>
+                    <button
+                      onClick={() => {
+                        setNombre(sugerencia);
+                        buscarCartasConTermino(sugerencia);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#0284c7',
+                        fontWeight: '800',
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        fontSize: '1rem',
+                        padding: 0
+                      }}
+                    >
+                      {sugerencia}
+                    </button>
+                    <span style={{ color: '#0369a1', fontWeight: 'bold' }}>?</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
+            <p style={{ margin: '15px 0 10px 0', fontSize: '0.95rem', fontWeight: 'bold', color: '#2c3e50' }}>
+              Para obtener mejores resultados, te sugerimos buscar utilizando los siguientes formatos estándar:
+            </p>
+            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.9rem', lineHeight: '1.7' }}>
+              <li><strong>Nombre del Pokémon:</strong> ej. <code>Pikachu</code>, <code>Charizard</code></li>
+              <li><strong>Número de carta / Total:</strong> ej. <code>060/072</code>, <code>88-99</code> o con espacio <code>060 072</code></li>
+              <li><strong>Nombre + Número:</strong> ej. <code>Pikachu 060/072</code> o <code>Pikachu 060-072</code></li>
+              <li><strong>Colección / Set:</strong> ej. <code>Surging Sparks</code>, <code>Obsidian Flames</code>, <code>151</code></li>
+            </ul>
+          </div>
+        )}
 
         {cartas.map((carta) => (
           <div

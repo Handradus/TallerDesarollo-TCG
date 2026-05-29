@@ -5,8 +5,8 @@ const ConsultaAPI = require('../entities/ConsultaAPI');
 require('dotenv').config();
 
 // Service dedicado SOLO para consultas a la API de Pokémon TCG
-async function consultarAPI(input, tipoBusqueda = 'carta') {
-  console.log(`🔧 === CONSULTA API POKÉMON TCG === Input: "${input}" Tipo: "${tipoBusqueda}"`);
+async function consultarAPI(input, tipoBusqueda = 'carta', supertipo) {
+  console.log(`🔧 === CONSULTA API POKÉMON TCG === Input: "${input}" Tipo: "${tipoBusqueda}" Supertipo: "${supertipo}"`);
   
   const headers = {
     'X-Api-Key': process.env.POKEMONTCG_API_KEY,
@@ -64,8 +64,12 @@ async function consultarAPI(input, tipoBusqueda = 'carta') {
         let acumuladoCartas = [];
         for (const setInfo of matches) {
           try {
-            console.log(`📡 [API] Solicitando cartas del set id=${setInfo.id} name="${setInfo.name}"`);
-            const cards = await fetchAllCards({ q: `set.id:"${setInfo.id}"`, pageSize: 250 });
+            console.log(`📡 [API] Solicitando cartas del set id=${setInfo.id} name="${setInfo.name}" supertipo: "${supertipo}"`);
+            let query = `set.id:"${setInfo.id}"`;
+            if (supertipo) {
+              query += ` supertype:${supertipo}`;
+            }
+            const cards = await fetchAllCards({ q: query, pageSize: 250 });
 
             console.log(`   • Cartas retornadas para ${setInfo.id}: ${cards.length}`);
             acumuladoCartas = acumuladoCartas.concat(cards);
@@ -112,7 +116,10 @@ async function consultarAPI(input, tipoBusqueda = 'carta') {
     if (esSetEspecial && tipoBusqueda === 'carta') {
       console.log(`🎯 [API] DETECTADO SET ESPECIAL en búsqueda de carta: "${inputOriginal}"`);
       console.log(`📡 [API] Cambiando a búsqueda por set automáticamente`);
-      const queryAPI = `set.name:"*${inputOriginal}*"`;
+      let queryAPI = `set.name:"*${inputOriginal}*"`;
+      if (supertipo) {
+        queryAPI += ` supertype:${supertipo}`;
+      }
       console.log(`📡 [API] Query construido para set especial: ${queryAPI}`);
       
       const cards = await fetchAllCards({ q: queryAPI, pageSize: 250 });
@@ -160,6 +167,14 @@ async function consultarAPI(input, tipoBusqueda = 'carta') {
       }
     } else {
       queryAPI = inputOriginal;
+    }
+
+    if (supertipo) {
+      if (queryAPI) {
+        queryAPI += ` supertype:${supertipo}`;
+      } else {
+        queryAPI = `supertype:${supertipo}`;
+      }
     }
 
     console.log(`📡 [API] Query construida: ${queryAPI}`);
@@ -342,11 +357,23 @@ async function procesarRespuestaSetAPI(cartasAPI, cartaRepo, consultaRepo, termi
         nombre: cartaAPI.name,
         numero: numero,
         set: set,
+        setId: cartaAPI.set?.id || null,
         serie: cartaAPI.set?.series || null,
+        fechaLanzamiento: cartaAPI.set?.releaseDate ? new Date(cartaAPI.set?.releaseDate) : null,
+        supertipo: cartaAPI.supertype || null,
+        subtipos: cartaAPI.subtypes || null,
+        nivel: cartaAPI.level || null,
+        hp: cartaAPI.hp || null,
+        tipos: cartaAPI.types || null,
+        evolucionaA: cartaAPI.evolvesTo || null,
+        retreatCost: cartaAPI.retreatCost || null,
+        debilidades: cartaAPI.weaknesses || null,
+        ataques: cartaAPI.attacks || null,
+        reglas: cartaAPI.rules || null,
         rareza: cartaAPI.rarity || null,
-        tipo: cartaAPI.types?.join(', ') || null,
-        subtipo: cartaAPI.subtypes?.join(', ') || null,
-        fechaLanzamiento: cartaAPI.set?.releaseDate || null,
+        ilustrador: cartaAPI.artist || null,
+        flavorText: cartaAPI.flavorText || null,
+        pokedexIds: cartaAPI.nationalPokedexNumbers || null,
         imagenPequena: cartaAPI.images?.small || null,
         imagenGrande: cartaAPI.images?.large || null,
         precioNormal: cartaAPI.tcgplayer?.prices?.normal?.market || null,

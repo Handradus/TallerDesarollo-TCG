@@ -268,7 +268,7 @@ const tiendasPredefinidas = [
     descripcion: 'Tienda chilena con enfoque en anime, manga y cartas.',
     valoracion: 4.0,
     urlBusqueda: 'https://artesanime.cl/search?q=BUSQUEDA',
-    tipoBusqueda: 'shopify',
+    tipoBusqueda: 'jumpseller',
     urlBase: 'https://artesanime.cl',
     direccion: 'Online, Chile',
     telefono: null,
@@ -288,8 +288,27 @@ async function seedTiendas() {
       await tiendaRepo.save(tienda);
       console.log(`✅ Insertada tienda: ${tienda.nombre}`);
     } else {
-      // No sobreescribir la tienda si ya existe para evitar perder cambios del usuario (como logos)
-      console.log(`⏩ Tienda ya existe, conservando datos actuales: ${tienda.nombre}`);
+      // Si ya existe, verificar si ha cambiado el tipo de búsqueda (por ejemplo, corrección de shopify a jumpseller)
+      let modificado = false;
+      if (yaExiste.tipoBusqueda !== tienda.tipoBusqueda) {
+        yaExiste.tipoBusqueda = tienda.tipoBusqueda;
+        modificado = true;
+      }
+      if (yaExiste.urlBusqueda !== tienda.urlBusqueda) {
+        yaExiste.urlBusqueda = tienda.urlBusqueda;
+        modificado = true;
+      }
+      if (yaExiste.urlBase !== tienda.urlBase) {
+        yaExiste.urlBase = tienda.urlBase;
+        modificado = true;
+      }
+      
+      if (modificado) {
+        await tiendaRepo.save(yaExiste);
+        console.log(`🔄 Actualizada configuración de búsqueda para la tienda existente: ${tienda.nombre}`);
+      } else {
+        console.log(`⏩ Tienda ya existe, conservando datos actuales: ${tienda.nombre}`);
+      }
     }
   }
 }
