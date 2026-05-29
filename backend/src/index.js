@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const { AppDataSource } = require('./data-source');
 const { seedTiendas } = require('./scripts/seedTiendas');
+const { seedUsers } = require('./scripts/seedUsers');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
@@ -47,6 +48,7 @@ AppDataSource.initialize()
     console.log('📦 Conectado a PostgreSQL correctamente');
 
     await seedTiendas();
+    await seedUsers();
 
     // Rutas
     app.use('/api/cartas', cartaRoutes);

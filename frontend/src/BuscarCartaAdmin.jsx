@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './css/BuscarCarta.css';
 import './css/BuscarCartaAdmin.css';
 import tituloWebImg from './assets/tituloWeb.png';
+import { getSpellingSuggestion } from './utils/similarity';
 
 export default function BuscarCartasAdmin() {
   const [nombre, setNombre] = useState('');
@@ -13,6 +14,7 @@ export default function BuscarCartasAdmin() {
   const [resultadoActualizacion, setResultadoActualizacion] = useState(null);
   const [actualizando, setActualizando] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [lastSearchTerm, setLastSearchTerm] = useState('');
   
   const apiUrl = import.meta.env.VITE_API_BASE_URL;
   const navigate = useNavigate();
@@ -27,8 +29,9 @@ export default function BuscarCartasAdmin() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const buscarEnAPI = async () => {
-    if (!nombre.trim()) {
+  const buscarEnAPI = async (overrideTerm) => {
+    const terminoParaBuscar = typeof overrideTerm === 'string' ? overrideTerm : nombre;
+    if (!terminoParaBuscar.trim()) {
       setError('Por favor ingresa un término de búsqueda');
       return;
     }
@@ -37,11 +40,12 @@ export default function BuscarCartasAdmin() {
     setError('');
     setCartasAPI([]);
     setResultadoActualizacion(null);
+    setLastSearchTerm(terminoParaBuscar);
 
     try {
-      console.log(`🔧 Buscando "${nombre}" en API (admin)...`);
+      console.log(`🔧 Buscando "${terminoParaBuscar}" en API (admin)...`);
       const token = localStorage.getItem('token');
-      const response = await fetch(`${apiUrl}/api/cartas/admin?nombre=${encodeURIComponent(nombre)}&tipo=${tipoBusqueda}`, {
+      const response = await fetch(`${apiUrl}/api/cartas/admin?nombre=${encodeURIComponent(terminoParaBuscar)}&tipo=${tipoBusqueda}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -115,6 +119,7 @@ export default function BuscarCartasAdmin() {
     setCartasAPI([]);
     setError('');
     setResultadoActualizacion(null);
+    setLastSearchTerm('');
   };
 
   const scrollToTop = () => {
@@ -282,6 +287,70 @@ export default function BuscarCartasAdmin() {
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Alerta de sin resultados con sugerencia ortográfica */}
+      {!loading && lastSearchTerm && cartasAPI.length === 0 && !resultadoActualizacion && (
+        <div className="no-results-warning" style={{
+          gridColumn: '1 / -1',
+          background: 'white',
+          borderLeft: '5px solid #ff9800',
+          padding: '25px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+          textAlign: 'left',
+          maxWidth: '600px',
+          margin: '20px auto',
+          color: '#4a5568'
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', color: '#e65100', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem' }}>
+            ⚠️ Búsqueda sin resultados
+          </h3>
+          <p style={{ margin: '0 0 15px 0', fontSize: '0.95rem', lineHeight: '1.5' }}>
+            No encontramos cartas para "<strong>{lastSearchTerm}</strong>" en la API de Pokémon TCG.
+          </p>
+
+          {(() => {
+            const sugerencia = getSpellingSuggestion(lastSearchTerm);
+            if (sugerencia) {
+              return (
+                <div style={{
+                  margin: '15px 0',
+                  padding: '12px 20px',
+                  background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
+                  borderRadius: '8px',
+                  borderLeft: '4px solid #0284c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  flexWrap: 'wrap'
+                }}>
+                  <span style={{ color: '#0369a1', fontWeight: 'bold' }}>🔮 ¿Quizás quisiste decir:</span>
+                  <button
+                    onClick={() => {
+                      setNombre(sugerencia);
+                      buscarEnAPI(sugerencia);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#0284c7',
+                      fontWeight: '800',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      padding: 0
+                    }}
+                  >
+                    {sugerencia}
+                  </button>
+                  <span style={{ color: '#0369a1', fontWeight: 'bold' }}>?</span>
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
       )}
 

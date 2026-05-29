@@ -12,6 +12,7 @@ module.exports = new EntitySchema({
         googleId: {
             type: 'varchar',
             unique: true,
+            nullable: true,
         },
         email: {
             type: 'varchar',
@@ -39,6 +40,14 @@ module.exports = new EntitySchema({
         banned: {
             type: 'boolean',
             default: false,
+        },
+        password: {
+            type: 'varchar',
+            nullable: true,
+        },
+        themeColor: {
+            type: 'varchar',
+            default: '#10b981',
         },
         createdAt: {
             type: 'timestamp',

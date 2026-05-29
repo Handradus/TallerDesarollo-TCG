@@ -4,6 +4,7 @@ const UserComment = require('../entities/UserComment');
 
 const userRepository = AppDataSource.getRepository(User);
 const commentRepository = AppDataSource.getRepository(UserComment);
+const { hashPassword, verifyPassword } = require('../helpers/crypto.helper');
 
 const getProfile = async (req, res) => {
     const { userId } = req.params;
@@ -42,11 +43,30 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     const userId = req.user.userId;
-    const { socialLinks } = req.body;
+    const { socialLinks, name, picture, themeColor } = req.body;
 
     try {
-        await userRepository.update(userId, { socialLinks });
-        res.json({ message: 'Profile updated' });
+        const updateData = {};
+        if (socialLinks !== undefined) updateData.socialLinks = socialLinks;
+        if (name !== undefined) updateData.name = name;
+        if (picture !== undefined) updateData.picture = picture;
+        if (themeColor !== undefined) updateData.themeColor = themeColor;
+
+        await userRepository.update(userId, updateData);
+
+        const updatedUser = await userRepository.findOneBy({ id: userId });
+
+        res.json({
+            message: 'Profile updated',
+            user: {
+                id: updatedUser.id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                picture: updatedUser.picture,
+                role: updatedUser.role,
+                themeColor: updatedUser.themeColor
+            }
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error updating profile' });
@@ -139,9 +159,42 @@ const reportComment = async (req, res) => {
     }
 };
 
+const updatePassword = async (req, res) => {
+    const userId = req.user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+        return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 6 caracteres' });
+    }
+
+    try {
+        const user = await userRepository.findOneBy({ id: userId });
+        if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+        // If user already has a password, verify currentPassword
+        if (user.password) {
+            if (!currentPassword) {
+                return res.status(400).json({ message: 'La contraseña actual es requerida' });
+            }
+
+            const isOk = verifyPassword(currentPassword, user.password);
+            if (!isOk) return res.status(400).json({ message: 'Contraseña actual incorrecta' });
+        }
+
+        const hashed = hashPassword(newPassword);
+        await userRepository.update(userId, { password: hashed });
+
+        res.json({ message: 'Contraseña actualizada correctamente' });
+    } catch (error) {
+        console.error('Error updating password:', error);
+        res.status(500).json({ message: 'Error actualizando contraseña' });
+    }
+};
+
 module.exports = {
     getProfile,
     updateProfile,
     addComment,
-    reportComment
+    reportComment,
+    updatePassword
 };

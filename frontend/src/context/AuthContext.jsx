@@ -67,10 +67,11 @@ export const AuthProvider = ({ children }) => {
         return () => axios.interceptors.response.eject(interceptor);
     }, []);
 
-    const login = async (googleData) => {
+    const login = async (credentials) => {
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google`, {
-                token: googleData.credential,
+            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
+                email: credentials.email,
+                password: credentials.password,
             });
 
             const { token, user } = res.data;
@@ -84,6 +85,38 @@ export const AuthProvider = ({ children }) => {
             console.error("Login failed:", error);
             throw error;
         }
+    };
+
+    const register = async (userData) => {
+        try {
+            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/register`, {
+                email: userData.email,
+                password: userData.password,
+                name: userData.name
+            });
+
+            // If the user registered successfully but is not yet approved
+            if (res.data?.message === 'pending_approval') {
+                return { pendingApproval: true };
+            }
+
+            const { token, user } = res.data;
+
+            localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify(user));
+            localStorage.setItem("loginTimestamp", Date.now().toString());
+            setUser(user);
+            setSessionExpiredMsg(false);
+            return { pendingApproval: false };
+        } catch (error) {
+            console.error("Registration failed:", error);
+            throw error;
+        }
+    };
+
+    const updateUser = (updatedUser) => {
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setUser(updatedUser);
     };
 
     const logout = () => {
@@ -100,6 +133,8 @@ export const AuthProvider = ({ children }) => {
     const value = {
         user,
         login,
+        register,
+        updateUser,
         logout,
         loading,
         sessionExpiredMsg,

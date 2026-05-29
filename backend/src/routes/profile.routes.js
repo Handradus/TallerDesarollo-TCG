@@ -9,6 +9,7 @@ router.get('/:userId', profileController.getProfile);
 // Protected
 router.use(verifyToken);
 router.put('/me', profileController.updateProfile);
+router.put('/me/password', profileController.updatePassword);
 router.post('/comment', profileController.addComment);
 router.post('/comment/:commentId/report', profileController.reportComment);
 

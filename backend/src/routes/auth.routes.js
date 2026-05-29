@@ -4,6 +4,8 @@ const authController = require('../controllers/auth.controller');
 const verifyToken = require('../middleware/auth.middleware');
 
 router.post('/google', authController.googleLogin);
+router.post('/login', authController.login);
+router.post('/register', authController.register);
 
 // Admin routes for approval flow
 router.get('/pending-users', verifyToken, authController.getPendingUsers);

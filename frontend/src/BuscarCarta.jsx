@@ -11,6 +11,7 @@ import { useAuth } from './context/AuthContext';
 import axios from 'axios';
 import AdBanner from './components/AdBanner';
 import Swal from 'sweetalert2';
+import { getSpellingSuggestion } from './utils/similarity';
 
 export default function BuscarCartas() {
   const [nombre, setNombre] = useState('');
@@ -836,7 +837,63 @@ export default function BuscarCartas() {
         }}
       >
         {!loading && !hasSearched && <p className="no-search-message">Busca una carta para ver los resultados</p>}
-        {!loading && hasSearched && cartas.length === 0 && <p className="no-results-message">No se encontraron cartas para "{lastSearchTerm}"</p>}
+        {!loading && hasSearched && cartas.length === 0 && (
+          <div className="no-results-warning" style={{
+            gridColumn: '1 / -1',
+            background: 'rgba(255, 255, 255, 0.08)',
+            borderLeft: '5px solid #0056b3',
+            padding: '25px',
+            borderRadius: '12px',
+            backdropFilter: 'blur(10px)',
+            textAlign: 'center',
+            maxWidth: '600px',
+            margin: '20px auto',
+            color: 'white'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#ffb703' }}>⚠️ Búsqueda sin resultados</h3>
+            <p>No encontramos cartas para "{lastSearchTerm}".</p>
+            
+            {(() => {
+              const sugerencia = getSpellingSuggestion(lastSearchTerm);
+              if (sugerencia) {
+                return (
+                  <div style={{
+                    margin: '15px 0',
+                    padding: '10px 20px',
+                    background: 'rgba(0, 86, 179, 0.25)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(0, 86, 179, 0.4)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span>🔮 ¿Quizás quisiste decir:</span>
+                    <button
+                      onClick={() => {
+                        setNombre(sugerencia);
+                        buscarCartasConTermino(sugerencia);
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#38b000',
+                        fontWeight: 'bold',
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        fontSize: '1rem',
+                        padding: 0
+                      }}
+                    >
+                      {sugerencia}
+                    </button>
+                    <span>?</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+          </div>
+        )}
 
         {cartas.map((carta) => (
           <div
