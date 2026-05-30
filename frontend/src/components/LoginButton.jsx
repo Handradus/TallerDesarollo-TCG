@@ -11,9 +11,20 @@ const LoginButton = () => {
 
     const onSuccess = async (credentialResponse) => {
         try {
-            await login(credentialResponse);
+            const result = await login(credentialResponse);
             setShowEulaModal(false);
-            setEulaAccepted(false); // Reset
+            setEulaAccepted(false);
+
+            // If they used the Register flow but already had an account, inform them
+            if (result && result.isNewUser === false) {
+                Swal.fire({
+                    title: '¡Ya tienes una cuenta!',
+                    html: 'Tu correo ya estaba registrado en Cartateca, por lo que hemos iniciado sesión directamente.<br><br><small style="color:#718096">La próxima vez usa el botón <b>"Iniciar Sesión"</b> directamente.</small>',
+                    icon: 'info',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#667eea'
+                });
+            }
         } catch (error) {
             if (error.response && error.response.status === 403 && error.response.data?.message === 'pending_approval') {
                 setShowEulaModal(false);
@@ -231,24 +242,31 @@ const LoginButton = () => {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
+                                gap: '10px',
                                 minHeight: '60px',
                                 justifyContent: 'center'
                             }}
                         >
-                            {eulaAccepted ? (
-                                <div className="fade-in" style={{ animation: 'fadeIn 0.4s ease' }}>
-                                    <GoogleLogin
-                                        onSuccess={onSuccess}
-                                        onError={onError}
-                                        ux_mode="popup"
-                                        text="signup_with"
-                                    />
-                                </div>
-                            ) : (
+                            {!eulaAccepted && (
                                 <p style={{ color: '#a0aec0', fontSize: '0.85rem', margin: 0 }}>
                                     Debes aceptar los Términos y Condiciones para habilitar el registro con Google.
                                 </p>
                             )}
+                            <div
+                                style={{
+                                    opacity: eulaAccepted ? 1 : 0.4,
+                                    pointerEvents: eulaAccepted ? 'auto' : 'none',
+                                    transition: 'opacity 0.3s ease',
+                                    filter: eulaAccepted ? 'none' : 'grayscale(60%)'
+                                }}
+                            >
+                                <GoogleLogin
+                                    onSuccess={onSuccess}
+                                    onError={onError}
+                                    ux_mode="popup"
+                                    text="signup_with"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

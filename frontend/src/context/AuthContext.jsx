@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
                 token: googleData.credential,
             });
 
-            const { token, user } = res.data;
+            const { token, user, isNewUser } = res.data;
 
             localStorage.setItem("token", token);
             localStorage.setItem("user", JSON.stringify(user));
@@ -84,6 +84,7 @@ export const AuthProvider = ({ children }) => {
             setUser(user);
             setSessionExpiredMsg(false);
             setForceAccepted(false); // Reset checkbox
+            return { isNewUser };
         } catch (error) {
             console.error("Login failed:", error);
             throw error;

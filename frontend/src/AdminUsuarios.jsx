@@ -68,6 +68,60 @@ export default function AdminUsuarios() {
         }
     };
 
+    const handleRechazar = async (id, nombre) => {
+        const confirm = await Swal.fire({
+            title: '¿Rechazar usuario?',
+            html: `<p>Se eliminará el registro de <strong>${nombre || 'este usuario'}</strong>.</p><p style="color:#e67e22;font-size:0.9em;">El usuario <b>podrá volver a registrarse</b> con la misma cuenta de Google.</p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e67e22',
+            cancelButtonColor: '#aaa',
+            confirmButtonText: 'Sí, rechazar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`${apiUrl}/api/auth/reject/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUsuarios(usuarios.filter(u => u.id !== id));
+            Swal.fire('Rechazado', 'El usuario fue eliminado y puede volver a registrarse.', 'info');
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'Hubo un problema al rechazar el usuario.', 'error');
+        }
+    };
+
+    const handleBanear = async (id, nombre) => {
+        const confirm = await Swal.fire({
+            title: '¿Banear usuario?',
+            html: `<p>Se bloqueará permanentemente a <strong>${nombre || 'este usuario'}</strong>.</p><p style="color:#c0392b;font-size:0.9em;">El usuario <b>no podrá volver a acceder</b> a la plataforma.</p>`,
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#c0392b',
+            cancelButtonColor: '#aaa',
+            confirmButtonText: 'Sí, banear',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`${apiUrl}/api/auth/ban/${id}`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUsuarios(usuarios.filter(u => u.id !== id));
+            Swal.fire('¡Baneado!', 'El usuario ha sido bloqueado permanentemente.', 'success');
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Error', 'Hubo un problema al banear al usuario.', 'error');
+        }
+    };
+
     const handleReactivar = async (id, nombre) => {
         const confirm = await Swal.fire({
             title: '¿Reactivar usuario?',
@@ -146,15 +200,28 @@ export default function AdminUsuarios() {
                             </p>
                         </div>
 
-                        <div className="actions">
+                        <div className="actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                             {activeTab === 'pending' ? (
-                                <button
-                                    onClick={() => handleAprobar(u.id, u.name)}
-                                    className="btn-success"
-                                    style={{ background: '#28a745', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
-                                >
-                                    ✅ Aprobar Acceso
-                                </button>
+                                <>
+                                    <button
+                                        onClick={() => handleAprobar(u.id, u.name)}
+                                        style={{ background: '#28a745', color: 'white', border: 'none', padding: '9px 16px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}
+                                    >
+                                        ✅ Aprobar
+                                    </button>
+                                    <button
+                                        onClick={() => handleRechazar(u.id, u.name)}
+                                        style={{ background: '#e67e22', color: 'white', border: 'none', padding: '9px 16px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}
+                                    >
+                                        ❌ Rechazar
+                                    </button>
+                                    <button
+                                        onClick={() => handleBanear(u.id, u.name)}
+                                        style={{ background: '#c0392b', color: 'white', border: 'none', padding: '9px 16px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}
+                                    >
+                                        🚫 Banear
+                                    </button>
+                                </>
                             ) : (
                                 <button
                                     onClick={() => handleReactivar(u.id, u.name)}

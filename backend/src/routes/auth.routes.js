@@ -9,6 +9,7 @@ router.post('/accept-eula', verifyToken, authController.acceptEula);
 // Admin routes for approval flow
 router.get('/pending-users', verifyToken, authController.getPendingUsers);
 router.post('/approve/:id', verifyToken, authController.approveUser);
+router.delete('/reject/:id', verifyToken, authController.rejectUser);
 
 router.get('/banned-users', verifyToken, authController.getBannedUsers);
 router.post('/ban/:id', verifyToken, authController.banUser);

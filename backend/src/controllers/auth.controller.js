@@ -26,8 +26,10 @@ const googleLogin = async (req, res) => {
         const picture = payload.picture;
 
         let user = await userRepository.findOneBy({ googleId });
+        let isNewUser = false;
 
         if (!user) {
+            isNewUser = true;
             const isAdmin = email === 'softguaren@gmail.com';
             user = userRepository.create({
                 googleId,
@@ -71,6 +73,7 @@ const googleLogin = async (req, res) => {
 
         res.json({
             token: jwtToken,
+            isNewUser,
             user: {
                 id: user.id,
                 name: user.name,
@@ -179,6 +182,29 @@ const unbanUser = async (req, res) => {
     }
 };
 
+// Admin: reject a pending user (delete so they can re-register)
+const rejectUser = async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+        const { id } = req.params;
+        const user = await userRepository.findOneBy({ id: parseInt(id) });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Prevent rejecting admins
+        if (user.role === 'admin') {
+            return res.status(403).json({ message: 'Cannot reject an administrator' });
+        }
+
+        await userRepository.remove(user);
+        res.json({ success: true, message: 'User rejected and removed. They can re-register.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal error' });
+    }
+};
+
 // User: accept EULA
 const acceptEula = async (req, res) => {
     try {
@@ -212,6 +238,7 @@ module.exports = {
     googleLogin,
     getPendingUsers,
     approveUser,
+    rejectUser,
     getBannedUsers,
     banUser,
     unbanUser,
