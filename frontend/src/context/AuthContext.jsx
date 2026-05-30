@@ -17,6 +17,9 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [sessionExpiredMsg, setSessionExpiredMsg] = useState(false);
     const [forceAccepted, setForceAccepted] = useState(false);
+    // Holds Google data for a NEW user who hasn't accepted EULA yet (no account in DB)
+    const [pendingGoogleData, setPendingGoogleData] = useState(null);
+    const [eulaRegistrationAccepted, setEulaRegistrationAccepted] = useState(false);
 
     // Check session validity on mount
     useEffect(() => {
@@ -76,19 +79,67 @@ export const AuthProvider = ({ children }) => {
                 token: googleData.credential,
             });
 
-            const { token, user, isNewUser } = res.data;
+            const { requiresEula, token, user } = res.data;
 
+            if (requiresEula) {
+                // New user — store their Google data and show EULA modal before creating account
+                setPendingGoogleData({
+                    ...res.data.googleData,
+                    credential: googleData.credential,
+                });
+                return { requiresEula: true };
+            }
+
+            // Existing user — complete login normally
             localStorage.setItem("token", token);
             localStorage.setItem("user", JSON.stringify(user));
             localStorage.setItem("loginTimestamp", Date.now().toString());
             setUser(user);
             setSessionExpiredMsg(false);
-            setForceAccepted(false); // Reset checkbox
-            return { isNewUser };
+            setForceAccepted(false);
+            return { requiresEula: false };
         } catch (error) {
             console.error("Login failed:", error);
             throw error;
         }
+    };
+
+    // Called when a new user accepts the EULA and wants to complete registration
+    const registerWithEula = async () => {
+        if (!pendingGoogleData) return;
+        try {
+            await axios.post(
+                `${import.meta.env.VITE_API_BASE_URL}/api/auth/google/register`,
+                { token: pendingGoogleData.credential }
+            );
+            // Account created — now pending admin approval
+            setPendingGoogleData(null);
+            setEulaRegistrationAccepted(false);
+            Swal.fire({
+                title: '¡Registro completado!',
+                text: 'Tu cuenta está a la espera de aprobación por parte de un administrador. Se te dará acceso pronto.',
+                icon: 'info',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#3085d6'
+            });
+        } catch (error) {
+            const msg = error.response?.data?.message;
+            if (msg === 'account_already_exists') {
+                // Race condition — account was created between steps, just let them log in
+                setPendingGoogleData(null);
+                setEulaRegistrationAccepted(false);
+                Swal.fire('Cuenta existente', 'Tu cuenta ya existe. Intenta iniciar sesión nuevamente.', 'info');
+            } else {
+                console.error("Registration failed:", error);
+                Swal.fire('Error', 'No se pudo completar el registro. Inténtalo de nuevo.', 'error');
+            }
+        }
+    };
+
+    // Called when a new user rejects the EULA — clears pending data, no account created
+    const cancelEulaRegistration = () => {
+        setPendingGoogleData(null);
+        setEulaRegistrationAccepted(false);
     };
 
     const logout = () => {
@@ -133,7 +184,9 @@ export const AuthProvider = ({ children }) => {
         loading,
         sessionExpiredMsg,
         dismissExpiredMsg,
-        acceptUserEula
+        acceptUserEula,
+        pendingGoogleData,
+        cancelEulaRegistration,
     };
 
     return (
@@ -186,7 +239,149 @@ export const AuthProvider = ({ children }) => {
                 </div>
             )}
 
-            {/* UNBYPASSABLE FORCE EULA OVERLAY MODAL */}
+            {/* ── NEW USER REGISTRATION EULA MODAL ── */}
+            {/* Shown BEFORE account is created — no user in DB yet */}
+            {pendingGoogleData && (
+                <div
+                    className="modal-overlay"
+                    style={{
+                        zIndex: 12000,
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(10, 15, 30, 0.92)',
+                        backdropFilter: 'blur(10px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <div
+                        className="modal-content"
+                        style={{
+                            maxWidth: '650px',
+                            width: '92%',
+                            maxHeight: '85vh',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            padding: '28px',
+                            borderRadius: '18px',
+                            background: 'white',
+                            boxShadow: '0 30px 70px rgba(0, 0, 0, 0.5)',
+                            animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                    >
+                        {/* Header con datos del nuevo usuario */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px', borderBottom: '2px solid #edf2f7', paddingBottom: '14px' }}>
+                            {pendingGoogleData.picture && (
+                                <img
+                                    src={pendingGoogleData.picture}
+                                    alt={pendingGoogleData.name}
+                                    style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px solid #e2e8f0' }}
+                                />
+                            )}
+                            <div style={{ textAlign: 'left' }}>
+                                <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#1a202c' }}>
+                                    ⚖️ Términos y Condiciones de Uso
+                                </h2>
+                                <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: '#718096' }}>
+                                    Bienvenido/a, <strong>{pendingGoogleData.name}</strong>. Antes de crear tu cuenta, lee y acepta nuestros términos.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Scrollable EULA Clauses */}
+                        <div
+                            style={{
+                                flexGrow: 1,
+                                overflowY: 'auto',
+                                marginBottom: '20px',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '8px',
+                                padding: '15px',
+                                background: '#f8fafc',
+                                maxHeight: '35vh',
+                                textAlign: 'left',
+                                fontSize: '0.9rem',
+                                color: '#4a5568',
+                                lineHeight: '1.6',
+                            }}
+                        >
+                            {EULA_CLAUSES.map((clause) => (
+                                <div key={clause.id} style={{ marginBottom: '20px' }}>
+                                    <h3 style={{ fontSize: '0.95rem', color: '#2d3748', margin: '0 0 8px 0', fontWeight: 'bold' }}>
+                                        {clause.title}
+                                    </h3>
+                                    {clause.paragraphs.map((p, idx) => (
+                                        <p key={idx} style={{ margin: '0 0 8px 0', textIndent: p.startsWith('*') ? '15px' : '0' }}>
+                                            {p}
+                                        </p>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Consent Checkbox */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', userSelect: 'none', textAlign: 'left' }}>
+                            <input
+                                type="checkbox"
+                                id="register-eula-checkbox"
+                                checked={eulaRegistrationAccepted}
+                                onChange={(e) => setEulaRegistrationAccepted(e.target.checked)}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#4285F4' }}
+                            />
+                            <label
+                                htmlFor="register-eula-checkbox"
+                                style={{ fontSize: '0.95rem', fontWeight: '600', color: '#2d3748', cursor: 'pointer' }}
+                            >
+                                He leído y acepto los Términos y Condiciones de Uso
+                            </label>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #edf2f7', paddingTop: '15px' }}>
+                            <button
+                                onClick={cancelEulaRegistration}
+                                style={{
+                                    padding: '10px 18px',
+                                    borderRadius: '8px',
+                                    fontSize: '0.9rem',
+                                    cursor: 'pointer',
+                                    background: '#edf2f7',
+                                    border: 'none',
+                                    fontWeight: '600',
+                                    color: '#4a5568',
+                                    transition: 'background 0.2s',
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.background = '#e2e8f0'}
+                                onMouseOut={(e) => e.currentTarget.style.background = '#edf2f7'}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={registerWithEula}
+                                disabled={!eulaRegistrationAccepted}
+                                style={{
+                                    background: eulaRegistrationAccepted ? 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)' : '#cbd5e0',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    fontWeight: '600',
+                                    fontSize: '0.9rem',
+                                    cursor: eulaRegistrationAccepted ? 'pointer' : 'not-allowed',
+                                    boxShadow: eulaRegistrationAccepted ? '0 4px 12px rgba(102, 126, 234, 0.25)' : 'none',
+                                    transition: 'all 0.2s',
+                                }}
+                            >
+                                Crear cuenta y continuar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── EXISTING USER FORCE EULA UPDATE MODAL ── */}
+            {/* Shown when user already has account but needs to accept updated terms */}
             {user && !user.acceptedTerms && (
                 <div 
                     className="modal-overlay" 

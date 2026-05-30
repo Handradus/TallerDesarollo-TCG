@@ -6,7 +6,10 @@ const User = require('../entities/User');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const userRepository = AppDataSource.getRepository(User);
 
-const googleLogin = async (req, res) => {
+// Step 1: Verify Google token.
+// - Existing user → full login (returns token + user).
+// - New user     → returns requiresEula: true + google data (NO account created yet).
+const googleCheck = async (req, res) => {
     const { token } = req.body;
 
     if (!token) {
@@ -25,55 +28,64 @@ const googleLogin = async (req, res) => {
         const name = payload.name;
         const picture = payload.picture;
 
-        let user = await userRepository.findOneBy({ googleId });
-        let isNewUser = false;
+        // Special case: admin account always gets created/updated directly
+        const isAdmin = email === 'softguaren@gmail.com';
 
-        if (!user) {
-            isNewUser = true;
-            const isAdmin = email === 'softguaren@gmail.com';
+        let user = await userRepository.findOneBy({ googleId });
+
+        if (!user && isAdmin) {
+            // Auto-create admin account without requiring EULA flow
             user = userRepository.create({
                 googleId,
                 email,
                 name,
                 picture,
-                role: isAdmin ? 'admin' : 'user',
-                approved: isAdmin ? true : false,
-                acceptedTerms: isAdmin ? true : false,
-                termsAcceptedAt: isAdmin ? new Date() : null,
+                role: 'admin',
+                approved: true,
+                acceptedTerms: true,
+                termsAcceptedAt: new Date(),
             });
             await userRepository.save(user);
-        } else {
-            // Update user info if changed
-            user.name = name;
-            user.picture = picture;
-            // Ensure admin role is preserved or granted if matching email
-            if (email === 'softguaren@gmail.com' && user.role !== 'admin') {
-                user.role = 'admin';
-                user.approved = true;
-            }
-            await userRepository.save(user);
         }
+
+        if (!user) {
+            // New regular user — do NOT create account yet, just return google data
+            // so the frontend can show the EULA modal first.
+            return res.json({
+                requiresEula: true,
+                googleData: { googleId, email, name, picture, token },
+            });
+        }
+
+        // Existing user — update profile info
+        user.name = name;
+        user.picture = picture;
+        if (isAdmin && user.role !== 'admin') {
+            user.role = 'admin';
+            user.approved = true;
+        }
+        await userRepository.save(user);
 
         // If user is banned, reject login completely
         if (user.banned) {
             return res.status(403).json({ message: 'account_banned', userId: user.id });
         }
 
-        // If user is not approved (and not admin), reject login and inform frontend
+        // If user is not approved (and not admin), reject login
         if (!user.approved && user.role !== 'admin') {
             return res.status(403).json({ message: 'pending_approval', userId: user.id });
         }
 
         // Create JWT
         const jwtToken = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role }, // Include role in JWT
+            { userId: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET || 'secret_key_change_me',
             { expiresIn: '7d' }
         );
 
-        res.json({
+        return res.json({
+            requiresEula: false,
             token: jwtToken,
-            isNewUser,
             user: {
                 id: user.id,
                 name: user.name,
@@ -84,7 +96,59 @@ const googleLogin = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Google Auth Error:', error);
+        console.error('Google Auth Check Error:', error);
+        res.status(401).json({ message: 'Invalid token' });
+    }
+};
+
+// Step 2: Called only when a NEW user accepts the EULA.
+// Re-verifies the Google token and creates the account with acceptedTerms: true.
+const googleRegister = async (req, res) => {
+    const { token } = req.body;
+
+    if (!token) {
+        return res.status(400).json({ message: 'Token is required' });
+    }
+
+    try {
+        // Re-verify token to ensure authenticity (never trust client-side data alone)
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+
+        const googleId = payload.sub;
+        const email = payload.email;
+        const name = payload.name;
+        const picture = payload.picture;
+
+        // Safety check: if account already exists, don't duplicate
+        let user = await userRepository.findOneBy({ googleId });
+        if (user) {
+            return res.status(409).json({ message: 'account_already_exists' });
+        }
+
+        // Create account with EULA already accepted
+        user = userRepository.create({
+            googleId,
+            email,
+            name,
+            picture,
+            role: 'user',
+            approved: false,          // Still needs admin approval
+            acceptedTerms: true,      // EULA accepted before creation ✅
+            termsAcceptedAt: new Date(),
+        });
+        await userRepository.save(user);
+
+        // Account created but pending approval — inform frontend
+        return res.status(201).json({
+            message: 'pending_approval',
+            userId: user.id,
+        });
+    } catch (error) {
+        console.error('Google Register Error:', error);
         res.status(401).json({ message: 'Invalid token' });
     }
 };
@@ -235,7 +299,8 @@ const acceptEula = async (req, res) => {
 };
 
 module.exports = {
-    googleLogin,
+    googleCheck,
+    googleRegister,
     getPendingUsers,
     approveUser,
     rejectUser,

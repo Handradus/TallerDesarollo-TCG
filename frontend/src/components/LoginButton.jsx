@@ -8,7 +8,9 @@ const LoginButton = () => {
 
     const onSuccess = async (credentialResponse) => {
         try {
-            await login(credentialResponse);
+            const result = await login(credentialResponse);
+            // If requiresEula: true, AuthContext shows the EULA modal automatically.
+            // Nothing else needed here.
         } catch (error) {
             if (error.response?.status === 403) {
                 const msg = error.response.data?.message;
