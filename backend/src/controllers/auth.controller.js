@@ -38,8 +38,8 @@ const googleLogin = async (req, res) => {
                 picture,
                 role: isAdmin ? 'admin' : 'user',
                 approved: isAdmin ? true : false,
-                acceptedTerms: true,
-                termsAcceptedAt: new Date(),
+                acceptedTerms: isAdmin ? true : false,
+                termsAcceptedAt: isAdmin ? new Date() : null,
             });
             await userRepository.save(user);
         } else {
