@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import './css/notFound.css';
-import missingnoImg from './assets/missignno.png';
+import '../css/notFound.css';
+import missingnoImg from '../assets/missignno.png';
 
 export default function NotFound() {
   const navigate = useNavigate();

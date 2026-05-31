@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import './css/admin.css';
+import '../../css/admin.css';
 
 export default function AdminUsuarios() {
     const [usuarios, setUsuarios] = useState([]);

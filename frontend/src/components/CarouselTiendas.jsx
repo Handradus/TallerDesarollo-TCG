@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import './css/CarouselTiendas.css';
+import '../css/CarouselTiendas.css';
 
 export default function CarouselTiendas() {
   const [tiendas, setTiendas] = useState([]);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
-import './css/tiendaDetalle.css';
+import { useAuth } from '../context/AuthContext';
+import '../css/tiendaDetalle.css';
 import Swal from 'sweetalert2';
 
 export default function TiendaDetalle() {

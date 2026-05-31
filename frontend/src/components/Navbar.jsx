@@ -1,9 +1,9 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import './css/navbar.css';
-import tituloWebImg from './assets/tituloWeb.png';
-import { useAuth } from './context/AuthContext';
-import { useSocket } from './context/SocketContext';
-import LoginButton from './components/LoginButton';
+import '../css/navbar.css';
+import tituloWebImg from '../assets/tituloWeb.png';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
+import LoginButton from './LoginButton';
 import axios from 'axios';
 import { useState, useEffect, useRef } from 'react';
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './css/agregarTienda.css';
+import '../css/agregarTienda.css';
 
 export default function AgregarTienda() {
   const navigate = useNavigate();

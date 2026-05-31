@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './css/admin-precios.css';
+import '../../css/admin-precios.css';
 
 export default function AdminPrecios() {
   const [cartaId, setCartaId] = useState('2051');

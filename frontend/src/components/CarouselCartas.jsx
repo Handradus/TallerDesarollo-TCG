@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './css/CarouselCartas.css';
+import '../css/CarouselCartas.css';
 
 export default function CarouselCartas() {
   const [cartas, setCartas] = useState([]);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import './css/contacto.css';
+import '../css/contacto.css';
 
 export default function Contacto() {
   const navigate = useNavigate();

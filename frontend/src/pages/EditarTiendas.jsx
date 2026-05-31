@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './css/editarTiendas.css';
+import '../css/editarTiendas.css';
 import Swal from 'sweetalert2';
 
 export default function EditarTiendas() {

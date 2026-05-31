@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import './css/modules.css';
+import '../css/modules.css';
 import Swal from 'sweetalert2';
 
 export default function MiPerfil() {

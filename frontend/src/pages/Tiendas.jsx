@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './css/tiendas.css';
-import AdBanner from './components/AdBanner';
+import '../css/tiendas.css';
+import AdBanner from '../components/AdBanner';
 import Swal from 'sweetalert2';
-import tiendaLogo from './assets/Tienda_logo.png';
+import tiendaLogo from '../assets/Tienda_logo.png';
 
 export default function Tiendas() {
   const navigate = useNavigate();

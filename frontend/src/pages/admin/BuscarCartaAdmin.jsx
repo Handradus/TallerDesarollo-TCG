@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import './css/BuscarCarta.css';
-import './css/BuscarCartaAdmin.css';
-import tituloWebImg from './assets/tituloWeb.png';
-import { getSpellingSuggestion } from './utils/similarity';
+import '../../css/BuscarCarta.css';
+import '../../css/BuscarCartaAdmin.css';
+import tituloWebImg from '../../assets/tituloWeb.png';
+import { getSpellingSuggestion } from '../../utils/similarity';
 
 export default function BuscarCartasAdmin() {
   const [activeTab, setActiveTab] = useState('importar'); // 'importar' o 'coleccionar'

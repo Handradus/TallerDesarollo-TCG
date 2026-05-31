@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useAuth } from './context/AuthContext';
-import { useSocket } from './context/SocketContext';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import Swal from 'sweetalert2';
-import './css/modules.css';
-import './css/mensajes.css';
+import '../css/modules.css';
+import '../css/mensajes.css';
 
 export default function Mensajes() {
     const [messages, setMessages] = useState([]);
