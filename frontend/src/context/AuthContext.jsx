@@ -22,7 +22,12 @@ export const AuthProvider = ({ children }) => {
     const [eulaRegistrationAccepted, setEulaRegistrationAccepted] = useState(false);
 
     // Check session validity on mount
+<<<<<<< HEAD
     // ⚠️ SECURITY: Token in sessionStorage (cleared on browser close)
+=======
+    // ⚠️ SECURITY: Token stored in sessionStorage (cleared on browser close)
+    // User data (non-sensitive) in localStorage for persistence
+>>>>>>> a3334e6898bd9682bac048e019d76571ec00e573
     useEffect(() => {
         const token = sessionStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
@@ -33,8 +38,13 @@ export const AuthProvider = ({ children }) => {
             if (elapsed > SESSION_DURATION_MS) {
                 // Session expired — clear everything and show message
                 sessionStorage.removeItem("token");
+<<<<<<< HEAD
                 localStorage.removeItem("user");
                 sessionStorage.removeItem("loginTimestamp");
+=======
+                sessionStorage.removeItem("loginTimestamp");
+                localStorage.removeItem("user");
+>>>>>>> a3334e6898bd9682bac048e019d76571ec00e573
                 setSessionExpiredMsg(true);
             } else {
                 setUser(JSON.parse(storedUser));
@@ -47,17 +57,29 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
+<<<<<<< HEAD
     // Setup axios interceptors: auto-attach token + auto-logout on 401/403
     // ⚠️ SECURITY: Request interceptor adds token from sessionStorage to all requests
     useEffect(() => {
         // Request interceptor: Automatically add token to Authorization header
+=======
+    // Setup axios interceptor: auto-logout on 401/403 & auto-attach token
+    // ⚠️ SECURITY: Automatically adds token to Authorization header from sessionStorage
+    useEffect(() => {
+        // Request interceptor: Add token to headers
+>>>>>>> a3334e6898bd9682bac048e019d76571ec00e573
         const requestInterceptor = axios.interceptors.request.use(
             (config) => {
                 const token = sessionStorage.getItem("token");
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
+<<<<<<< HEAD
                 config.withCredentials = true; // For future HttpOnly cookie support
+=======
+                // Enable credentials for cookies (if backend supports HttpOnly cookies)
+                config.withCredentials = true;
+>>>>>>> a3334e6898bd9682bac048e019d76571ec00e573
                 return config;
             },
             (error) => Promise.reject(error)
@@ -68,6 +90,10 @@ export const AuthProvider = ({ children }) => {
             (response) => response,
             (error) => {
                 if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+<<<<<<< HEAD
+=======
+                    // Check if user is currently logged in — if so, token has expired
+>>>>>>> a3334e6898bd9682bac048e019d76571ec00e573
                     const token = sessionStorage.getItem("token");
                     if (token) {
                         const msg = error.response.data?.message;
@@ -89,9 +115,11 @@ export const AuthProvider = ({ children }) => {
             axios.interceptors.response.eject(responseInterceptor);
         };
     }, []);
-
-    const login = async (googleData) => {
-        try {
+// ⚠️ SECURITY: Token in sessionStorage (cleared on browser close)
+            sessionStorage.setItem("token", token);
+            // User data in localStorage (safe to persist, doesn't include token)
+            localStorage.setItem("user", JSON.stringify(user));
+            session
             const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/google`, {
                 token: googleData.credential,
             });
@@ -159,11 +187,17 @@ export const AuthProvider = ({ children }) => {
         setPendingGoogleData(null);
         setEulaRegistrationAccepted(false);
     };
+<<<<<<< HEAD
 
     const logout = () => {
         // ⚠️ SECURITY: Remove token from sessionStorage + user from localStorage
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("loginTimestamp");
+=======
+sessionStorage.removeItem("token");
+        sessionStorage.removeItem("loginTimestamp");
+        localStorage.removeItem("user
+>>>>>>> a3334e6898bd9682bac048e019d76571ec00e573
         localStorage.removeItem("user");
         setUser(null);
         setForceAccepted(false);
