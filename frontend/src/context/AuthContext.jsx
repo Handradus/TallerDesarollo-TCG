@@ -22,45 +22,59 @@ export const AuthProvider = ({ children }) => {
     const [eulaRegistrationAccepted, setEulaRegistrationAccepted] = useState(false);
 
     // Check session validity on mount
+    // ⚠️ SECURITY: Token in sessionStorage (cleared on browser close)
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         const storedUser = localStorage.getItem("user");
-        const loginTimestamp = localStorage.getItem("loginTimestamp");
+        const loginTimestamp = sessionStorage.getItem("loginTimestamp");
 
         if (token && storedUser && loginTimestamp) {
             const elapsed = Date.now() - parseInt(loginTimestamp, 10);
             if (elapsed > SESSION_DURATION_MS) {
                 // Session expired — clear everything and show message
-                localStorage.removeItem("token");
+                sessionStorage.removeItem("token");
                 localStorage.removeItem("user");
-                localStorage.removeItem("loginTimestamp");
+                sessionStorage.removeItem("loginTimestamp");
                 setSessionExpiredMsg(true);
             } else {
                 setUser(JSON.parse(storedUser));
             }
         } else if (token && storedUser) {
             // Legacy: no loginTimestamp yet — set it now
-            localStorage.setItem("loginTimestamp", Date.now().toString());
+            sessionStorage.setItem("loginTimestamp", Date.now().toString());
             setUser(JSON.parse(storedUser));
         }
         setLoading(false);
     }, []);
 
-    // Setup axios interceptor: auto-logout on 401/403
+    // Setup axios interceptors: auto-attach token + auto-logout on 401/403
+    // ⚠️ SECURITY: Request interceptor adds token from sessionStorage to all requests
     useEffect(() => {
-        const interceptor = axios.interceptors.response.use(
+        // Request interceptor: Automatically add token to Authorization header
+        const requestInterceptor = axios.interceptors.request.use(
+            (config) => {
+                const token = sessionStorage.getItem("token");
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+                config.withCredentials = true; // For future HttpOnly cookie support
+                return config;
+            },
+            (error) => Promise.reject(error)
+        );
+
+        // Response interceptor: Handle 401/403
+        const responseInterceptor = axios.interceptors.response.use(
             (response) => response,
             (error) => {
                 if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-                    // Check if user is currently logged in — if so, token has expired
-                    const token = localStorage.getItem("token");
+                    const token = sessionStorage.getItem("token");
                     if (token) {
-                        // Don't show expired message for auth-related endpoints (login, pending_approval, account_banned)
                         const msg = error.response.data?.message;
                         if (msg !== 'pending_approval' && msg !== 'account_banned') {
-                            localStorage.removeItem("token");
+                            sessionStorage.removeItem("token");
+                            sessionStorage.removeItem("loginTimestamp");
                             localStorage.removeItem("user");
-                            localStorage.removeItem("loginTimestamp");
                             setUser(null);
                             setSessionExpiredMsg(true);
                         }
@@ -70,7 +84,10 @@ export const AuthProvider = ({ children }) => {
             }
         );
 
-        return () => axios.interceptors.response.eject(interceptor);
+        return () => {
+            axios.interceptors.request.eject(requestInterceptor);
+            axios.interceptors.response.eject(responseInterceptor);
+        };
     }, []);
 
     const login = async (googleData) => {
@@ -91,9 +108,10 @@ export const AuthProvider = ({ children }) => {
             }
 
             // Existing user — complete login normally
-            localStorage.setItem("token", token);
+            // ⚠️ SECURITY: Token in sessionStorage (cleared when browser closes)
+            sessionStorage.setItem("token", token);
             localStorage.setItem("user", JSON.stringify(user));
-            localStorage.setItem("loginTimestamp", Date.now().toString());
+            sessionStorage.setItem("loginTimestamp", Date.now().toString());
             setUser(user);
             setSessionExpiredMsg(false);
             setForceAccepted(false);
@@ -143,9 +161,10 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        localStorage.removeItem("token");
+        // ⚠️ SECURITY: Remove token from sessionStorage + user from localStorage
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("loginTimestamp");
         localStorage.removeItem("user");
-        localStorage.removeItem("loginTimestamp");
         setUser(null);
         setForceAccepted(false);
     };
@@ -155,15 +174,16 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Call API to accept EULA for existing users
+    // ⚠️ SECURITY: Token automatically added by axios interceptor
     const acceptUserEula = async () => {
         try {
-            const token = localStorage.getItem("token");
+            const token = sessionStorage.getItem("token");
             if (!token) return;
 
+            // Token is automatically added to Authorization header by interceptor
             const res = await axios.post(
                 `${import.meta.env.VITE_API_BASE_URL}/api/auth/accept-eula`, 
-                {}, 
-                { headers: { Authorization: `Bearer ${token}` } }
+                {}
             );
 
             const updatedUser = res.data.user;
