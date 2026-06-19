@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import './css/contacto.css';
+import '../css/contacto.css';
+import { Target, ChartBarBig, User } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
 
 export default function Contacto() {
   const navigate = useNavigate();
@@ -72,9 +74,9 @@ export default function Contacto() {
             Llega a miles de entrenadores y coleccionistas anunciándote en nuestra plataforma.
           </p>
           <ul className="beneficios-lista">
-            <li>🎯 Audiencia segmentada (jugadores y coleccionistas)</li>
-            <li>📊 Alta visibilidad en búsquedas de cartas</li>
-            <li>🤝 Precios accesibles para tiendas emergentes</li>
+            <li><PixelIcon icon={Target} size={14} style={{marginRight:'4px'}} /> Audiencia segmentada (jugadores y coleccionistas)</li>
+            <li><PixelIcon icon={ChartBarBig} size={14} style={{marginRight:'4px'}} /> Alta visibilidad en búsquedas de cartas</li>
+            <li><PixelIcon icon={User} size={14} style={{marginRight:'4px'}} /> Precios accesibles para tiendas emergentes</li>
           </ul>
           <div className="info-extra">
             <p><strong>Email:</strong> Softguaren@gmail.com</p>

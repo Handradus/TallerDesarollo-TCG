@@ -1,11 +1,17 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import './css/navbar.css';
-import tituloWebImg from './assets/tituloWeb.png';
-import { useAuth } from './context/AuthContext';
-import { useSocket } from './context/SocketContext';
-import LoginButton from './components/LoginButton';
+import '../css/navbar.css';
+import tituloWebImg from '../assets/tituloWeb.png';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
+import LoginButton from './LoginButton';
 import axios from 'axios';
 import { useState, useEffect, useRef } from 'react';
+import {
+  Home, ShoppingBag, Store, ShoppingCart, Mail, User,
+  MagicEdit, Scale, Flag, Menu, Close, SettingsCog, Zap,
+  Plus, Search
+} from 'pixelarticons/react';
+import PixelIcon from './PixelIcon';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -71,55 +77,62 @@ export default function Navbar() {
   const menuItems = [
     {
       path: '/buscar',
-      label: '🏠 Inicio',
+      icon: Home,
+      label: 'Inicio',
       title: 'Ir al inicio'
     },
     {
       path: '/coleccion',
-      label: '🎴 Mi Colección',
+      icon: ShoppingBag,
+      label: 'Mi Colección',
       title: 'Ver mi colección',
       roles: ['user', 'admin', 'tienda']
     },
     {
       path: '/mercado',
-      label: '🏪 Mercado',
+      icon: Store,
+      label: 'Mercado',
       title: 'Explorar cartas en venta',
       roles: ['public', 'user', 'admin']
     },
     {
       path: '/mi-tienda',
-      label: '💰 Mi Tienda',
+      icon: ShoppingCart,
+      label: 'Mi Tienda',
       title: 'Vender mis cartas',
       roles: ['user', 'admin', 'tienda']
     },
     {
       path: '/mensajes',
-      label: '📨 Mensajes',
+      icon: Mail,
+      label: 'Mensajes',
       title: 'Mis mensajes',
       roles: ['user', 'admin', 'tienda']
     },
     {
       path: '/perfil',
-      label: '👤 Mi Perfil',
+      icon: User,
+      label: 'Mi Perfil',
       title: 'Editar perfil y redes',
       roles: ['user', 'admin', 'tienda']
     },
     {
       path: '/tiendas',
-      label: '🏪 Tiendas',
+      icon: Store,
+      label: 'Tiendas',
       title: 'Ver todas las tiendas disponibles',
       roles: ['public', 'user', 'admin', 'tienda']
     }
   ];
 
   const adminLinks = [
-    { path: '/admin-buscar', label: '🔧 Búsqueda Admin' },
-    { path: '/admin-precios', label: '🔥 Forzar Precios' },
-    { path: '/admin-usuarios', label: '👤 Aprobar Usuarios' },
-    { path: '/agregar-tienda', label: '➕ Agregar Tienda' },
-    { path: '/editar-tiendas', label: '✏️ Editar Tiendas' },
-    { path: '/admin-moderacion', label: '⚖️ Moderación Tiendas' },
-    { path: '/admin-reportes', label: '🚩 Reportes Usuarios' }
+    { path: '/admin-buscar', icon: Search, label: 'Búsqueda Admin' },
+    { path: '/admin-precios', icon: Zap, label: 'Forzar Precios' },
+    { path: '/admin-usuarios', icon: User, label: 'Aprobar Usuarios' },
+    { path: '/agregar-tienda', icon: Plus, label: 'Agregar Tienda' },
+    { path: '/editar-tiendas', icon: MagicEdit, label: 'Editar Tiendas' },
+    { path: '/admin-moderacion', icon: Scale, label: 'Moderación Tiendas' },
+    { path: '/admin-reportes', icon: Flag, label: 'Reportes Usuarios' }
   ];
 
   const isActive = (path) => {
@@ -152,7 +165,7 @@ export default function Navbar() {
             aria-label="Abrir menú"
             aria-expanded={menuOpen}
           >
-            {menuOpen ? '✕' : '☰'}
+            <PixelIcon icon={menuOpen ? Close : Menu} size={22} />
           </button>
 
           {/* Menu Items */}
@@ -172,6 +185,7 @@ export default function Navbar() {
                 title={item.title}
                 style={{ position: 'relative' }}
               >
+                <PixelIcon icon={item.icon} size={16} style={{ marginRight: '5px' }} />
                 {item.label}
                 {item.path === '/mensajes' && unreadCount > 0 && (
                   <span style={{
@@ -198,7 +212,8 @@ export default function Navbar() {
                   className={`navbar-item ${showAdminMenu ? 'active' : ''}`}
                   onClick={() => setShowAdminMenu(!showAdminMenu)}
                 >
-                  🔧 Admin ▼
+                  <PixelIcon icon={SettingsCog} size={16} style={{ marginRight: '5px' }} />
+                  Admin ▼
                 </button>
                 {/* Dropdown */}
                 {showAdminMenu && (
@@ -226,11 +241,15 @@ export default function Navbar() {
                           padding: '10px 15px',
                           textAlign: 'left',
                           cursor: 'pointer',
-                          borderBottom: '1px solid #4a5568'
+                          borderBottom: '1px solid #4a5568',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
                         }}
-                        onMouseOver={e => e.target.style.background = '#4a5568'}
-                        onMouseOut={e => e.target.style.background = 'transparent'}
+                        onMouseOver={e => e.currentTarget.style.background = '#4a5568'}
+                        onMouseOut={e => e.currentTarget.style.background = 'transparent'}
                       >
+                        <PixelIcon icon={link.icon} size={15} />
                         {link.label}
                       </button>
                     ))}

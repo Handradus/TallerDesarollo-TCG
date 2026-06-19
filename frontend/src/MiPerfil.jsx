@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import './css/modules.css';
+import '../css/modules.css';
 import Swal from 'sweetalert2';
+import { MagicEdit, Camera, ShoppingBag, Close } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
 
 export default function MiPerfil() {
     const { user } = useAuth();
@@ -83,7 +85,7 @@ export default function MiPerfil() {
             {/* Main Content */}
             <div className="collection-content">
                 <div className="collection-header">
-                    <h1>✏️ Editar Perfil</h1>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><PixelIcon icon={MagicEdit} size={16} /> Editar Perfil</h1>
                 </div>
 
                 <div style={{ background: 'white', padding: '25px', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
@@ -93,7 +95,7 @@ export default function MiPerfil() {
                     </p>
 
                     <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>📸 Instagram URL</label>
+                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}><PixelIcon icon={Camera} size={14} /> Instagram URL</label>
                         <input
                             type="text"
                             placeholder="https://instagram.com/tu_usuario"
@@ -104,7 +106,7 @@ export default function MiPerfil() {
                     </div>
 
                     <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>🃏 TCG Match URL</label>
+                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}><PixelIcon icon={ShoppingBag} size={14} /> TCG Match URL</label>
                         <input
                             type="text"
                             placeholder="Enlace a tu perfil de TCG Match"
@@ -115,7 +117,7 @@ export default function MiPerfil() {
                     </div>
 
                     <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>✖️ X (Twitter) URL</label>
+                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}><PixelIcon icon={Close} size={14} /> X (Twitter) URL</label>
                         <input
                             type="text"
                             placeholder="https://x.com/tu_usuario"

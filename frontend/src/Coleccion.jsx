@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import './css/index.css';
+import '../css/index.css';
+import { Check, ShoppingCart, MagicEdit, Plus, Trash, Archive, Folder, Clipboard } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
 
 const MySwal = withReactContent(Swal);
 
@@ -353,7 +355,7 @@ export default function Coleccion() {
                             style={{ fontSize: '0.8rem', padding: '2px 8px', backgroundColor: '#4CAF50' }}
                             title="Ya la conseguí (Marcar como obtenida)"
                         >
-                            ✅ Conseguí
+                            <PixelIcon icon={Check} size={16} /> Conseguí
                         </button>
                     ) : (
                         <button
@@ -362,7 +364,7 @@ export default function Coleccion() {
                             style={{ fontSize: '0.8rem', padding: '2px 8px' }}
                             title="Vender en Mercado"
                         >
-                            💰
+                            <PixelIcon icon={ShoppingCart} size={16} />
                         </button>
                     )}
                     <button
@@ -370,21 +372,21 @@ export default function Coleccion() {
                         className="btn-secondary btn-sm"
                         title="Editar detalles (Estado, Idioma...)"
                     >
-                        ✏️
+                        <PixelIcon icon={MagicEdit} size={16} />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); addCopy(card); }}
                         className="btn-secondary btn-sm"
                         title="Agregar otra copia"
                     >
-                        ➕
+                        <PixelIcon icon={Plus} size={16} />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); removeFromCollection(card.id); }}
                         className="btn-danger btn-sm"
                         title="Eliminar de la colección"
                     >
-                        🗑️
+                        <PixelIcon icon={Trash} size={16} />
                     </button>
                 </div>
             </div>
@@ -397,13 +399,13 @@ export default function Coleccion() {
         <div className="collection-layout fade-in">
             {/* Sidebar for Binders */}
             <div className="binders-sidebar">
-                <h3>📚 Mis Carpetas</h3>
+                <h3><PixelIcon icon={Archive} size={16} /> Mis Carpetas</h3>
                 <ul>
                     <li
                         className={selectedBinderId === null ? 'active' : ''}
                         onClick={() => setSelectedBinderId(null)}
                     >
-                        🗂️ Todas las Cartas
+                        <PixelIcon icon={Folder} size={16} /> Todas las Cartas
                     </li>
                     {binders.map(b => (
                         <li
@@ -411,7 +413,7 @@ export default function Coleccion() {
                             className={selectedBinderId === b.id ? 'active' : ''}
                             onClick={() => setSelectedBinderId(b.id)}
                         >
-                            📁 {b.name}
+                            <PixelIcon icon={Folder} size={16} /> {b.name}
                         </li>
                     ))}
                 </ul>
@@ -473,8 +475,8 @@ export default function Coleccion() {
                             className="filter-select"
                             title="Agrupar cartas por Set"
                         >
-                            <option value="grouped">🗂️ Agrupar por Set</option>
-                            <option value="flat">📋 Mostrar todas juntas</option>
+                            <option value="grouped">Agrupar por Set</option>
+                            <option value="flat">Mostrar todas juntas</option>
                         </select>
 
                         <select

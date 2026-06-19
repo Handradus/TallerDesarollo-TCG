@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './css/agregarTienda.css';
+import { Store, Check, Close, Clipboard, SettingsCog, Phone } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
+import '../css/agregarTienda.css';
 
 export default function AgregarTienda() {
   const navigate = useNavigate();
@@ -227,25 +229,29 @@ export default function AgregarTienda() {
         >
           ← Volver al inicio
         </button>
-        <h1>🏪 Agregar Nueva Tienda</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <PixelIcon icon={Store} size={20} /> Agregar Nueva Tienda
+        </h1>
       </div>
 
       {success && (
-        <div className="success-message">
-          ✅ ¡Tienda creada exitosamente!
+        <div className="success-message" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <PixelIcon icon={Check} size={16} /> ¡Tienda creada exitosamente!
         </div>
       )}
 
       {errors.general && (
-        <div className="error-message">
-          ❌ {errors.general}
+        <div className="error-message" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <PixelIcon icon={Close} size={16} /> {errors.general}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="agregar-tienda-form">
         {/* Información básica */}
         <div className="form-section">
-          <h3>📋 Información básica</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <PixelIcon icon={Clipboard} size={16} /> Información básica
+          </h3>
           
           <div className="form-group">
             <label htmlFor="nombre">Nombre de la tienda *</label>
@@ -303,7 +309,9 @@ export default function AgregarTienda() {
 
         {/* Configuración técnica */}
         <div className="form-section">
-          <h3>⚙️ Configuración técnica</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <PixelIcon icon={SettingsCog} size={16} /> Configuración técnica
+          </h3>
           
           <div className="form-group">
             <label htmlFor="urlBase">URL base de la tienda *</label>
@@ -362,7 +370,9 @@ export default function AgregarTienda() {
 
         {/* Información de contacto */}
         <div className="form-section">
-          <h3>📞 Información de contacto</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <PixelIcon icon={Phone} size={16} /> Información de contacto
+          </h3>
           
           <div className="form-group">
             <label htmlFor="direccion">Dirección</label>

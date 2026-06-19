@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useAuth } from './context/AuthContext';
-import { useSocket } from './context/SocketContext';
+import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import Swal from 'sweetalert2';
-import './css/modules.css';
-import './css/mensajes.css';
+import '../css/modules.css';
+import '../css/mensajes.css';
+import { Message, Clipboard, Flag, Reload, Close } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
 
 export default function Mensajes() {
     const [messages, setMessages] = useState([]);
@@ -240,7 +242,7 @@ export default function Mensajes() {
                             className={`tab-btn ${activeTab === 'chats' ? 'active' : ''}`}
                             onClick={() => setActiveTab('chats')}
                         >
-                            💬 Chats (Mercado)
+                            <PixelIcon icon={Message} size={16} style={{marginRight:'4px'}} /> Chats (Mercado)
                         </button>
                         <button 
                             className={`tab-btn ${activeTab === 'contacto' ? 'active' : ''}`}
@@ -249,7 +251,7 @@ export default function Mensajes() {
                                 setSelectedConvId(null);
                             }}
                         >
-                            📋 Tablón de Contacto
+                            <PixelIcon icon={Clipboard} size={16} style={{marginRight:'4px'}} /> Tablón de Contacto
                             {contactMessages.filter(m => !m.read).length > 0 && (
                                 <span className="unread-badge" style={{ marginLeft: '8px' }}>
                                     {contactMessages.filter(m => !m.read).length}
@@ -301,11 +303,11 @@ export default function Mensajes() {
                                     <div className="chat-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                                         <h3 style={{ margin: 0 }}>Chat con {activeConversation.partner.name || 'Usuario'}</h3>
                                         <div className="chat-actions" style={{ display: 'flex', gap: '10px' }}>
-                                            <button onClick={handleReportUser} className="btn-secondary" style={{ padding: '5px 10px', fontSize: '0.85rem' }}>🚩 Reportar</button>
+                                            <button onClick={handleReportUser} className="btn-secondary" style={{ padding: '5px 10px', fontSize: '0.85rem' }}><PixelIcon icon={Flag} size={14} style={{marginRight:'4px'}} /> Reportar</button>
                                             {blockStatus.blockedByMe ? (
-                                                <button onClick={handleUnblockUser} className="btn-success" style={{ padding: '5px 10px', fontSize: '0.85rem' }}>♻️ Desbloquear</button>
+                                                <button onClick={handleUnblockUser} className="btn-success" style={{ padding: '5px 10px', fontSize: '0.85rem' }}><PixelIcon icon={Reload} size={14} style={{marginRight:'4px'}} /> Desbloquear</button>
                                             ) : (
-                                                <button onClick={handleBlockUser} className="btn-danger" style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>🚫 Bloquear</button>
+                                                <button onClick={handleBlockUser} className="btn-danger" style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}><PixelIcon icon={Close} size={14} style={{marginRight:'4px'}} /> Bloquear</button>
                                             )}
                                         </div>
                                     </div>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './css/editarTiendas.css';
+import '../css/editarTiendas.css';
 import Swal from 'sweetalert2';
+import { MagicEdit, Check, Close, Trash, Star } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
 
 export default function EditarTiendas() {
   const navigate = useNavigate();
@@ -390,7 +392,7 @@ export default function EditarTiendas() {
         >
           ← Volver al inicio
         </button>
-        <h1>✏️ Editar Tiendas</h1>
+        <h1><PixelIcon icon={MagicEdit} size={24} /> Editar Tiendas</h1>
         <button 
           className="btn-agregar"
           onClick={() => navigate('/agregar-tienda')}
@@ -401,7 +403,7 @@ export default function EditarTiendas() {
 
       {mensaje.texto && (
         <div className={`mensaje ${mensaje.tipo}`}>
-          {mensaje.tipo === 'success' ? '✅' : '❌'} {mensaje.texto}
+          {mensaje.tipo === 'success' ? <PixelIcon icon={Check} size={14} color="green" /> : <PixelIcon icon={Close} size={14} color="red" />} {mensaje.texto}
         </div>
       )}
 
@@ -584,7 +586,7 @@ export default function EditarTiendas() {
                 {/* 2. Estado */}
                 <div className="tienda-status">
                   <span className={`status-badge ${tienda.activo ? 'activa' : 'inactiva'}`}>
-                    {tienda.activo ? '✅ Activa' : '❌ Inactiva'}
+                    {tienda.activo ? <><PixelIcon icon={Check} size={14} color="green" /> Activa</> : <><PixelIcon icon={Close} size={14} color="red" /> Inactiva</>}
                   </span>
                 </div>
 
@@ -601,20 +603,20 @@ export default function EditarTiendas() {
                     className="btn-editar"
                     onClick={() => iniciarEdicion(tienda)}
                   >
-                    ✏️ Editar
+                    <PixelIcon icon={MagicEdit} size={16} /> Editar
                   </button>
                   <button 
                     className={tienda.activo ? "btn-eliminar" : "btn-activar"}
                     onClick={() => toggleActivarTienda(tienda.id, tienda.nombre, tienda.activo)}
                   >
-                    {tienda.activo ? "🗑️ Desactivar" : "✅ Activar"}
+                    {tienda.activo ? <><PixelIcon icon={Trash} size={16} /> Desactivar</> : <><PixelIcon icon={Check} size={16} /> Activar</>}
                   </button>
                 </div>
 
                 {/* 5. Datos */}
                 <div className="tienda-details">
                   {tienda.descripcion && <p><strong>Descripción:</strong> {tienda.descripcion}</p>}
-                  {tienda.valoracion && <p><strong>Valoración:</strong> ⭐ {tienda.valoracion}/5</p>}
+                  {tienda.valoracion && <p><strong>Valoración:</strong> <PixelIcon icon={Star} size={14} color="#ffd700" /> {tienda.valoracion}/5</p>}
                   <p><strong>Tipo:</strong> {tienda.tipoBusqueda}</p>
                   <p><strong>URL Base:</strong> <a href={tienda.urlBase} target="_blank" rel="noopener noreferrer">{tienda.urlBase}</a></p>
                   {tienda.direccion && <p><strong>Dirección:</strong> {tienda.direccion}</p>}

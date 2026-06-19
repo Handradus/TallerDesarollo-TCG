@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import './css/CarouselTiendas.css';
+import '../css/CarouselTiendas.css';
+import { Store, Star } from 'pixelarticons/react';
+import PixelIcon from './PixelIcon';
 
 export default function CarouselTiendas() {
   const [tiendas, setTiendas] = useState([]);
@@ -48,7 +50,7 @@ export default function CarouselTiendas() {
   if (loading) {
     return (
       <div className="carousel-container">
-        <h3>🏪 Últimas tiendas visitadas</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}><PixelIcon icon={Store} size={20} /> Últimas tiendas visitadas</h3>
         <div className="carousel-loading">Cargando tiendas...</div>
       </div>
     );
@@ -57,7 +59,7 @@ export default function CarouselTiendas() {
   if (tiendas.length === 0) {
     return (
       <div className="carousel-container">
-        <h3>🏪 Últimas tiendas visitadas</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}><PixelIcon icon={Store} size={20} /> Últimas tiendas visitadas</h3>
         <div className="carousel-empty">¡Visita algunas tiendas para verlas aquí!</div>
       </div>
     );
@@ -65,7 +67,7 @@ export default function CarouselTiendas() {
 
   return (
     <div className="carousel-container">
-      <h3>🏪 Últimas tiendas visitadas</h3>
+      <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}><PixelIcon icon={Store} size={20} /> Últimas tiendas visitadas</h3>
       <div className="carousel-track-container">
         <div className="carousel-tiendas-wrapper">
           <div className="carousel-tiendas-track">
@@ -95,8 +97,8 @@ export default function CarouselTiendas() {
                   <h3>{tienda.nombre}</h3>
                 )}
                 {!tienda.logo && tienda.valoracion && (
-                  <div className="tienda-rating">
-                    ⭐ {tienda.valoracion}
+                  <div className="tienda-rating" style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+                    <PixelIcon icon={Star} size={14} color="#ffd700" /> {tienda.valoracion}
                   </div>
                 )}
               </div>

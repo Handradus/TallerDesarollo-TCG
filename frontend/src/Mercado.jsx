@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from './context/AuthContext';
-import './css/index.css';
-import './css/modules.css';
-import AdBanner from './components/AdBanner';
+import { useAuth } from '../context/AuthContext';
+import '../css/index.css';
+import '../css/modules.css';
+import AdBanner from '../components/AdBanner';
 import Swal from 'sweetalert2';
+import { Search, Store, User, Truck, Camera, Message, Flag } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
 
 export default function Mercado() {
     const [items, setItems] = useState([]);
@@ -101,7 +103,7 @@ export default function Mercado() {
         <div className="collection-layout fade-in">
             {/* Sidebar Filters */}
             <div className="binders-sidebar">
-                <h3>🔍 Filtros y Búsqueda</h3>
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><PixelIcon icon={Search} size={20} /> Filtros y Búsqueda</h3>
 
                 <div style={{ marginBottom: '15px' }}>
                     <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', color: '#555' }}>Búsqueda</label>
@@ -162,7 +164,7 @@ export default function Mercado() {
             {/* Main Content */}
             <div className="collection-content">
                 <div className="collection-header">
-                    <h1>🏪 Mercado de Entrenadores</h1>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><PixelIcon icon={Store} size={20} /> Mercado de Entrenadores</h1>
                 </div>
 
                 {/* Banners publicitarios */}
@@ -192,25 +194,25 @@ export default function Mercado() {
                                                 fontSize: '0.9rem'
                                             }}>${item.price}</span>
 
-                                            <span style={{ fontSize: '0.8rem', color: '#666' }}>
-                                                👤 <a href={`/profile/${item.user.id}`} target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: 'bold' }}>{item.user.name}</a>
+                                            <span style={{ fontSize: '0.8rem', color: '#666', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <PixelIcon icon={User} size={16} /> <a href={`/profile/${item.user.id}`} target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: 'bold' }}>{item.user.name}</a>
                                             </span>
                                         </div>
 
                                         <div style={{ fontSize: '0.8rem', color: '#555', marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                                             {(item.deliveryType === 'envio' || item.deliveryType === 'ambos') && (
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    🚚 Envíos a todo Chile
+                                                    <PixelIcon icon={Truck} size={16} /> Envíos a todo Chile
                                                 </span>
                                             )}
                                             {(item.deliveryType === 'presencial' || item.deliveryType === 'ambos') && (
                                                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    🤝 Presencial {item.region ? `(${item.region})` : ''}
+                                                    <PixelIcon icon={User} size={16} /> Presencial {item.region ? `(${item.region})` : ''}
                                                 </span>
                                             )}
                                         </div>
 
-                                        {item.realImage && <span style={{ display: 'block', fontSize: '0.75rem', color: '#666', marginBottom: '8px', background: '#eee', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}>📸 Foto Real</span>}
+                                        {item.realImage && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#666', marginBottom: '8px', background: '#eee', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}><PixelIcon icon={Camera} size={14} /> Foto Real</span>}
 
                                         {item.description && (
                                             <p style={{ fontSize: '0.85rem', color: '#777', fontStyle: 'italic', marginBottom: '10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -223,9 +225,9 @@ export default function Mercado() {
                                                 <button
                                                     onClick={() => setSelectedItem(item)}
                                                     className="btn-primary"
-                                                    style={{ flex: 1, fontSize: '0.9rem', padding: '10px' }}
+                                                    style={{ flex: 1, fontSize: '0.9rem', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                                                 >
-                                                    📩 Contactar
+                                                    <PixelIcon icon={Message} size={16} /> Contactar
                                                 </button>
                                                 <button
                                                     onClick={() => setReportItem(item)}
@@ -233,7 +235,7 @@ export default function Mercado() {
                                                     style={{ fontSize: '0.9rem', padding: '10px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                                                     title="Reportar Publicación"
                                                 >
-                                                    🚩
+                                                    <PixelIcon icon={Flag} size={16} />
                                                 </button>
                                             </div>
                                         ) : (
@@ -295,7 +297,7 @@ export default function Mercado() {
                 <div className="modal-overlay" onClick={() => setReportItem(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <button className="modal-close" onClick={() => setReportItem(null)}>&times;</button>
-                        <h2 style={{ marginTop: 0, color: '#e74c3c' }}>🚩 Reportar Publicación</h2>
+                        <h2 style={{ marginTop: 0, color: '#e74c3c', display: 'flex', alignItems: 'center', gap: '8px' }}><PixelIcon icon={Flag} size={20} /> Reportar Publicación</h2>
                         <p style={{ fontSize: '0.9rem', color: '#555', marginBottom: '15px' }}>
                             Si esta publicación incumple las normas (ej: foto falsa, fraude, contenido inapropiado), envíanos un reporte detallado.
                         </p>

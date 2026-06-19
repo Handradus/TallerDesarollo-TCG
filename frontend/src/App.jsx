@@ -1,6 +1,6 @@
 import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './Routes';
-import Navbar from './Navbar';
+import Navbar from './components/Navbar';
 import PageLayout from './components/PageLayout';
 
 function App() {

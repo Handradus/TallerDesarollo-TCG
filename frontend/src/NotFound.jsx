@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import './css/notFound.css';
 import missingnoImg from './assets/missignno.png';
+import { Home } from 'pixelarticons/react';
+import PixelIcon from './components/PixelIcon';
 
 export default function NotFound() {
   const navigate = useNavigate();
@@ -37,7 +39,7 @@ export default function NotFound() {
             className="btn-home"
             onClick={() => navigate('/')}
           >
-            🏠 Volver al inicio
+            <PixelIcon icon={Home} size={16} style={{marginRight:'4px'}} /> Volver al inicio
           </button>
           <button 
             className="btn-back"
