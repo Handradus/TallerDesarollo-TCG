@@ -215,7 +215,7 @@ export default function BuscarCartas() {
   // Cargar datos del sessionStorage al montar el componente
   useEffect(() => {
     // Actualizar título del documento
-    document.title = "⚡ PokéDex TCG - Centro de Entrenadores";
+    document.title = "Cartateca";
 
     const savedData = sessionStorage.getItem('pokemon-search-data');
     if (savedData) {
@@ -491,7 +491,7 @@ export default function BuscarCartas() {
       <div className="logo-principal">
         <img
           src={tituloWebImg}
-          alt="PokéDex TCG - Centro de Entrenadores"
+          alt="Cartateca"
           className="titulo-web-img"
           onClick={() => {
             limpiarBusqueda();

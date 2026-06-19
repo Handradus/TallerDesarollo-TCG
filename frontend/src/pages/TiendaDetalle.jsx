@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../css/tiendaDetalle.css';
 import Swal from 'sweetalert2';
+import { Close, Home, Store, Star, MagicEdit, Globe, MapPin, Phone, Clock, ShoppingCart, MapPinHome } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
 
 export default function TiendaDetalle() {
   const { nombreTienda } = useParams();
@@ -142,7 +144,7 @@ export default function TiendaDetalle() {
     return (
       <div className="tienda-detalle-container">
         <div className="error-container">
-          <div className="error-icon">❌</div>
+          <div className="error-icon"><PixelIcon icon={Close} size={32} /></div>
           <h2>Tienda no encontrada</h2>
           <p>{error}</p>
           <div className="error-actions">
@@ -175,7 +177,7 @@ export default function TiendaDetalle() {
           className="btn-inicio"
           onClick={() => navigate('/')}
         >
-          🏠 Inicio
+          <PixelIcon icon={Home} size={16} /> Inicio
         </button>
       </div>
 
@@ -199,7 +201,7 @@ export default function TiendaDetalle() {
                 className="logo-placeholder-main"
                 style={{ display: tienda.logo ? 'none' : 'flex' }}
               >
-                🏪
+                <PixelIcon icon={Store} size={40} />
               </div>
             </div>
             
@@ -214,7 +216,7 @@ export default function TiendaDetalle() {
                         key={i} 
                         className={`estrella ${i < Math.floor(valoracionVisible) ? 'filled' : ''}`}
                       >
-                        ⭐
+                        <PixelIcon icon={Star} size={16} color="#ffd700" />
                       </span>
                     ))}
                   </div>
@@ -230,7 +232,7 @@ export default function TiendaDetalle() {
             {tienda.descripcion && (
               <div className="detail-card">
                 <div className="detail-header">
-                  <span className="detail-icon">📝</span>
+                  <span className="detail-icon"><PixelIcon icon={MagicEdit} size={20} /></span>
                   <h3>Descripción</h3>
                 </div>
                 <p className="detail-content">{tienda.descripcion}</p>
@@ -240,7 +242,7 @@ export default function TiendaDetalle() {
             {tienda.urlBase && (
               <div className="detail-card clickable" onClick={() => abrirSitioWeb(tienda.urlBase)}>
                 <div className="detail-header">
-                  <span className="detail-icon">🌐</span>
+                  <span className="detail-icon"><PixelIcon icon={Globe} size={20} /></span>
                   <h3>Sitio Web</h3>
                 </div>
                 <div className="detail-content">
@@ -253,7 +255,7 @@ export default function TiendaDetalle() {
             {tienda.direccion && tienda.tipo !== 'online' && !tienda.direccion.toLowerCase().includes('online') && (
               <div className="detail-card clickable" onClick={() => abrirEnGoogleMaps(tienda.direccion)}>
                 <div className="detail-header">
-                  <span className="detail-icon">📍</span>
+                  <span className="detail-icon"><PixelIcon icon={MapPin} size={20} /></span>
                   <h3>Ubicación</h3>
                 </div>
                 <div className="detail-content">
@@ -266,7 +268,7 @@ export default function TiendaDetalle() {
             {tienda.telefono && (
               <div className="detail-card">
                 <div className="detail-header">
-                  <span className="detail-icon">📞</span>
+                  <span className="detail-icon"><PixelIcon icon={Phone} size={20} /></span>
                   <h3>Teléfono</h3>
                 </div>
                 <div className="detail-content">
@@ -280,7 +282,7 @@ export default function TiendaDetalle() {
             {tienda.ultimaActualizacion && (
               <div className="detail-card">
                 <div className="detail-header">
-                  <span className="detail-icon">🕒</span>
+                  <span className="detail-icon"><PixelIcon icon={Clock} size={20} /></span>
                   <h3>Última Actualización</h3>
                 </div>
                 <div className="detail-content">
@@ -303,7 +305,7 @@ export default function TiendaDetalle() {
                 className="btn-accion-principal"
                 onClick={() => abrirSitioWeb(tienda.urlBase)}
               >
-                🛒 Visitar Tienda
+                <PixelIcon icon={ShoppingCart} size={16} /> Visitar Tienda
               </button>
             )}
             
@@ -312,7 +314,7 @@ export default function TiendaDetalle() {
                 className="btn-accion-secundaria"
                 onClick={() => abrirEnGoogleMaps(tienda.direccion)}
               >
-                🗺️ Ver en Mapa
+                <PixelIcon icon={MapPinHome} size={16} /> Ver en Mapa
               </button>
             )}
           </div>
@@ -330,11 +332,11 @@ export default function TiendaDetalle() {
                     value={rating}
                     onChange={(e) => setRating(parseInt(e.target.value, 10))}
                   >
-                    <option value="5">⭐⭐⭐⭐⭐ Excelente</option>
-                    <option value="4">⭐⭐⭐⭐ Bueno</option>
-                    <option value="3">⭐⭐⭐ Regular</option>
-                    <option value="2">⭐⭐ Malo</option>
-                    <option value="1">⭐ Muy mala</option>
+                    <option value="5">★★★★★ Excelente</option>
+                    <option value="4">★★★★ Bueno</option>
+                    <option value="3">★★★ Regular</option>
+                    <option value="2">★★ Malo</option>
+                    <option value="1">★ Muy mala</option>
                   </select>
                 </div>
 
@@ -369,7 +371,7 @@ export default function TiendaDetalle() {
                       <span className="review-author">{review.user?.name || 'Usuario'}</span>
                       <span className="review-date">{new Date(review.createdAt).toLocaleDateString('es-ES')}</span>
                     </div>
-                    <div className="review-stars">{'⭐'.repeat(review.rating || 5)}</div>
+                    <div className="review-stars">{Array.from({length: review.rating || 5}, (_, i) => <PixelIcon key={i} icon={Star} size={12} color="#ffd700" />)}</div>
                     <p className="review-content">{review.content}</p>
                   </div>
                 ))

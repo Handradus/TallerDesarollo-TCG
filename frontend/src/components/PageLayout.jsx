@@ -3,6 +3,8 @@ import AdSenseSlot from './AdSenseSlot';
 import { Link } from 'react-router-dom';
 import { EULA_CLAUSES } from '../utils/eula';
 import '../css/pageLayout.css';
+import { Zap, ShoppingBag, Megaphone, InfoBox, Scale, Mail } from 'pixelarticons/react';
+import PixelIcon from './PixelIcon';
 
 /**
  * PageLayout — Envuelve el contenido central con columnas laterales publicitarias y Footer global premium
@@ -18,7 +20,7 @@ export default function PageLayout({ children }) {
         {/* Holder grande (banner personalizable) */}
         <Link to="/contacto" className="sidebar-holder sidebar-holder--top" style={{ textDecoration: 'none' }}>
           <div className="sidebar-holder-inner">
-            <span className="sidebar-holder-icon">⚡</span>
+            <span className="sidebar-holder-icon"><PixelIcon icon={Zap} size={28} /></span>
             <span className="sidebar-holder-label">Tu anuncio aquí</span>
             <span className="sidebar-holder-sub">160 × 300 px</span>
             <span className="sidebar-holder-cta">Contáctanos →</span>
@@ -32,7 +34,7 @@ export default function PageLayout({ children }) {
           format="rectangle"
           className="sidebar-adsense"
           placeholderLabel="AdSense 160×300"
-          placeholderIcon="📣"
+          placeholderIcon={<PixelIcon icon={Megaphone} size={24} />}
           style={{ minHeight: '280px' }}
         />
       </aside>
@@ -83,10 +85,13 @@ export default function PageLayout({ children }) {
                 fontSize: '0.9rem',
                 fontWeight: '600',
                 textDecoration: 'underline',
-                transition: 'opacity 0.2s'
+                transition: 'opacity 0.2s',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
               }}
             >
-              ℹ️ Sobre Nosotros
+              <PixelIcon icon={InfoBox} size={15} /> Sobre Nosotros
             </button>
             <button 
               onClick={() => setShowEula(true)} 
@@ -99,10 +104,13 @@ export default function PageLayout({ children }) {
                 fontSize: '0.9rem',
                 fontWeight: '600',
                 textDecoration: 'underline',
-                transition: 'opacity 0.2s'
+                transition: 'opacity 0.2s',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
               }}
             >
-              ⚖️ Términos y Condiciones
+              <PixelIcon icon={Scale} size={15} /> Términos y Condiciones
             </button>
             <a 
               href="mailto:softguaren@gmail.com" 
@@ -112,10 +120,13 @@ export default function PageLayout({ children }) {
                 fontSize: '0.9rem',
                 fontWeight: '600',
                 textDecoration: 'underline',
-                transition: 'opacity 0.2s'
+                transition: 'opacity 0.2s',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
               }}
             >
-              ✉️ Correo de Soporte
+              <PixelIcon icon={Mail} size={15} /> Correo de Soporte
             </a>
           </div>
         </footer>
@@ -126,7 +137,7 @@ export default function PageLayout({ children }) {
         {/* Holder grande */}
         <Link to="/contacto" className="sidebar-holder sidebar-holder--top" style={{ textDecoration: 'none' }}>
           <div className="sidebar-holder-inner">
-            <span className="sidebar-holder-icon">🎴</span>
+            <span className="sidebar-holder-icon"><PixelIcon icon={ShoppingBag} size={28} /></span>
             <span className="sidebar-holder-label">Tu anuncio aquí</span>
             <span className="sidebar-holder-sub">160 × 300 px</span>
             <span className="sidebar-holder-cta">Contáctanos →</span>
@@ -140,7 +151,7 @@ export default function PageLayout({ children }) {
           format="rectangle"
           className="sidebar-adsense"
           placeholderLabel="AdSense 160×300"
-          placeholderIcon="📣"
+          placeholderIcon={<PixelIcon icon={Megaphone} size={24} />}
           style={{ minHeight: '280px' }}
         />
       </aside>
@@ -168,9 +179,12 @@ export default function PageLayout({ children }) {
               color: '#1a202c',
               fontSize: '1.4rem',
               borderBottom: '2px solid #edf2f7',
-              paddingBottom: '10px'
+              paddingBottom: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
-              ⚖️ Términos y Condiciones de Uso
+              <PixelIcon icon={Scale} size={22} color="#1a202c" /> Términos y Condiciones de Uso
             </h2>
             
             <div
@@ -243,9 +257,12 @@ export default function PageLayout({ children }) {
               color: '#1a202c',
               fontSize: '1.4rem',
               borderBottom: '2px solid #edf2f7',
-              paddingBottom: '10px'
+              paddingBottom: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
-              ℹ️ Sobre Cartateca
+              <PixelIcon icon={InfoBox} size={22} color="#1a202c" /> Sobre Cartateca
             </h2>
 
             <div style={{ textAlign: 'left', color: '#4a5568', lineHeight: '1.6', fontSize: '0.95rem' }}>
@@ -255,8 +272,8 @@ export default function PageLayout({ children }) {
               <p>
                 Nuestra misión es proveer una interfaz limpia, veloz y altamente premium que facilite a la comunidad la búsqueda de cartas, la gestión de colecciones personales, la consulta de precios del mercado y el intercambio seguro de cartas.
               </p>
-              <p style={{ margin: '15px 0', padding: '10px', background: '#f7fafc', borderRadius: '8px', borderLeft: '4px solid #764ba2' }}>
-                📧 <strong>Contacto Legal y Soporte:</strong> <a href="mailto:softguaren@gmail.com" style={{ color: '#764ba2', fontWeight: 'bold' }}>softguaren@gmail.com</a>
+              <p style={{ margin: '15px 0', padding: '10px', background: '#f7fafc', borderRadius: '8px', borderLeft: '4px solid #764ba2', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <PixelIcon icon={Mail} size={15} color="#764ba2" /><strong>Contacto Legal y Soporte:</strong> <a href="mailto:softguaren@gmail.com" style={{ color: '#764ba2', fontWeight: 'bold' }}>softguaren@gmail.com</a>
               </p>
               <p style={{ fontSize: '0.85rem', color: '#718096', margin: '20px 0 0 0' }}>
                 Cartateca ™ 2026. Todos los derechos reservados. Desarrollado con pasión por y para la comunidad.

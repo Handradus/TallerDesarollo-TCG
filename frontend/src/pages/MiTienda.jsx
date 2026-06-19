@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import '../css/modules.css';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { ShoppingCart, Camera, Search, Close, SquareAlert } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
 
 const MySwal = withReactContent(Swal);
 
@@ -168,7 +170,7 @@ export default function MiTienda() {
         <div className="collection-layout fade-in">
             {/* Sidebar equivalent - just info for now */}
             <div className="binders-sidebar">
-                <h3>💰 Mi Tienda</h3>
+                <h3><PixelIcon icon={ShoppingCart} size={18} /> Mi Tienda</h3>
                 <div style={{ padding: '10px 0', color: '#555' }}>
                     <p>Gestiona tus cartas en venta.</p>
                     <p>Estas cartas son visibles para todos los usuarios en el Mercado.</p>
@@ -213,7 +215,7 @@ export default function MiTienda() {
                                         }}>
                                             ${item.price}
                                         </div>
-                                        {item.realImage && <span style={{ display: 'block', fontSize: '0.8rem', color: '#666', marginBottom: '5px' }}>📸 Foto Real Incluida</span>}
+                                        {item.realImage && <span style={{ display: 'block', fontSize: '0.8rem', color: '#666', marginBottom: '5px' }}><PixelIcon icon={Camera} size={14} /> Foto Real Incluida</span>}
                                         <button
                                             onClick={() => handleDelete(item.id)}
                                             className="btn-danger"
@@ -264,7 +266,7 @@ export default function MiTienda() {
                                     onClick={() => window.location.href = '/'}
                                     style={{ width: '100%' }}
                                 >
-                                    🔍 Ir al Buscador
+                                    <PixelIcon icon={Search} size={16} /> Ir al Buscador
                                 </button>
                             </div>
                         ) : (
@@ -305,7 +307,7 @@ export default function MiTienda() {
                                     />
                                     {price && parseFloat(price) <= 0 && (
                                         <small style={{ color: '#e74c3c', display: 'block', marginTop: '5px' }}>
-                                            ❌ El precio debe ser un valor positivo
+                                            <PixelIcon icon={Close} size={14} /> El precio debe ser un valor positivo
                                         </small>
                                     )}
                                 </div>
@@ -373,8 +375,8 @@ export default function MiTienda() {
                                         fontWeight: isDescriptionTooLong ? 'bold' : 'normal'
                                     }}>
                                         {wordCount}/{MAX_WORDS} palabras
-                                        {isDescriptionTooLong && ` ❌ Excedido por ${wordCount - MAX_WORDS} palabras`}
-                                        {!isDescriptionTooLong && wordsRemaining <= 50 && wordsRemaining > 0 && ` ⚠️ (${wordsRemaining} restantes)`}
+                                        {isDescriptionTooLong && <> <PixelIcon icon={Close} size={14} /> Excedido por {wordCount - MAX_WORDS} palabras</>}
+                                        {!isDescriptionTooLong && wordsRemaining <= 50 && wordsRemaining > 0 && <> <PixelIcon icon={SquareAlert} size={14} /> ({wordsRemaining} restantes)</>}
                                     </small>
                                 </div>
 

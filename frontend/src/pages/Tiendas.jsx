@@ -4,6 +4,8 @@ import '../css/tiendas.css';
 import AdBanner from '../components/AdBanner';
 import Swal from 'sweetalert2';
 import tiendaLogo from '../assets/Tienda_logo.png';
+import { Close, Lightbulb, Store, Star, Search } from 'pixelarticons/react';
+import PixelIcon from '../components/PixelIcon';
 
 export default function Tiendas() {
   const navigate = useNavigate();
@@ -192,7 +194,7 @@ export default function Tiendas() {
               onClick={() => setBusqueda('')}
               title="Limpiar búsqueda"
             >
-              ✕
+              <PixelIcon icon={Close} size={16} />
             </button>
           )}
         </div>
@@ -225,7 +227,7 @@ export default function Tiendas() {
             style={{ marginLeft: 'auto' }}
             onClick={() => setShowSuggestModal(true)}
           >
-            💡 Sugerir Tienda
+            <PixelIcon icon={Lightbulb} size={16} /> Sugerir Tienda
           </button>
         </div>
 
@@ -263,7 +265,7 @@ export default function Tiendas() {
                   className="tienda-logo-placeholder"
                   style={{ display: tienda.logo ? 'none' : 'flex' }}
                 >
-                  🏪
+                  <PixelIcon icon={Store} size={32} />
                 </div>
               </div>
 
@@ -272,7 +274,7 @@ export default function Tiendas() {
 
                 {tienda.valoracion && (
                   <div className="tienda-valoracion">
-                    <span className="estrellas">⭐</span>
+                    <span className="estrellas"><PixelIcon icon={Star} size={14} color="#ffd700" /></span>
                     <span className="valoracion-numero">{tienda.valoracion}/5</span>
                   </div>
                 )}
@@ -286,7 +288,7 @@ export default function Tiendas() {
           ))
         ) : (
           <div className="no-results">
-            <div className="no-results-icon">🔍</div>
+            <div className="no-results-icon"><PixelIcon icon={Search} size={32} /></div>
             <h3>No se encontraron tiendas</h3>
             <p>
               {busqueda
@@ -318,7 +320,7 @@ export default function Tiendas() {
           <div className="modal-overlay" onClick={() => setShowSuggestModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
               <button className="modal-close" onClick={() => setShowSuggestModal(false)}>&times;</button>
-              <h2>💡 Sugerir Nueva Tienda</h2>
+              <h2><PixelIcon icon={Lightbulb} size={20} /> Sugerir Nueva Tienda</h2>
               <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '15px' }}>
                 Ayúdanos a crecer. Tu sugerencia será revisada por un administrador.
               </p>

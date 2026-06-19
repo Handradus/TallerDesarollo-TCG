@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdSenseSlot from './AdSenseSlot';
 import '../css/adBanner.css';
+import { Zap, Star, Megaphone } from 'pixelarticons/react';
+import PixelIcon from './PixelIcon';
 
 /**
  * AdBanner — Fila inferior de publicidad
@@ -24,7 +26,7 @@ const DEFAULT_BANNERS = [
     label: 'Tu anuncio aquí',
     sublabel: 'Banner 300 × 100 px',
     accentColor: '#667eea',
-    icon: '⚡',
+    icon: <PixelIcon icon={Zap} size={28} />,
   },
   {
     id: 'banner-2',
@@ -34,14 +36,14 @@ const DEFAULT_BANNERS = [
     label: 'Tu anuncio aquí',
     sublabel: 'Banner 300 × 100 px',
     accentColor: '#43e97b',
-    icon: '🌟',
+    icon: <PixelIcon icon={Star} size={28} />,
   },
 ];
 
 // Slot IDs de AdSense para la barra inferior — reemplaza con los reales
 const BOTTOM_ADSENSE_SLOTS = [
-  { id: 'bottom-adsense-1', slotId: '1111111111', icon: '📣', label: 'AdSense 300×100' },
-  { id: 'bottom-adsense-2', slotId: '2222222222', icon: '📣', label: 'AdSense 300×100' },
+  { id: 'bottom-adsense-1', slotId: '1111111111', icon: <PixelIcon icon={Megaphone} size={24} />, label: 'AdSense 300×100' },
+  { id: 'bottom-adsense-2', slotId: '2222222222', icon: <PixelIcon icon={Megaphone} size={24} />, label: 'AdSense 300×100' },
 ];
 
 export default function AdBanner({

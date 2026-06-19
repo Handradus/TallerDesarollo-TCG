@@ -43,7 +43,7 @@ export default function Landing() {
       }}>
         <img 
           src={tituloWebImg} 
-          alt="PokéDex TCG" 
+          alt="Cartateca" 
           style={{ width: '100%', maxWidth: '300px', marginBottom: '2rem' }} 
         />
         <h1 style={{ color: '#2d3748', marginBottom: '1rem', fontSize: '1.8rem' }}>
