@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import './css/modules.css';
 import Swal from 'sweetalert2';
+import PixelIcon from './components/PixelIcon';
+import { User } from 'pixelarticons/react';
 
 export default function PerfilPublico() {
     const { userId } = useParams();
@@ -110,7 +112,10 @@ export default function PerfilPublico() {
             {/* Main Content: Reputation */}
             <div className="collection-content">
                 <div className="collection-header">
-                    <h1>⭐ Reputación y Comentarios</h1>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <PixelIcon icon={User} size={32} color="#6a4c93" /> 
+                        Reputación y Comentarios
+                    </h1>
                 </div>
 
                 <div style={{ marginBottom: '30px' }}>
