@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import '../css/tiendaDetalle.css';
+import { useAuth } from './context/AuthContext';
+import './css/tiendaDetalle.css';
 import Swal from 'sweetalert2';
 import { Close, Home, Store, Star, MagicEdit, Globe, MapPin, Phone, Clock, ShoppingCart, MapPinHome } from 'pixelarticons/react';
-import PixelIcon from '../components/PixelIcon';
+import PixelIcon from './components/PixelIcon';
 
 export default function TiendaDetalle() {
   const { nombreTienda } = useParams();

@@ -1,8 +1,8 @@
-import '../css/detalleCarta.css';
+import './css/detalleCarta.css';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import Swal from 'sweetalert2';
 import {
   ResponsiveContainer,
@@ -16,17 +16,17 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
-import spriteFuego from '../assets/sprites/fuego.png';
-import spriteAgua from '../assets/sprites/agua.png';
-import spritePlanta from '../assets/sprites/planta.png';
-import spriteElectrica from '../assets/sprites/electrica.png';
-import spritePsiquica from '../assets/sprites/psiquica.png';
-import spriteDragon from '../assets/sprites/dragon.png';
-import spriteSiniestra from '../assets/sprites/siniestra.png';
-import spriteHada from '../assets/sprites/hada.png';
-import spriteLucha from '../assets/sprites/lucha.png';
-import spriteMetal from '../assets/sprites/metal.png';
-import spriteNormal from '../assets/sprites/normal.png';
+import spriteFuego from './assets/sprites/fuego.png';
+import spriteAgua from './assets/sprites/agua.png';
+import spritePlanta from './assets/sprites/planta.png';
+import spriteElectrica from './assets/sprites/electrica.png';
+import spritePsiquica from './assets/sprites/psiquica.png';
+import spriteDragon from './assets/sprites/dragon.png';
+import spriteSiniestra from './assets/sprites/siniestra.png';
+import spriteHada from './assets/sprites/hada.png';
+import spriteLucha from './assets/sprites/lucha.png';
+import spriteMetal from './assets/sprites/metal.png';
+import spriteNormal from './assets/sprites/normal.png';
 
 export default function CartaDetalle() {
   const { id } = useParams();

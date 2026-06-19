@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../css/BuscarCarta.css';
-import { obtenerSugerenciasHibridas } from '../utils/sugerenciasBackend';
-import { normalizarTexto } from '../utils/sugerencias';
-import { ordenarCartas } from '../utils/ordenarCartas';
-import CarouselCartas from '../CarouselCartas';
-import CarouselTiendas from '../CarouselTiendas';
-import tituloWebImg from '../assets/tituloWeb.png';
-import { useAuth } from '../context/AuthContext';
+import './css/BuscarCarta.css';
+import { obtenerSugerenciasHibridas } from './utils/sugerenciasBackend';
+import { normalizarTexto } from './utils/sugerencias';
+import { ordenarCartas } from './utils/ordenarCartas';
+import CarouselCartas from './CarouselCartas';
+import CarouselTiendas from './CarouselTiendas';
+import tituloWebImg from './assets/tituloWeb.png';
+import { useAuth } from './context/AuthContext';
 import axios from 'axios';
-import AdBanner from '../components/AdBanner';
+import AdBanner from './components/AdBanner';
 import Swal from 'sweetalert2';
-import { getSpellingSuggestion } from '../utils/similarity';
+import { getSpellingSuggestion } from './utils/similarity';
 
 export default function BuscarCartas() {
   const [nombre, setNombre] = useState('');

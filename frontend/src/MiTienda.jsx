@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import '../css/modules.css';
+import { useAuth } from './context/AuthContext';
+import './css/modules.css';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { ShoppingCart, Camera, Search, Close, SquareAlert } from 'pixelarticons/react';
-import PixelIcon from '../components/PixelIcon';
+import PixelIcon from './components/PixelIcon';
 
 const MySwal = withReactContent(Swal);
 

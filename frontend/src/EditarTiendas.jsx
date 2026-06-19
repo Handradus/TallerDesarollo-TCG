@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../css/editarTiendas.css';
+import './css/editarTiendas.css';
 import Swal from 'sweetalert2';
 import { MagicEdit, Check, Close, Trash, Star } from 'pixelarticons/react';
-import PixelIcon from '../components/PixelIcon';
+import PixelIcon from './components/PixelIcon';
 
 export default function EditarTiendas() {
   const navigate = useNavigate();

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, Check, Close, Clipboard, SettingsCog, Phone } from 'pixelarticons/react';
-import PixelIcon from '../components/PixelIcon';
-import '../css/agregarTienda.css';
+import PixelIcon from './components/PixelIcon';
+import './css/agregarTienda.css';
 
 export default function AgregarTienda() {
   const navigate = useNavigate();

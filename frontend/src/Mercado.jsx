@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import '../css/index.css';
-import '../css/modules.css';
-import AdBanner from '../components/AdBanner';
+import { useAuth } from './context/AuthContext';
+import './css/index.css';
+import './css/modules.css';
+import AdBanner from './components/AdBanner';
 import Swal from 'sweetalert2';
 import { Search, Store, User, Truck, Camera, Message, Flag } from 'pixelarticons/react';
-import PixelIcon from '../components/PixelIcon';
+import PixelIcon from './components/PixelIcon';
 
 export default function Mercado() {
     const [items, setItems] = useState([]);

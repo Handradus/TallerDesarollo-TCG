@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import '../css/index.css';
+import './css/index.css';
 import { Check, ShoppingCart, MagicEdit, Plus, Trash, Archive, Folder, Clipboard } from 'pixelarticons/react';
-import PixelIcon from '../components/PixelIcon';
+import PixelIcon from './components/PixelIcon';
 
 const MySwal = withReactContent(Swal);
 

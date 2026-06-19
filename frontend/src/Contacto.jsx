@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import '../css/contacto.css';
+import './css/contacto.css';
 import { Target, ChartBarBig, User } from 'pixelarticons/react';
-import PixelIcon from '../components/PixelIcon';
+import PixelIcon from './components/PixelIcon';
 
 export default function Contacto() {
   const navigate = useNavigate();

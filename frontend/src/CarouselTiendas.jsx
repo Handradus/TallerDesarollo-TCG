@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import '../css/CarouselTiendas.css';
+import './css/CarouselTiendas.css';
 import { Store, Star } from 'pixelarticons/react';
-import PixelIcon from './PixelIcon';
+import PixelIcon from './components/PixelIcon';
 
 export default function CarouselTiendas() {
   const [tiendas, setTiendas] = useState([]);
