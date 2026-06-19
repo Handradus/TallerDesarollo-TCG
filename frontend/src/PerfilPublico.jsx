@@ -140,7 +140,9 @@ export default function PerfilPublico() {
 
                 <div className="message-list">
                     {comments.length === 0 ? (
-                        <p style={{ textAlign: 'center', color: '#888' }}>Este usuario aún no tiene comentarios.</p>
+                        <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', padding: '2rem', borderRadius: '12px', textAlign: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', margin: '1rem 0' }}>
+                            <p style={{ margin: 0, color: '#444', fontWeight: '500', fontSize: '1.1rem' }}>Este usuario aún no tiene comentarios.</p>
+                        </div>
                     ) : (
                         comments.map(c => (
                             <div key={c.id} className="message-card" style={{ borderLeftColor: c.rating >= 4 ? '#4CAF50' : c.rating <= 2 ? '#F44336' : '#FFC107' }}>
