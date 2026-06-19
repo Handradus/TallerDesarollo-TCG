@@ -1131,7 +1131,7 @@ export default function CartaDetalle() {
                   )}
                 </h3>
                 {cargandoTiendas ? (
-                  <p>Cargando tiendas...</p>
+                  <ScrapingLoader text="Buscando disponibilidad en tiendas..." />
                 ) : carta.tiendasDisponibles && carta.tiendasDisponibles.length > 0 ? (
                   <div className="tiendas-grid">
                     {carta.tiendasDisponibles.map((tienda, index) => (
