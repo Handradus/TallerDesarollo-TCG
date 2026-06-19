@@ -12,6 +12,7 @@ import axios from 'axios';
 import AdBanner from './components/AdBanner';
 import Swal from 'sweetalert2';
 import { getSpellingSuggestion } from './utils/similarity';
+import ScrapingLoader from './components/ScrapingLoader';
 
 export default function BuscarCartas() {
   const [nombre, setNombre] = useState('');
@@ -821,7 +822,7 @@ export default function BuscarCartas() {
 
       {error && <div className="error-message">{error}</div>}
 
-      {loading && <p className="loading-message">Buscando cartas...</p>}
+      {loading && <ScrapingLoader text="Buscando cartas..." />}
 
       {/* Grid de resultados */}
       <div

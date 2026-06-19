@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Scraping Loader</title>
+    <style>
+        body {
+            background-color: #f5f6fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* --- Estilos copiados de ScrapingLoader.css --- */
+        .scraping-loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .scraping-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f0f0f0;
+            border-top: 5px solid #ffcb05; /* Pokemon Yellow */
+            border-right: 5px solid #3c5aa6; /* Pokemon Blue */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .scraping-loader-text {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            min-height: 28px;
+        }
+
+        .scraping-progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background-color: #f1f2f6;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .scraping-progress-bar-fill {
+            height: 100%;
+            background-color: #2ecc71; /* Green */
+            border-radius: 5px;
+            transition: width 1s linear, background-color 0.4s ease;
+            width: 0%;
+        }
+
+        .scraping-progress-bar-fill.slow {
+            background-color: #e67e22; /* Orange warning */
+        }
+
+        .scraping-timer {
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .scraping-timer.slow {
+            color: #e67e22;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scraping-loader-container">
+        <div class="scraping-spinner"></div>
+        <p class="scraping-loader-text" id="loader-text">Iniciando...</p>
+        
+        <div class="scraping-progress-bar-bg">
+            <div class="scraping-progress-bar-fill" id="progress-bar"></div>
+        </div>
+        
+        <p class="scraping-timer" id="timer-text">Tiempo estimado: 10s</p>
+    </div>
+
+    <script>
+        // Simulador en JS nativo del comportamiento en React
+        let elapsed = 0;
+        const loaderText = document.getElementById('loader-text');
+        const progressBar = document.getElementById('progress-bar');
+        const timerText = document.getElementById('timer-text');
+
+        setInterval(() => {
+            elapsed += 1;
+            
+            // Actualizar textos según el tiempo
+            if (elapsed >= 10) {
+                loaderText.innerText = "Esto está tardando más de lo esperado. Por favor, espera un poco más...";
+            } else if (elapsed >= 7) {
+                loaderText.innerText = "Consolidando datos...";
+            } else if (elapsed >= 4) {
+                loaderText.innerText = "Analizando tiendas y precios...";
+            } else if (elapsed >= 2) {
+                loaderText.innerText = "Buscando en la web...";
+            } else {
+                loaderText.innerText = "Buscando resultados...";
+            }
+
+            // Calcular y aplicar progreso (max 100%)
+            const progress = Math.min((elapsed / 10) * 100, 100);
+            progressBar.style.width = progress + '%';
+
+            // Comportamiento cuando pasa de los 10 segundos
+            if (elapsed >= 10) {
+                progressBar.classList.add('slow');
+                timerText.classList.add('slow');
+                timerText.innerText = "Paciencia, casi listo...";
+            } else {
+                timerText.innerText = `Tiempo estimado: ${10 - elapsed}s`;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

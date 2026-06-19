@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import Swal from 'sweetalert2';
+import ScrapingLoader from './components/ScrapingLoader';
 import {
   ResponsiveContainer,
   LineChart,
@@ -939,10 +940,7 @@ export default function CartaDetalle() {
                 </div>
 
                 {cargandoPreciosPriceCharting && (
-                  <div className="loading-precios">
-                    <div className="spinner"></div>
-                    <span>Consultando PriceCharting...</span>
-                  </div>
+                  <ScrapingLoader text="Consultando PriceCharting..." />
                 )}
 
                 {!cargandoPreciosPriceCharting && vistaPriceCharting === 'actual' && preciosPriceCharting && (
