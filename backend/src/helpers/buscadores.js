@@ -222,6 +222,63 @@ function analizarCoincidenciasCarta(carta, href, textoElemento, tienda) {
   };
 }
 
+function extraerJSONLD($, tienda, carta) {
+  let resultado = null;
+  try {
+    const jsonScripts = $('script[type="application/ld+json"]');
+    jsonScripts.each((i, el) => {
+      if (resultado) return false;
+      try {
+        const jsonText = $(el).html();
+        if (jsonText) {
+          const data = JSON.parse(jsonText);
+          const items = Array.isArray(data) ? data : (data['@graph'] || (data.itemListElement ? data.itemListElement.map(item => item.item) : [data]));
+          
+          for (const item of items) {
+            if (!item) continue;
+            if (item['@type'] === 'Product' || (Array.isArray(item['@type']) && item['@type'].includes('Product'))) {
+              const nombreProducto = item.name || '';
+              const urlProducto = item.url || item['@id'] || '';
+              if (!nombreProducto) continue;
+
+              const analisis = analizarCoincidenciasCarta(carta, urlProducto, nombreProducto, tienda);
+              if (analisis.coincideAlguno) {
+                let precio = null;
+                let disponible = false;
+                if (item.offers) {
+                  const offers = Array.isArray(item.offers) ? item.offers : [item.offers];
+                  for (const offer of offers) {
+                    if (offer.price) {
+                      precio = Math.round(Number(offer.price)).toString();
+                      disponible = offer.availability && (offer.availability.includes('InStock') || offer.availability === 'http://schema.org/InStock');
+                      break;
+                    }
+                  }
+                }
+                
+                console.log(`✅ [${tienda.nombre}] JSON-LD ENCONTRADO: "${nombreProducto}" | $${precio} | disponible: ${disponible}`);
+                resultado = {
+                  url: urlProducto,
+                  verificada: true,
+                  tipoProducto: 'json-ld',
+                  precio,
+                  disponible
+                };
+                return false; // break .each loop
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // Ignorar error de parseo en un script particular
+      }
+    });
+  } catch (e) {
+    console.warn(`⚠️ [${tienda.nombre}] Error analizando JSON-LD: ${e.message}`);
+  }
+  return resultado;
+}
+
 async function buscarEnTiendaShopify(tienda, carta) {
   // Usar la API JSON nativa de Shopify: más confiable que parsear HTML
   const urlBase = tienda.urlBase;
@@ -453,6 +510,13 @@ async function buscarEnTiendaLevelUp(tienda, carta) {
     });
 
     const $ = cheerio.load(res.data);
+    
+    // Intento intermedio: extraer JSON-LD oculto
+    const jsonLdResult = extraerJSONLD($, tienda, carta);
+    if (jsonLdResult) {
+      return jsonLdResult;
+    }
+
     const enlaces = $('a.woocommerce-LoopProduct-link, .product a.preview, .product-element-top > a, .product a[href*="/producto/"], .product a[href*="/product/"]');
 
     console.log(`🔗 [${tienda.nombre}] Enlaces encontrados: ${enlaces.length}`);
@@ -958,6 +1022,12 @@ async function buscarEnTiendaJumpseller(tienda, carta) {
 
     const $ = cheerio.load(res.data);
     
+    // Intento intermedio: extraer JSON-LD oculto
+    const jsonLdResult = extraerJSONLD($, tienda, carta);
+    if (jsonLdResult) {
+      return jsonLdResult;
+    }
+
     // En Jumpseller, los títulos de productos de búsqueda están dentro de <h4><a href="...">
     // O también pueden estar dentro de .product-block a o .product a
     const enlaces = $('h4 a, .product-block a, .product a');

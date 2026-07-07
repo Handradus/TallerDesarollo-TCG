@@ -780,32 +780,7 @@ export default function CartaDetalle() {
 
   return (
     <div className="detalle-container">
-      {/* Navbar fija */}
-      <nav className="carta-navbar">
-        <div className="navbar-content">
-          <div className="nav-buttons">
-            <button
-              className="btn-nav btn-volver"
-              onClick={() => navigate(-1)}
-              title="Volver a la página anterior"
-            >
-              ← Volver
-            </button>
-            <button
-              className="btn-nav btn-home"
-              onClick={() => navigate('/')}
-              title="Ir al inicio"
-            >
-              🏠 Inicio
-            </button>
-          </div>
-          <div className="navbar-title">
-            <span style={{ background: `linear-gradient(135deg, ${tipoColor}, ${tipoColor}dd)` }}>
-              {getTipoIcon(carta.tipos)} {carta.nombre}
-            </span>
-          </div>
-        </div>
-      </nav>
+      {/* Eliminada la nav custom ("carta-navbar") para usar la principal del sitio */ }
 
       <div className="carta-detalle">
         {/* Título principal arriba de todo */}

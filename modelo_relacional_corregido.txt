@@ -1,0 +1,272 @@
+erDiagram
+  BlockedUser {
+    int id
+    int blockerId
+    int blockedId
+    timestamp createdAt
+  }
+
+
+  Carta {
+    int id
+    varchar nombre
+    varchar numero
+    varchar set
+    varchar setId
+    int printedTotal
+    varchar serie
+    date fechaLanzamiento
+    varchar supertipo
+    simple-array subtipos
+    varchar nivel
+    varchar hp
+    simple-array tipos
+    simple-array evolucionaA
+    simple-array retreatCost
+    jsonb debilidades
+    jsonb ataques
+    simple-array reglas
+    varchar rareza
+    varchar ilustrador
+    text flavorText
+    simple-array pokedexIds
+    varchar imagenPequena
+    varchar imagenGrande
+    decimal precioNormal
+    decimal precioHolofoil
+    decimal precioPriceCharting
+    varchar urlPriceCharting
+    decimal precioGradedPriceCharting
+    timestamp fechaActualizacionPrecios
+    timestamp fechaCreacion
+  }
+
+  Carta ||--o{ CartaLink : "links"
+
+  CartaLink {
+    int id
+    varchar url
+    boolean verificada
+    boolean disponible
+    varchar idioma
+    varchar tipoProducto
+    decimal precio
+    timestamp fechaGuardado
+    int cartaId FK
+    int tiendaId FK
+  }
+
+  CartaLink }o--|| Carta : "carta"
+  CartaLink }o--|| Tienda : "tienda"
+
+  ConsultaAPI {
+    int id
+    varchar termino
+    date fechaConsulta
+  }
+
+
+  CustomCollection {
+    int id
+    varchar name
+    int userId
+    timestamp createdAt
+  }
+
+  CustomCollection }o--|| User : "user"
+  CustomCollection ||--o{ UserCollection : "cards"
+
+  DailyCardScraping {
+  }
+
+
+  DailyScrapingQuota {
+  }
+
+
+  HistorialCarta {
+    int id
+    int cartaId
+    timestamp fechaAcceso
+    varchar ipUsuario
+  }
+
+  HistorialCarta }o--|| Carta : "carta"
+
+  HistorialPrecioPriceCharting {
+    int id
+    decimal precio
+    varchar url
+    boolean encontrado
+    timestamp fechaCaptura
+    int cartaId FK
+  }
+
+  HistorialPrecioPriceCharting }o--|| Carta : "carta"
+
+  HistorialPrecioTienda {
+    int id
+    decimal precio
+    boolean disponible
+    varchar url
+    varchar tipoProducto
+    varchar fuente
+    timestamp fechaCaptura
+    int cartaId FK
+    int tiendaId FK
+  }
+
+  HistorialPrecioTienda }o--|| Carta : "carta"
+  HistorialPrecioTienda }o--|| Tienda : "tienda"
+
+  HistorialTienda {
+    int id
+    int tiendaId
+    timestamp fechaVisita
+    varchar ipUsuario
+  }
+
+  HistorialTienda }o--|| Tienda : "tienda"
+
+  MarketItem {
+    int id
+    decimal price
+    text description
+    int quantity
+    varchar realImage
+    boolean active
+    timestamp createdAt
+    int userId
+    int cartaId
+    varchar deliveryType
+    varchar region
+  }
+
+  MarketItem }o--|| User : "user"
+  MarketItem }o--|| Carta : "carta"
+
+  Message {
+    int id
+    text content
+    boolean read
+    timestamp createdAt
+    int senderId
+    int receiverId
+    int marketItemId
+  }
+
+  Message }o--|| User : "sender"
+  Message }o--|| User : "receiver"
+  Message }o--|| MarketItem : "marketItem"
+
+  Report {
+    int id
+    varchar reason
+    varchar status
+    timestamp createdAt
+    int reporterId
+    int marketItemId
+    int reportedUserId
+  }
+
+  Report }o--|| User : "reporter"
+  Report }o--|| MarketItem : "marketItem"
+  Report }o--|| User : "reportedUser"
+
+  SuggestedStore {
+    int id
+    varchar nombre
+    text descripcion
+    varchar urlBusqueda
+    varchar tipoBusqueda
+    varchar urlBase
+    varchar direccion
+    varchar telefono
+    varchar logo
+    varchar region
+    varchar tipo
+    varchar status
+    timestamp createdAt
+    int userId
+  }
+
+  SuggestedStore }o--|| User : "user"
+
+  Tienda {
+    int id
+    varchar nombre
+    text descripcion
+    decimal valoracion
+    varchar urlBusqueda
+    varchar tipoBusqueda
+    varchar urlBase
+    varchar direccion
+    varchar telefono
+    varchar logo
+    timestamp ultimaActualizacion
+    boolean activo
+    varchar region
+    varchar tipo
+  }
+
+
+  TiendaReview {
+    int id
+    int tiendaId
+    int userId
+    text content
+    int rating
+    timestamp createdAt
+    timestamp updatedAt
+  }
+
+  TiendaReview }o--|| Tienda : "tienda"
+  TiendaReview }o--|| User : "user"
+
+  User {
+    int id
+    varchar googleId
+    varchar email
+    varchar name
+    varchar picture
+    simple-json socialLinks
+    varchar role
+    boolean approved
+    boolean banned
+    boolean acceptedTerms
+    timestamp termsAcceptedAt
+    timestamp createdAt
+  }
+
+
+  UserCollection {
+    int id
+    boolean isOwned
+    int quantity
+    varchar condition
+    varchar language
+    varchar foilType
+    timestamp addedAt
+    int userId
+    int cartaId
+    int customCollectionId FK
+  }
+
+  UserCollection }o--|| User : "user"
+  UserCollection }o--|| Carta : "carta"
+  UserCollection }o--|| CustomCollection : "customCollection"
+
+  UserComment {
+    int id
+    int senderId
+    int receiverId
+    text content
+    int rating
+    boolean isReported
+    timestamp createdAt
+    timestamp updatedAt
+  }
+
+  UserComment }o--|| User : "sender"
+  UserComment }o--|| User : "receiver"
+

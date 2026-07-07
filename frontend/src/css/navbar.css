@@ -61,6 +61,7 @@
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  white-space: nowrap;
 }
 
 .navbar-item:hover {

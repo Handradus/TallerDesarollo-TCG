@@ -27,9 +27,13 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cors());
 
 // Rate Limiter
+// IMPORTANTE: Al estar detrás de Nginx/Docker, Express necesita confiar en el proxy
+// para poder leer la IP real del usuario. Si no, todos los usuarios comparten el mismo límite.
+app.set('trust proxy', 1);
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 2000, // Limit each IP to 2000 requests per windowMs (Aumentado de 100 a 2000)
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
