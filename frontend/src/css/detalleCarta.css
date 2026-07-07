@@ -104,12 +104,12 @@
 }
 
 .carta-detalle {
-  background: rgba(139, 137, 137, 0.95);
+  background: rgba(220, 224, 230, 0.95); /* Tono plomo muy suave, casi blanco */
   backdrop-filter: blur(10px);
   border-radius: 24px;
   padding: 3rem;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   animation: fadeInUp 0.6s ease-out;
 }
 
@@ -282,10 +282,7 @@
 .alternativas-edicion-panel {
   margin: 0 0 2rem 0;
   padding: 1.2rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.93);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  /* Eliminado el background blanco y bordes para que sea una sola card global */
 }
 
 .alternativas-edicion-header {
@@ -372,10 +369,7 @@
 .carta-imagen {
   position: relative;
   text-align: center;
-  background: linear-gradient(145deg, #f8fafc, #e2e8f0);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
 }
 
 .carta-imagen::before {
@@ -414,17 +408,13 @@
 }
 
 .precios {
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(102, 126, 234, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 1rem;
+  /* Eliminado background y sombra para unificar diseño */
 }
 
 .precios:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+  transform: none;
+  box-shadow: none;
 }
 
 .precios h3 {

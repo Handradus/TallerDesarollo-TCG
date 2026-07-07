@@ -903,7 +903,7 @@ export default function CartaDetalle() {
                     className={`pricecharting-toggle ${vistaPriceCharting === 'actual' ? 'active' : ''}`}
                     onClick={() => setVistaPriceCharting('actual')}
                   >
-                    Precio actual
+                    Precio de referencia
                   </button>
                   <button
                     type="button"
@@ -937,7 +937,7 @@ export default function CartaDetalle() {
                         {preciosPriceCharting.precioPriceCharting ? (
                           <div className="precio-grid">
                             <div className="precio-item">
-                              <strong>Precio actual:</strong> ${preciosPriceCharting.precioPriceCharting}
+                              <strong>Precio de referencia:</strong> ${preciosPriceCharting.precioPriceCharting}
                             </div>
                           </div>
                         ) : (
@@ -1012,6 +1012,29 @@ export default function CartaDetalle() {
                   </div>
                 )}
               </div>
+
+              {carta.tiendasDisponibles && carta.tiendasDisponibles.length > 0 && (
+                (() => {
+                  const tiendasConPrecio = carta.tiendasDisponibles.filter(t => t.precio != null && t.precio !== '');
+                  if (tiendasConPrecio.length === 0) return null;
+                  const tiendaMasBarata = tiendasConPrecio.reduce((min, t) => {
+                    const p1 = parseInt(String(min.precio).replace(/[^\d]/g, ''), 10) || Infinity;
+                    const p2 = parseInt(String(t.precio).replace(/[^\d]/g, ''), 10) || Infinity;
+                    return p2 < p1 ? t : min;
+                  }, tiendasConPrecio[0]);
+                  return (
+                    <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '0.95rem', color: '#166534' }}>
+                      <strong>🏷️ Mejor precio en tiendas:</strong> ${tiendaMasBarata.precio} en{' '}
+                      <button 
+                        onClick={() => handleTiendaClick(tiendaMasBarata)} 
+                        style={{ background: 'none', border: 'none', color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit', fontWeight: 'bold' }}
+                      >
+                        {tiendaMasBarata.nombre}
+                      </button>
+                    </div>
+                  );
+                })()
+              )}
 
               <p className="precio-disclaimer">
                 💡 Los precios son referenciales y pueden variar según la condición y disponibilidad.
