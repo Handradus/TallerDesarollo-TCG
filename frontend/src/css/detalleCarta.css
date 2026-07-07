@@ -549,26 +549,28 @@
 }
 
 .detalle-tab {
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+  color: #4b5563;
   border-radius: 999px;
   padding: 0.8rem 1.2rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
 }
 
 .detalle-tab:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.08);
+  color: #111827;
 }
 
 .detalle-tab.active {
   background: linear-gradient(135deg, #111827 0%, #374151 100%);
-  border-color: rgba(255, 255, 255, 0.55);
-  box-shadow: 0 10px 22px rgba(17, 24, 39, 0.25);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.2);
 }
 
 /* Sección completa de tiendas - independiente */
