@@ -9,7 +9,7 @@
     width: 100%;
     height: calc(100vh - 140px); /* Ajustar según altura del header */
     min-height: 600px;
-    background-color: var(--card-bg, #ffffff);
+    background-color: var(--card-bg, rgba(235, 240, 245, 0.95));
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     overflow: hidden;
@@ -136,7 +136,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: #ffffff;
+    background: #f8fafc; /* Un gris muy sutil en lugar de blanco puro */
 }
 
 .chat-empty-state {
@@ -146,7 +146,7 @@
     justify-content: center;
     color: #888;
     font-size: 1.1rem;
-    background: #fdfdfd;
+    background: #f8fafc;
 }
 
 .chat-header {
@@ -154,7 +154,8 @@
     border-bottom: 1px solid var(--border-color, #e0e0e0);
     display: flex;
     align-items: center;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
     box-shadow: 0 2px 5px rgba(0,0,0,0.02);
     z-index: 2;
 }
@@ -240,7 +241,8 @@
 /* --- Área de Entrada (Responder) --- */
 .chat-input-area {
     padding: 15px 20px;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
     border-top: 1px solid var(--border-color, #e0e0e0);
     display: flex;
     gap: 10px;

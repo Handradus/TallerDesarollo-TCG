@@ -408,8 +408,10 @@
 }
 
 .precios {
-  padding: 1rem;
-  /* Eliminado background y sombra para unificar diseño */
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.03); /* Un plomo extra muy sutil */
+  border: 1px solid rgba(0, 0, 0, 0.05); /* Borde divisor suave */
+  border-radius: 16px;
 }
 
 .precios:hover {
