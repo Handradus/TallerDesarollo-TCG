@@ -51,11 +51,10 @@
   box-shadow: 0 4px 16px rgba(100, 108, 255, 0.3);
 }
 
-/* Sección de búsqueda */
 .search-section {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(100, 108, 255, 0.1);
   display: flex;
@@ -68,7 +67,7 @@
 .carousels-section {
   margin-bottom: 3rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(70, 130, 180, 0.1);
   border: 1px solid rgba(70, 130, 180, 0.1);
@@ -199,7 +198,7 @@
   font-weight: 500;
   margin: 1.5rem 0 0 0;
   padding: 1rem;
-  background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   border-radius: 12px;
   border-left: 4px solid #28a745;
   max-width: 600px;
