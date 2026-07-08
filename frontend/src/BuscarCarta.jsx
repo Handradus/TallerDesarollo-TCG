@@ -666,9 +666,9 @@ export default function BuscarCartas() {
               gap: '15px',
               margin: '10px 0 20px 0',
               padding: '15px',
-              backgroundColor: '#f8f9fa',
+              backgroundColor: 'var(--panel-bg)',
               borderRadius: '8px',
-              border: '1px solid #e0e0e0'
+              border: '1px solid var(--panel-border)'
             }}>
               
               {/* Barra de herramientas para Selección Múltiple */}
@@ -679,7 +679,7 @@ export default function BuscarCartas() {
                   alignItems: 'center',
                   gap: '15px',
                   paddingBottom: '15px',
-                  borderBottom: '1px solid #ddd',
+                  borderBottom: '1px solid var(--panel-border)',
                   flexWrap: 'wrap'
                 }}>
                   <button
@@ -804,8 +804,9 @@ export default function BuscarCartas() {
                   }}
                   style={{
                     padding: '5px 10px',
-                    background: '#f3f4f6',
-                    border: '1px solid #ddd',
+                    background: 'var(--sub-panel-bg)',
+                    border: '1px solid var(--panel-border)',
+                    color: 'var(--text-primary)',
                     borderRadius: '4px',
                     cursor: 'pointer',
                     fontSize: '0.8rem'
@@ -921,10 +922,10 @@ export default function BuscarCartas() {
               cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
-              border: isMultiSelectMode && selectedCards.has(carta.id) ? '3px solid #9C27B0' : '1px solid #e0e0e0',
+              border: isMultiSelectMode && selectedCards.has(carta.id) ? '3px solid #9C27B0' : '1px solid var(--panel-border)',
               borderRadius: '16px',
               padding: '1.5rem',
-              background: isMultiSelectMode && selectedCards.has(carta.id) ? 'rgba(156, 39, 176, 0.05)' : 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+              background: isMultiSelectMode && selectedCards.has(carta.id) ? 'rgba(156, 39, 176, 0.15)' : 'var(--panel-bg)',
               boxShadow: isMultiSelectMode && selectedCards.has(carta.id) ? '0 8px 25px rgba(156, 39, 176, 0.3)' : '0 4px 20px rgba(0, 0, 0, 0.08)',
               transition: 'all 0.2s ease',
               minHeight: '450px',
@@ -941,7 +942,7 @@ export default function BuscarCartas() {
                 width: '28px',
                 height: '28px',
                 borderRadius: '50%',
-                backgroundColor: selectedCards.has(carta.id) ? '#9C27B0' : 'white',
+                backgroundColor: selectedCards.has(carta.id) ? '#9C27B0' : 'var(--panel-bg)',
                 border: '2px solid #9C27B0',
                 display: 'flex',
                 alignItems: 'center',

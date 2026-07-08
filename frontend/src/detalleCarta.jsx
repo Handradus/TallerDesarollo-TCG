@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import Swal from 'sweetalert2';
 import ScrapingLoader from './components/ScrapingLoader';
-import { Coins, Heart, Label } from 'pixelarticons/react';
+import { Coins, Heart, Label, Lightbulb } from 'pixelarticons/react';
 import PixelIcon from './components/PixelIcon';
 import {
   ResponsiveContainer,
@@ -1027,11 +1027,11 @@ export default function CartaDetalle() {
                     return p2 < p1 ? t : min;
                   }, tiendasConPrecio[0]);
                   return (
-                    <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '0.95rem', color: '#166534' }}>
+                    <div style={{ marginTop: '15px', padding: '10px', background: 'var(--sub-panel-bg)', border: '1px solid rgba(255, 215, 0, 0.3)', borderRadius: '8px', fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                       <strong><PixelIcon icon={Coins} size={18} style={{ color: '#ffd700', marginRight: '4px' }} /> Mejor precio en tiendas:</strong> ${tiendaMasBarata.precio} en{' '}
                       <button 
                         onClick={() => handleTiendaClick(tiendaMasBarata)} 
-                        style={{ background: 'none', border: 'none', color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit', fontWeight: 'bold' }}
+                        style={{ background: 'none', border: 'none', color: '#ffd700', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit', fontWeight: 'bold' }}
                       >
                         {tiendaMasBarata.nombre}
                       </button>
@@ -1041,7 +1041,7 @@ export default function CartaDetalle() {
               )}
 
               <p className="precio-disclaimer">
-                💡 Los precios son referenciales y pueden variar según la condición y disponibilidad.
+                <PixelIcon icon={Lightbulb} size={16} style={{ color: '#ffd700', marginRight: '4px', filter: 'drop-shadow(0 0 2px rgba(255, 215, 0, 0.4))' }} /> Los precios son referenciales y pueden variar según la condición y disponibilidad.
               </p>
             </div>
           </div>
