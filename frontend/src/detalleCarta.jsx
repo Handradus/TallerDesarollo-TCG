@@ -5,6 +5,8 @@ import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import Swal from 'sweetalert2';
 import ScrapingLoader from './components/ScrapingLoader';
+import { Coins, Heart, Label } from 'pixelarticons/react';
+import PixelIcon from './components/PixelIcon';
 import {
   ResponsiveContainer,
   LineChart,
@@ -806,7 +808,9 @@ export default function CartaDetalle() {
               style={{ padding: '10px 20px', fontSize: '1.2rem', backgroundColor: '#9C27B0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
               title="Marcar como 'Lo Quiero' (se mostrará gris en tu colección)"
             >
-              ❤️ Lo Quiero
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <PixelIcon icon={Heart} size={20} style={{ color: '#ff6b81', filter: 'drop-shadow(0 2px 4px rgba(255, 107, 129, 0.4))' }} /> Lo Quiero
+              </span>
             </button>
             <button
               onClick={venderCarta}
@@ -1024,7 +1028,7 @@ export default function CartaDetalle() {
                   }, tiendasConPrecio[0]);
                   return (
                     <div style={{ marginTop: '15px', padding: '10px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '0.95rem', color: '#166534' }}>
-                      <strong>🏷️ Mejor precio en tiendas:</strong> ${tiendaMasBarata.precio} en{' '}
+                      <strong><PixelIcon icon={Coins} size={18} style={{ color: '#ffd700', marginRight: '4px' }} /> Mejor precio en tiendas:</strong> ${tiendaMasBarata.precio} en{' '}
                       <button 
                         onClick={() => handleTiendaClick(tiendaMasBarata)} 
                         style={{ background: 'none', border: 'none', color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit', fontWeight: 'bold' }}
@@ -1511,7 +1515,9 @@ export default function CartaDetalle() {
         <div className="modal-overlay" onClick={() => setMostrarModalDeseado(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
             <button className="modal-close" onClick={() => setMostrarModalDeseado(false)}>✕</button>
-            <h2 style={{ marginTop: 0, color: '#333' }}>❤️ Lo Quiero</h2>
+            <h2 style={{ marginTop: 0, color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <PixelIcon icon={Heart} size={24} style={{ color: '#ff6b81' }} /> Lo Quiero
+            </h2>
             <p style={{ color: '#666', marginBottom: '15px' }}>La carta se guardará como "deseada" en tu colección.</p>
 
             <div style={{ margin: '20px 0' }}>
@@ -1550,9 +1556,9 @@ export default function CartaDetalle() {
               <button
                 className="btn-primary"
                 onClick={confirmarDeseado}
-                style={{ padding: '8px 15px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                style={{ padding: '8px 15px', background: '#9C27B0', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                ❤️ Confirmar
+                <PixelIcon icon={Heart} size={18} style={{ color: '#ffcfd6' }} /> Confirmar
               </button>
             </div>
           </div>

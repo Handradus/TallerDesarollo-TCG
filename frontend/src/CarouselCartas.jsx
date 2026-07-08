@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css/CarouselCartas.css';
-
+import { Card } from 'pixelarticons/react';
+import PixelIcon from './components/PixelIcon';
 export default function CarouselCartas() {
   const [cartas, setCartas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +57,7 @@ export default function CarouselCartas() {
   if (cartas.length === 0) {
     return (
       <div className="carousel-container">
-        <h3>🃏 Últimas cartas vistas</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}><PixelIcon icon={Card} size={20} /> Últimas cartas vistas</h3>
         <div className="carousel-empty">¡Busca algunas cartas para verlas aquí!</div>
       </div>
     );
@@ -64,7 +65,7 @@ export default function CarouselCartas() {
 
   return (
     <div className="carousel-container">
-      <h3>🃏 Últimas cartas vistas</h3>
+      <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}><PixelIcon icon={Card} size={20} /> Últimas cartas vistas</h3>
       <div className="carousel-cartas-wrapper">
         <div className="carousel-cartas-track">
           {/* Triplicamos las cartas para crear un efecto de loop infinito perfecto */}
