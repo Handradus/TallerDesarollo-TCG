@@ -597,7 +597,7 @@ export default function BuscarCartas() {
           margin: '15px 0 5px 0',
           fontSize: '0.9rem'
         }}>
-          <span style={{ fontWeight: '500', color: '#555' }}>Buscar:</span>
+          <span style={{ fontWeight: '500', color: 'var(--text-secondary)' }}>Buscar:</span>
           <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <input
               type="radio"

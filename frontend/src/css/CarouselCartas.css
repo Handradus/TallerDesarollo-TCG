@@ -8,7 +8,7 @@
   overflow: hidden;
 }
 
-.carousel-cartas-header h2 {
+.carousel-container h3 {
   color: var(--text-primary);
   font-size: 1.5rem;
   margin-bottom: 1.5rem;

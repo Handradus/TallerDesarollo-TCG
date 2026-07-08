@@ -529,7 +529,7 @@
     margin-top: 15px;
 }
 
-.filters-row select.filter-select {
+select.filter-select, .filters-row select.filter-select {
     padding: 0.5rem 1rem;
     border: 1px solid var(--panel-border);
     border-radius: 8px;
@@ -540,13 +540,13 @@
     min-width: 150px;
 }
 
-.filters-row select.filter-select:hover {
+select.filter-select:hover, .filters-row select.filter-select:hover {
     border-color: #764ba2;
     box-shadow: 0 4px 12px rgba(118, 75, 162, 0.1);
     transform: translateY(-1px);
 }
 
-.filters-row select.filter-select:focus {
+select.filter-select:focus, .filters-row select.filter-select:focus {
     border-color: #764ba2;
     box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.15);
 }
