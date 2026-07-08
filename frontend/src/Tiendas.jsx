@@ -200,7 +200,7 @@ export default function Tiendas() {
         </div>
 
         {/* Filters Row */}
-        <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+        <div className="filters-row" style={{ marginTop: '10px' }}>
           <select
             value={typeFilter}
             onChange={e => setTypeFilter(e.target.value)}

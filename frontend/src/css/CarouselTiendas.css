@@ -1,15 +1,15 @@
 /* CSS para Carousel de Tiendas */
 .carousel-tiendas-container {
-  background: transparent;
+  background: var(--panel-bg);
   margin: 1rem 0;
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
 
 .carousel-tiendas-header h2 {
-  color: #1f2937;
+  color: var(--text-primary);
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
   text-align: center;
@@ -50,14 +50,14 @@
 .carousel-tienda-item {
   flex: 0 0 auto;
   min-width: 180px;
-  background: rgba(248, 250, 252, 0.9);
+  background: var(--panel-bg);
   border-radius: 8px;
   padding: 1rem;
   text-align: center;
   cursor: pointer;
-  border: 2px solid transparent;
+  border: 2px solid var(--panel-border);
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -66,9 +66,9 @@
 }
 
 .carousel-tienda-item:hover {
-  border-color: #3b82f6;
+  border-color: var(--accent-primary);
   transform: translateY(-3px) scale(1.05);
-  background: transparent;
+  background: var(--sub-panel-bg);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   z-index: 10;
   position: relative;
@@ -97,9 +97,16 @@
   transform: scale(1.1);
 }
 
-.carousel-tienda-item h3,
+.carousel-tienda-item h3 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  text-align: center;
+}
+
 .tienda-nombre-fallback {
-  color: #1f2937;
+  color: var(--text-primary);
   font-size: 0.9rem;
   margin: 0;
   font-weight: 600;
