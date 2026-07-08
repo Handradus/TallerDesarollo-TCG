@@ -54,7 +54,7 @@
 .search-section {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: var(--sub-panel-bg);
+  background: var(--panel-bg);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(100, 108, 255, 0.1);
   display: flex;
@@ -67,10 +67,10 @@
 .carousels-section {
   margin-bottom: 3rem;
   padding: 1.5rem;
-  background: var(--sub-panel-bg);
+  background: var(--panel-bg);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(70, 130, 180, 0.1);
-  border: 1px solid var(--sub-panel-border);
+  border: 1px solid var(--panel-border);
 }
 
 /* Contenedor para input + botón */
@@ -198,7 +198,7 @@
   font-weight: 500;
   margin: 1.5rem 0 0 0;
   padding: 1rem;
-  background: var(--sub-panel-bg);
+  background: var(--panel-bg);
   border-radius: 12px;
   border-left: 4px solid #28a745;
   max-width: 600px;
@@ -225,7 +225,7 @@
 
 /* Controles de ordenamiento */
 .sort-controls {
-  background: var(--sub-panel-bg);
+  background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;

@@ -133,6 +133,18 @@
     border: 1px solid var(--panel-border);
 }
 
+.card-item {
+    background: var(--panel-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    border: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+}
+
 .card-item:hover {
     transform: translateY(-8px) scale(1.02);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
