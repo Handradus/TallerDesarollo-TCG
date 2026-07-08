@@ -1466,7 +1466,7 @@ export default function CartaDetalle() {
               <select
                 value={selectedBinder}
                 onChange={e => setSelectedBinder(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem', marginBottom: selectedBinder === 'NEW' ? '10px' : '0' }}
+                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', marginBottom: selectedBinder === 'NEW' ? '10px' : '0' }}
               >
                 <option value="">🗂️ Colección General</option>
                 {binders.map(b => (
@@ -1481,7 +1481,7 @@ export default function CartaDetalle() {
                   value={newBinderName}
                   onChange={e => setNewBinderName(e.target.value)}
                   autoFocus
-                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', boxSizing: 'border-box' }}
                 />
               )}
             </div>
@@ -1490,7 +1490,7 @@ export default function CartaDetalle() {
               <button
                 className="btn-secondary"
                 onClick={() => setMostrarModalColeccion(false)}
-                style={{ padding: '8px 15px', border: '1px solid #ccc', background: '#f5f5f5', borderRadius: '4px', cursor: 'pointer' }}
+                style={{ padding: '8px 15px', border: '1px solid var(--panel-border)', background: 'var(--sub-panel-bg)', borderRadius: '4px', cursor: 'pointer' }}
               >
                 Cancelar
               </button>
@@ -1519,7 +1519,7 @@ export default function CartaDetalle() {
               <select
                 value={selectedBinderDeseado}
                 onChange={e => setSelectedBinderDeseado(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem', marginBottom: selectedBinderDeseado === 'NEW' ? '10px' : '0' }}
+                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', marginBottom: selectedBinderDeseado === 'NEW' ? '10px' : '0' }}
               >
                 <option value="">🗂️ Colección General</option>
                 {binders.map(b => (
@@ -1534,7 +1534,7 @@ export default function CartaDetalle() {
                   value={newBinderNameDeseado}
                   onChange={e => setNewBinderNameDeseado(e.target.value)}
                   autoFocus
-                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '1rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', boxSizing: 'border-box' }}
                 />
               )}
             </div>
@@ -1543,7 +1543,7 @@ export default function CartaDetalle() {
               <button
                 className="btn-secondary"
                 onClick={() => setMostrarModalDeseado(false)}
-                style={{ padding: '8px 15px', border: '1px solid #ccc', background: '#f5f5f5', borderRadius: '4px', cursor: 'pointer' }}
+                style={{ padding: '8px 15px', border: '1px solid var(--panel-border)', background: 'var(--sub-panel-bg)', borderRadius: '4px', cursor: 'pointer' }}
               >
                 Cancelar
               </button>

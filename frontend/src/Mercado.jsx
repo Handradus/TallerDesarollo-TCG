@@ -194,7 +194,7 @@ export default function Mercado() {
                                                 fontSize: '0.9rem'
                                             }}>${item.price}</span>
 
-                                            <span style={{ fontSize: '0.8rem', color: '#666', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                 <PixelIcon icon={User} size={16} /> <a href={`/profile/${item.user.id}`} target="_blank" rel="noopener noreferrer" style={{ color: '#667eea', textDecoration: 'none', fontWeight: 'bold' }}>{item.user.name}</a>
                                             </span>
                                         </div>
@@ -212,7 +212,7 @@ export default function Mercado() {
                                             )}
                                         </div>
 
-                                        {item.realImage && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#666', marginBottom: '8px', background: '#eee', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}><PixelIcon icon={Camera} size={14} /> Foto Real</span>}
+                                        {item.realImage && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px', background: 'var(--sub-panel-bg)', padding: '2px 6px', borderRadius: '4px', width: 'fit-content' }}><PixelIcon icon={Camera} size={14} /> Foto Real</span>}
 
                                         {item.description && (
                                             <p style={{ fontSize: '0.85rem', color: '#777', fontStyle: 'italic', marginBottom: '10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -259,7 +259,7 @@ export default function Mercado() {
                         <button className="modal-close" onClick={() => setSelectedItem(null)}>&times;</button>
                         <h2 style={{ marginTop: 0, color: '#333' }}>Contactar Vendedor</h2>
 
-                        <div style={{ background: '#f9f9f9', padding: '15px', borderRadius: '10px', marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'flex-start', flexDirection: selectedItem.realImage ? 'column' : 'row' }}>
+                        <div style={{ background: 'var(--sub-panel-bg)', padding: '15px', borderRadius: '10px', marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'flex-start', flexDirection: selectedItem.realImage ? 'column' : 'row' }}>
                             {selectedItem.realImage ? (
                                 <div style={{ width: '100%', textAlign: 'center' }}>
                                     <img src={`${apiUrl}${selectedItem.realImage}`} alt="Real State" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
@@ -272,7 +272,7 @@ export default function Mercado() {
                             <div style={{ width: '100%' }}>
                                 <h4 style={{ margin: 0 }}>{selectedItem.carta.nombre}</h4>
                                 <p style={{ margin: '5px 0', color: '#4CAF50', fontWeight: 'bold' }}>${selectedItem.price}</p>
-                                <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Vendedor: {selectedItem.user.name}</p>
+                                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Vendedor: {selectedItem.user.name}</p>
                             </div>
                         </div>
 
@@ -302,11 +302,11 @@ export default function Mercado() {
                             Si esta publicación incumple las normas (ej: foto falsa, fraude, contenido inapropiado), envíanos un reporte detallado.
                         </p>
 
-                        <div style={{ background: '#f9f9f9', padding: '15px', borderRadius: '10px', marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
+                        <div style={{ background: 'var(--sub-panel-bg)', padding: '15px', borderRadius: '10px', marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
                             <img src={reportItem.realImage ? `${apiUrl}${reportItem.realImage}` : reportItem.carta.imagenPequena} alt="" style={{ height: '80px', borderRadius: '4px' }} />
                             <div>
                                 <h4 style={{ margin: 0 }}>{reportItem.carta.nombre}</h4>
-                                <p style={{ margin: '5px 0', fontSize: '0.85rem', color: '#666' }}>Vendedor: {reportItem.user.name}</p>
+                                <p style={{ margin: '5px 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Vendedor: {reportItem.user.name}</p>
                             </div>
                         </div>
 

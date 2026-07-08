@@ -329,8 +329,8 @@ export default function Coleccion() {
                 
                 {/* Custom Properties Badges */}
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '5px' }}>
-                    {card.condition && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.condition}</span>}
-                    {card.language && <span style={{fontSize: '0.7rem', background: '#eee', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd'}}>{card.language}</span>}
+                    {card.condition && <span style={{fontSize: '0.7rem', background: 'var(--sub-panel-bg)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--panel-border)'}}>{card.condition}</span>}
+                    {card.language && <span style={{fontSize: '0.7rem', background: 'var(--sub-panel-bg)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--panel-border)'}}>{card.language}</span>}
                     {card.foilType && card.foilType !== 'Normal' && <span style={{fontSize: '0.7rem', background: 'linear-gradient(45deg, #ffd700, #ff8c00)', color: 'white', padding: '2px 6px', borderRadius: '4px'}}>{card.foilType}</span>}
                 </div>
 
@@ -460,7 +460,7 @@ export default function Coleccion() {
                             {rarities.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
 
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'white', padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'var(--input-bg, var(--panel-bg))', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--panel-border)' }}>
                             <input
                                 type="checkbox"
                                 checked={showPrices}

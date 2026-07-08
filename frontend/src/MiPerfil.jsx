@@ -73,7 +73,7 @@ export default function MiPerfil() {
                     />
                 </div>
                 <h3>{user.name}</h3>
-                <p style={{ color: '#666', fontSize: '0.9rem' }}>{user.email}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{user.email}</p>
 
                 <div style={{ marginTop: '20px' }}>
                     <Link to={`/profile/${user.id}`} className="btn-secondary" style={{ display: 'block', width: '100%', marginBottom: '10px', textAlign: 'center' }}>
@@ -88,9 +88,9 @@ export default function MiPerfil() {
                     <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><PixelIcon icon={MagicEdit} size={16} /> Editar Perfil</h1>
                 </div>
 
-                <div style={{ background: 'white', padding: '25px', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#444' }}>Enlaces Sociales</h3>
-                    <p style={{ marginBottom: '20px', color: '#666', fontSize: '0.9rem' }}>
+                <div style={{ background: 'var(--panel-bg)', padding: '25px', borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+                    <h3 style={{ marginTop: 0, marginBottom: '20px', color: 'var(--text-primary)' }}>Enlaces Sociales</h3>
+                    <p style={{ marginBottom: '20px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                         Agrega enlaces a tus redes para generar confianza con otros usuarios.
                     </p>
 
