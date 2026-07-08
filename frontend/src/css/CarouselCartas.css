@@ -1,6 +1,6 @@
 /* CSS para Carousel de Cartas Recientes */
 .carousel-cartas-container {
-  background: white;
+  background: transparent;
   margin: 1rem 0;
   padding: 2rem;
   border-radius: 12px;
@@ -61,7 +61,7 @@
 .carousel-carta-item:hover {
   transform: translateY(-5px) scale(1.05);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  background: white;
+  background: transparent;
   z-index: 10;
   position: relative;
 }

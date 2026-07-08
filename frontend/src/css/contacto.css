@@ -11,7 +11,7 @@
   align-items: center;
   margin-bottom: 2rem;
   padding: 1rem 0;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--panel-border);
 }
 
 .contacto-main-title {
@@ -19,7 +19,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: 20px;
-  background-color: #efedf4;
+  background-color: var(--sub-panel-bg);
   padding: 15px 30px;
   border-radius: 15px;
   color: #6b52ae;
@@ -33,7 +33,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
-  background: white;
+  background: var(--panel-bg);
   padding: 30px;
   border-radius: 15px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
@@ -45,7 +45,7 @@
 }
 
 .contacto-info p {
-  color: #4a5568;
+  color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 1.5rem;
   font-size: 1.05rem;
@@ -60,11 +60,11 @@
 .beneficios-lista li {
   margin-bottom: 0.8rem;
   font-size: 1.05rem;
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 .info-extra {
-  background: #f8f9fa;
+  background: var(--sub-panel-bg);
   padding: 15px;
   border-radius: 10px;
   border-left: 4px solid #6b52ae;
@@ -88,14 +88,16 @@
 
 .form-group label {
   font-weight: 600;
-  color: #2d3748;
+  color: var(--text-primary);
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   padding: 10px 15px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--input-border, var(--panel-border));
+  background-color: var(--input-bg, #fff);
+  color: var(--text-primary);
   border-radius: 8px;
   font-size: 1rem;
   transition: all 0.2s;

@@ -31,6 +31,47 @@
   --button-bg-success: #10b981;
   --button-bg-success-hover: #059669;
   --button-bg-dark: linear-gradient(135deg, #111827 0%, #374151 100%);
+
+  --input-bg: #ffffff;
+  --input-border: #ddd;
+  --card-bg: rgba(250, 250, 255, 0.95);
+  --card-hover: rgba(245, 245, 250, 1);
+  --divider: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] {
+  --bg-gradient-start: rgba(10, 10, 10, 0.95);
+  --bg-gradient-end: rgba(18, 18, 18, 0.95);
+  
+  --panel-bg: #1E1E1E;
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --sub-panel-bg: #2A2A2A;
+  --sub-panel-border: rgba(255, 255, 255, 0.06);
+  
+  --text-primary: #E5E5E5;
+  --text-secondary: #A0A0A0;
+  --text-inverse: #121212;
+  
+  --button-bg-accent: #3b82f6;
+  --button-bg-accent-hover: #60a5fa;
+  --accent-primary: #60a5fa;
+  --accent-subtle: rgba(96, 165, 250, 0.15);
+  --accent-subtle-hover: rgba(96, 165, 250, 0.25);
+  
+  --button-bg-secondary: linear-gradient(135deg, #333333 0%, #2A2A2A 100%);
+  --button-bg-danger: #f87171;
+  --button-bg-warning: #fbbf24;
+  --button-bg-warning-hover: #f59e0b;
+  --border-warning: rgba(251, 191, 36, 0.2);
+  --button-bg-success: #34d399;
+  --button-bg-success-hover: #10b981;
+  --button-bg-dark: linear-gradient(135deg, #2A2A2A 0%, #333333 100%);
+
+  --input-bg: #2A2A2A;
+  --input-border: rgba(255, 255, 255, 0.1);
+  --card-bg: #252525;
+  --card-hover: #2E2E2E;
+  --divider: rgba(255, 255, 255, 0.06);
 }
 
 /* Estilos globales */

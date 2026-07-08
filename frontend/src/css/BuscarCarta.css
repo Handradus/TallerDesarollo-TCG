@@ -54,7 +54,7 @@
 .search-section {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  background: var(--sub-panel-bg);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(100, 108, 255, 0.1);
   display: flex;
@@ -67,10 +67,10 @@
 .carousels-section {
   margin-bottom: 3rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  background: var(--sub-panel-bg);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(70, 130, 180, 0.1);
-  border: 1px solid rgba(70, 130, 180, 0.1);
+  border: 1px solid var(--sub-panel-border);
 }
 
 /* Contenedor para input + botón */
@@ -98,10 +98,10 @@
   width: 100%;
   padding: 0.8rem 1.2rem;
   font-size: 1.1rem;
-  border: 2px solid #ddd;
+  border: 2px solid var(--input-border);
   border-radius: 8px;
   transition: all 0.3s ease;
-  background-color: #fafafa;
+  background-color: var(--sub-panel-bg);
   box-sizing: border-box;
 }
 
@@ -109,7 +109,7 @@
   outline: none;
   border-color: #646cff;
   box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.1);
-  background-color: white;
+  background-color: var(--panel-bg);
 }
 
 /* Estado de advertencia para el input */
@@ -129,7 +129,7 @@
 }
 
 .search-input::placeholder {
-  color: #999;
+  color: var(--text-secondary);
   font-style: italic;
 }
 
@@ -193,12 +193,12 @@
 /* Información de búsqueda */
 .search-info {
   text-align: center;
-  color: #495057;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   font-weight: 500;
   margin: 1.5rem 0 0 0;
   padding: 1rem;
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  background: var(--sub-panel-bg);
   border-radius: 12px;
   border-left: 4px solid #28a745;
   max-width: 600px;
@@ -208,7 +208,7 @@
 
 /* Selector de tipo de búsqueda */
 .search-type-selector {
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--panel-bg);
   border-radius: 8px;
   padding: 8px 16px;
   border: 1px solid rgba(100, 108, 255, 0.2);
@@ -225,8 +225,8 @@
 
 /* Controles de ordenamiento */
 .sort-controls {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border: 1px solid #dee2e6;
+  background: var(--sub-panel-bg);
+  border: 1px solid var(--panel-border);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
 }
@@ -236,7 +236,7 @@
 }
 
 .sort-controls select {
-  background-color: white;
+  background-color: var(--input-bg);
   transition: all 0.2s ease;
 }
 
@@ -255,8 +255,8 @@
 }
 
 .sort-controls button:hover {
-  background: #e9ecef !important;
-  border-color: #adb5bd !important;
+  background: var(--sub-panel-bg) !important;
+  border-color: var(--panel-border) !important;
 }
 
 /* Grilla de cartas - FORZAR GRID LAYOUT COMPLETAMENTE */
@@ -317,7 +317,7 @@
 /* Mensajes específicos */
 .no-search-message {
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1.1rem;
   font-style: italic;
   margin: 2rem 0;
@@ -338,13 +338,13 @@
 
 /* Cada carta */
 .carta-item {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--panel-border);
   padding: 1.5rem;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  background: var(--panel-bg);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   cursor: pointer;
@@ -389,7 +389,7 @@
 
 .carta-item h2 {
   margin: 0 0 1rem 0;
-  color: #2c3e50;
+  color: var(--text-primary);
   font-size: 1.3rem;
   font-weight: 700;
   text-align: center;
@@ -427,13 +427,13 @@
 
 .carta-item p {
   margin: 0.3rem 0;
-  color: #495057;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   text-align: center;
 }
 
 .carta-item p strong {
-  color: #2c3e50;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -544,8 +544,8 @@
   position: fixed;
   bottom: 30px;
   right: 30px;
-  background: #e7e8ed ;
-  color: rgb(12, 12, 12);
+  background: var(--sub-panel-bg);
+  color: var(--text-primary);
   border: none;
   border-radius: 50%;
   width: 60px;
@@ -602,7 +602,7 @@
   top: 100% !important;
   left: 0 !important;
   right: 0 !important;
-  background-color: white !important;
+  background-color: var(--panel-bg) !important;
   border: 2px solid #646cff !important;
   border-top: none !important;
   border-radius: 0 0 8px 8px !important;
@@ -629,12 +629,12 @@
 .suggestion-item {
   padding: 12px 16px !important;
   cursor: pointer !important;
-  border-bottom: 1px solid #eee !important;
+  border-bottom: 1px solid var(--panel-border) !important;
   font-size: 14px !important;
   transition: background-color 0.15s ease !important;
   display: flex !important;
   align-items: center !important;
-  background-color: white !important;
+  background-color: var(--panel-bg) !important;
 }
 
 .suggestion-item:last-child {
@@ -642,11 +642,11 @@
 }
 
 .suggestion-item:hover {
-  background-color: #f8f9fa !important;
+  background-color: var(--sub-panel-bg) !important;
 }
 
 .suggestion-item:active {
-  background-color: #e9ecef !important;
+  background-color: var(--sub-panel-bg) !important;
 }
 
 /* Cuando las sugerencias están activas, cambiar bordes del input */

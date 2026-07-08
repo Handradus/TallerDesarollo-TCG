@@ -45,8 +45,8 @@ body {
     margin-top: 0;
     margin-bottom: 20px;
     font-size: 1.4rem;
-    color: #333;
-    border-bottom: 2px solid #eee;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--panel-border);
     padding-bottom: 10px;
 }
 
@@ -63,7 +63,7 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 500;
-    color: #555;
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -84,10 +84,10 @@ body {
     width: 100%;
     margin-top: 20px;
     padding: 12px;
-    background: white;
-    border: 2px dashed #ccc;
+    background: var(--panel-bg);
+    border: 2px dashed var(--panel-border);
     border-radius: 10px;
-    color: #666;
+    color: var(--text-secondary);
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s;
@@ -254,7 +254,7 @@ body {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #666;
+    color: var(--text-secondary);
     transition: color 0.2s;
 }
 
@@ -340,7 +340,7 @@ body {
 
 .msg-date {
     font-size: 0.85rem;
-    color: #888;
+    color: var(--text-secondary);
 }
 
 .msg-ref {
@@ -355,7 +355,7 @@ body {
 }
 
 .msg-body {
-    color: #ccc;
+    color: var(--text-secondary);
     line-height: 1.5;
 }
 
@@ -555,13 +555,13 @@ body {
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    background: white !important;
+    background: var(--panel-bg) !important;
     padding: 10px 16px !important;
     border-radius: 10px !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid var(--panel-border) !important;
     font-weight: 500;
     font-size: 0.9rem;
-    color: #444;
+    color: var(--text-secondary);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     transition: all 0.2s ease;
 }
@@ -577,10 +577,10 @@ body {
     -webkit-appearance: none;
     width: 18px;
     height: 18px;
-    border: 2px solid #ccc;
+    border: 2px solid var(--panel-border);
     border-radius: 5px;
     outline: none;
-    background-color: #fff;
+    background-color: var(--panel-bg);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -638,14 +638,14 @@ body {
 }
 
 .card-item .card-info button.btn-secondary.btn-sm {
-    background: #f1f3f7 !important;
-    color: #4f5b66 !important;
+    background: var(--sub-panel-bg) !important;
+    color: var(--text-secondary) !important;
     border: 1px solid rgba(0,0,0,0.04) !important;
 }
 
 .card-item .card-info button.btn-secondary.btn-sm:hover {
-    background: #e2e6f0 !important;
-    color: #1e293b !important;
+    background: var(--accent-subtle) !important;
+    color: var(--text-primary) !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
@@ -665,5 +665,5 @@ body {
 /* Special treatment for wanted cards */
 .collection-card.is-wanted {
     border: 2px dashed rgba(118, 75, 162, 0.3) !important;
-    background: rgba(255, 255, 255, 0.6) !important;
+    background: var(--panel-bg) !important;
 }

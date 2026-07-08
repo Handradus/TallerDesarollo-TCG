@@ -12,6 +12,7 @@ import {
   Plus, Search, Lightbulb, Moon
 } from 'pixelarticons/react';
 import PixelIcon from './PixelIcon';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function Navbar() {
   const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const { isDarkMode, toggleTheme } = useTheme();
 
   // Close mobile menu on navigation
   useEffect(() => {
@@ -260,6 +262,14 @@ export default function Navbar() {
           </div>
 
           <div className="navbar-auth" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button 
+              className="navbar-item theme-toggle-btn" 
+              onClick={toggleTheme}
+              title={isDarkMode ? "Modo Claro" : "Modo Oscuro"}
+              style={{ background: 'transparent', padding: '0.4rem 0.6rem', display: 'flex', alignItems: 'center' }}
+            >
+              <PixelIcon icon={isDarkMode ? Lightbulb : Moon} size={18} />
+            </button>
 
             {!user ? (
               <LoginButton />

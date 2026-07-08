@@ -115,7 +115,7 @@
 
 /* Mensaje de error */
 .error-message {
-  color: rgb(13, 9, 9);
+  color: var(--text-inverse);
   margin: 2rem 0;
 }
 

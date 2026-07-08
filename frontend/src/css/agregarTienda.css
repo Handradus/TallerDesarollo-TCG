@@ -2,7 +2,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
-  background: white;
+  background: var(--panel-bg);
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-top: 2rem;
@@ -14,11 +14,11 @@
   gap: 1rem;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid var(--panel-border);
 }
 
 .agregar-tienda-header h1 {
-  color: #2c3e50;
+  color: var(--text-primary);
   margin: 0;
   font-size: 2rem;
 }
@@ -65,15 +65,15 @@
 }
 
 .form-section {
-  background: #f8f9fa;
+  background: var(--sub-panel-bg);
   padding: 1.5rem;
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--panel-border);
 }
 
 .form-section h3 {
   margin: 0 0 1.5rem 0;
-  color: #495057;
+  color: var(--text-secondary);
   font-size: 1.2rem;
   font-weight: 600;
 }
@@ -98,11 +98,13 @@
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ced4da;
+  border: 1px solid var(--input-border, var(--panel-border));
   border-radius: 6px;
   font-size: 1rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   box-sizing: border-box;
+  background-color: var(--input-bg, var(--panel-bg));
+  color: var(--text-primary);
 }
 
 .form-group input:focus,
@@ -122,7 +124,7 @@
 .form-group small {
   display: block;
   margin-top: 0.25rem;
-  color: #6c757d;
+  color: var(--text-secondary);
   font-size: 0.875rem;
   font-style: italic;
 }
@@ -167,7 +169,7 @@
   gap: 1rem;
   justify-content: flex-end;
   padding-top: 1.5rem;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--panel-border);
 }
 
 .btn-cancelar {

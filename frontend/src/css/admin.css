@@ -5,9 +5,9 @@
 }
 
 .admin-container h1 {
-    color: #2c3e50;
+    color: var(--text-primary);
     margin-bottom: 1.5rem;
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid var(--panel-border);
     padding-bottom: 0.5rem;
 }
 
@@ -33,8 +33,8 @@
 }
 
 .suggestion-card {
-    background: white;
-    border: 1px solid #e0e0e0;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -48,16 +48,16 @@
 
 .suggestion-card h3 {
     margin: 0 0 1rem 0;
-    color: #34495e;
+    color: var(--text-primary);
 }
 
 .suggestion-card p {
     margin: 0.5rem 0;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .suggestion-card strong {
-    color: #333;
+    color: var(--text-primary);
 }
 
 .badge {
@@ -87,7 +87,7 @@
     margin-top: 1.5rem;
     display: flex;
     gap: 1rem;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--panel-border);
     padding-top: 1rem;
 }
 
@@ -136,7 +136,7 @@
 .mensajes-tabs {
     display: flex;
     gap: 0.5rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--panel-border);
     margin-bottom: 20px;
 }
 
@@ -146,7 +146,7 @@
     background: none;
     cursor: pointer;
     font-weight: 600;
-    color: #666;
+    color: var(--text-secondary);
     border-bottom: 3px solid transparent;
     transition: all 0.2s;
 }

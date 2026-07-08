@@ -151,7 +151,7 @@
 }
 
 .stat-item {
-  background: white;
+  background: var(--input-bg, var(--panel-bg));
   padding: 1rem;
   border-radius: 12px;
   text-align: center;
@@ -179,12 +179,12 @@
   display: block;
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
-  color: #2c3e50;
+  color: var(--text-primary);
 }
 
 /* Listas de cartas en resultado */
 .cartas-nuevas, .cartas-actualizadas, .cartas-errores {
-  background: white;
+  background: var(--input-bg, var(--panel-bg));
   border-radius: 12px;
   padding: 1.5rem;
   margin: 1rem 0;
@@ -496,11 +496,11 @@
   font-size: 1.1rem;
   border: 2px solid #ddd;
   border-radius: 8px;
-  background-color: #fafafa;
+  background-color: var(--sub-panel-bg);
   transition: all 0.3s ease;
   cursor: pointer;
   box-sizing: border-box;
-  color: #2c3e50;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
@@ -508,7 +508,7 @@
   outline: none;
   border-color: #ff6b35;
   box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.15);
-  background-color: white;
+  background-color: var(--panel-bg);
 }
 
 .supertipo-select:hover {
@@ -609,7 +609,7 @@
   font-size: 1rem;
   font-weight: 700;
   background: transparent;
-  color: #4a5568;
+  color: var(--text-secondary);
   border: none;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
