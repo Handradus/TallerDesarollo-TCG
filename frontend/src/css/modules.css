@@ -1,20 +1,10 @@
 /* Global Premium Overrides */
 :root {
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-bg: var(--panel-bg);
+    --glass-border: var(--panel-border);
     --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --secondary-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
     --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-}
-
-body {
-    background: #f0f2f5;
-    background-image:
-        radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-        radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
-        radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
-    background-attachment: fixed;
-    min-height: 100vh;
 }
 
 /* Base Layout Wrapper */
