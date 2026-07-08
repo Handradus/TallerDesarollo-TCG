@@ -9,7 +9,7 @@
     width: 100%;
     height: calc(100vh - 140px); /* Ajustar según altura del header */
     min-height: 600px;
-    background-color: var(--card-bg, rgba(235, 240, 245, 0.95));
+    background-color: var(--panel-bg);
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     overflow: hidden;
@@ -21,8 +21,8 @@
    ========================================================================== */
 .mensajes-tabs {
     display: flex;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
-    background: var(--bg-alt, #f8f9fa);
+    border-bottom: 1px solid var(--panel-border);
+    background: var(--sub-panel-bg);
 }
 
 .tab-btn {
@@ -32,21 +32,21 @@
     background: transparent;
     font-size: 1rem;
     font-weight: 600;
-    color: var(--text-secondary, #666);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
     border-bottom: 3px solid transparent;
 }
 
 .tab-btn:hover {
-    background-color: rgba(0, 0, 0, 0.03);
-    color: var(--primary-color, #6a11cb);
+    background-color: var(--sub-panel-bg);
+    color: var(--button-bg-accent);
 }
 
 .tab-btn.active {
-    color: var(--primary-color, #6a11cb);
-    border-bottom-color: var(--primary-color, #6a11cb);
-    background-color: #fff;
+    color: var(--button-bg-accent);
+    border-bottom-color: var(--button-bg-accent);
+    background-color: var(--panel-bg);
 }
 
 /* ==========================================================================
@@ -61,16 +61,16 @@
 /* --- Panel Izquierdo: Lista de Conversaciones --- */
 .conversations-sidebar {
     width: 320px;
-    border-right: 1px solid var(--border-color, #e0e0e0);
+    border-right: 1px solid var(--panel-border);
     display: flex;
     flex-direction: column;
-    background: var(--bg-alt, #f9f9f9);
+    background: var(--sub-panel-bg);
     overflow-y: auto;
 }
 
 .conversation-item {
     padding: 15px;
-    border-bottom: 1px solid var(--border-color, #eaeaea);
+    border-bottom: 1px solid var(--panel-border);
     cursor: pointer;
     transition: background 0.2s ease;
     display: flex;
@@ -79,12 +79,12 @@
 }
 
 .conversation-item:hover {
-    background-color: #f1f1f1;
+    background-color: var(--sub-panel-bg);
 }
 
 .conversation-item.active {
-    background-color: rgba(106, 17, 203, 0.08);
-    border-left: 4px solid var(--primary-color, #6a11cb);
+    background-color: var(--accent-subtle);
+    border-left: 4px solid var(--button-bg-accent);
 }
 
 .conv-header {
@@ -95,7 +95,7 @@
 
 .conv-name {
     font-weight: 600;
-    color: var(--text-color, #333);
+    color: var(--text-primary);
     font-size: 0.95rem;
     white-space: nowrap;
     overflow: hidden;
@@ -123,8 +123,8 @@
 }
 
 .unread-badge {
-    background-color: #ff3b30;
-    color: white;
+    background-color: var(--button-bg-danger);
+    color: var(--text-inverse);
     font-size: 0.7rem;
     font-weight: 700;
     padding: 2px 6px;
@@ -136,7 +136,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: #f8fafc; /* Un gris muy sutil en lugar de blanco puro */
+    background: var(--panel-bg);
 }
 
 .chat-empty-state {
@@ -144,17 +144,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #888;
+    color: var(--text-secondary);
     font-size: 1.1rem;
-    background: #f8fafc;
+    background: var(--panel-bg);
 }
 
 .chat-header {
     padding: 15px 20px;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    border-bottom: 1px solid var(--panel-border);
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--sub-panel-bg);
     backdrop-filter: blur(10px);
     box-shadow: 0 2px 5px rgba(0,0,0,0.02);
     z-index: 2;
@@ -173,7 +173,7 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
-    background-color: #f5f7fb;
+    background-color: var(--sub-panel-bg);
 }
 
 /* --- Burbujas de Mensaje --- */
@@ -204,15 +204,15 @@
 }
 
 .message-bubble.own {
-    background-color: var(--primary-color, #6a11cb);
-    color: white;
+    background-color: var(--button-bg-accent);
+    color: var(--text-inverse);
     border-bottom-right-radius: 4px;
 }
 
 .message-bubble.other {
-    background-color: #ffffff;
-    color: #333;
-    border: 1px solid #eaeaea;
+    background-color: var(--panel-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--panel-border);
     border-bottom-left-radius: 4px;
 }
 
@@ -241,9 +241,9 @@
 /* --- Área de Entrada (Responder) --- */
 .chat-input-area {
     padding: 15px 20px;
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--sub-panel-bg);
     backdrop-filter: blur(10px);
-    border-top: 1px solid var(--border-color, #e0e0e0);
+    border-top: 1px solid var(--panel-border);
     display: flex;
     gap: 10px;
 }
@@ -253,7 +253,9 @@
     resize: none;
     padding: 12px;
     border-radius: 8px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--text-primary);
     font-size: 0.95rem;
     font-family: inherit;
     transition: border-color 0.2s;
@@ -262,13 +264,13 @@
 
 .chat-input-area textarea:focus {
     outline: none;
-    border-color: var(--primary-color, #6a11cb);
+    border-color: var(--button-bg-accent);
 }
 
 .btn-send-reply {
     padding: 0 25px;
-    background-color: var(--primary-color, #6a11cb);
-    color: white;
+    background-color: var(--button-bg-accent);
+    color: var(--text-inverse);
     border: none;
     border-radius: 8px;
     font-weight: 600;
@@ -277,7 +279,7 @@
 }
 
 .btn-send-reply:hover:not(:disabled) {
-    background-color: #580ebd;
+    background-color: var(--button-bg-accent-hover);
 }
 
 .btn-send-reply:active:not(:disabled) {
@@ -295,7 +297,7 @@
 .tablon-contacto-layout {
     padding: 20px;
     overflow-y: auto;
-    background: #fdfdfd;
+    background: var(--panel-bg);
 }
 
 .contacto-grid {
@@ -305,11 +307,11 @@
 }
 
 .contacto-card {
-    background: #fff;
+    background: var(--sub-panel-bg);
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    border-top: 4px solid #2575fc;
+    border-top: 4px solid var(--button-bg-accent);
     transition: transform 0.2s;
 }
 
@@ -323,15 +325,15 @@
     justify-content: space-between;
     margin-bottom: 15px;
     font-size: 0.85rem;
-    color: #777;
-    border-bottom: 1px solid #eee;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--panel-border);
     padding-bottom: 10px;
 }
 
 .contacto-body {
     font-size: 0.95rem;
     line-height: 1.5;
-    color: #444;
+    color: var(--text-primary);
     white-space: pre-wrap; /* Respeta los saltos de línea del mensaje de contacto */
 }
 
@@ -353,7 +355,7 @@
     width: 100%;
     max-height: 35vh;
     border-right: none;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    border-bottom: 1px solid var(--panel-border);
   }
 
   .chat-main {

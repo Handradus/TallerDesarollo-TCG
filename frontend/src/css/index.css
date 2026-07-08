@@ -3,19 +3,79 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg-gradient-start: rgba(102, 126, 234, 0.75);
+  --bg-gradient-end: rgba(118, 75, 162, 0.75);
+  --bg-pattern: url('../assets/patron_poke.jpg');
+  
+  --panel-bg: rgba(250, 250, 255, 0.95);
+  --panel-border: rgba(255, 255, 255, 0.4);
+  --sub-panel-bg: rgba(0, 0, 0, 0.03);
+  --sub-panel-border: rgba(0, 0, 0, 0.05);
+  
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-inverse: #ffffff;
+  
+  --button-bg-accent: #2563eb;
+  --button-bg-accent-hover: #1d4ed8;
+  --accent-primary: #3b82f6;
+  --accent-subtle: rgba(59, 130, 246, 0.12);
+  --accent-subtle-hover: rgba(59, 130, 246, 0.2);
+  
+  --button-bg-secondary: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+  --button-bg-danger: #ef4444;
+  --button-bg-warning: #f59e0b;
+  --button-bg-warning-hover: #d97706;
+  --border-warning: rgba(245, 158, 11, 0.15);
+  --button-bg-success: #10b981;
+  --button-bg-success-hover: #059669;
+  --button-bg-dark: linear-gradient(135deg, #111827 0%, #374151 100%);
+}
+
+[data-theme="dark"] {
+  --bg-gradient-start: rgba(15, 23, 42, 0.95);
+  --bg-gradient-end: rgba(30, 20, 45, 0.95);
+  
+  --panel-bg: rgba(25, 30, 40, 0.95);
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --sub-panel-bg: rgba(0, 0, 0, 0.3);
+  --sub-panel-border: rgba(255, 255, 255, 0.1);
+  
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-inverse: #111827;
+  
+  --button-bg-accent: #3b82f6;
+  --button-bg-accent-hover: #60a5fa;
+  --accent-primary: #60a5fa;
+  --accent-subtle: rgba(96, 165, 250, 0.15);
+  --accent-subtle-hover: rgba(96, 165, 250, 0.25);
+  
+  --button-bg-secondary: linear-gradient(135deg, #475569 0%, #334155 100%);
+  --button-bg-danger: #f87171;
+  --button-bg-warning: #fbbf24;
+  --button-bg-warning-hover: #f59e0b;
+  --border-warning: rgba(251, 191, 36, 0.2);
+  --button-bg-success: #34d399;
+  --button-bg-success-hover: #10b981;
+  --button-bg-dark: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+}
+
 /* Estilos globales */
 body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  /* Fondo combinado: patrón Pokémon + gradiente encima (oscurecido para menor brillo) */
+  /* Fondo combinado con variables para Dark Mode */
   background: 
-    linear-gradient(135deg, rgba(65, 80, 150, 0.85) 0%, rgba(80, 50, 115, 0.85) 100%),
-    url('../assets/patron_poke.jpg');
+    linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%),
+    var(--bg-pattern);
   background-size: auto, 150px 150px;
-  background-repeat: no-repeat, repeat; /* Gradiente no repeat, patrón repeat */
+  background-repeat: no-repeat, repeat;
   background-attachment: fixed, fixed;
   min-height: 100vh;
+  transition: background 0.3s ease;
 }
 
 /* Prevent horizontal overflow on mobile */
