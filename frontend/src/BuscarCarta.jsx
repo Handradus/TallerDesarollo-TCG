@@ -13,7 +13,8 @@ import AdBanner from './components/AdBanner';
 import Swal from 'sweetalert2';
 import { getSpellingSuggestion } from './utils/similarity';
 import ScrapingLoader from './components/ScrapingLoader';
-
+import { Home, MagicEdit } from 'pixelarticons/react';
+import PixelIcon from './components/PixelIcon';
 export default function BuscarCartas() {
   const [nombre, setNombre] = useState('');
   const [cartas, setCartas] = useState([]);
@@ -511,7 +512,9 @@ export default function BuscarCartas() {
             className="btn-limpiar-busqueda"
             title="Volver al inicio"
           >
-            🏠 Limpiar Búsqueda
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <PixelIcon icon={Home} size={20} /> Limpiar Búsqueda
+            </div>
           </button>
         </div>
       )}
@@ -769,7 +772,9 @@ export default function BuscarCartas() {
                 onChange={(e) => setOrdenar(e.target.value)}
                 style={{
                   padding: '5px 10px',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--panel-border)',
+                  background: 'var(--sub-panel-bg)',
+                  color: 'var(--text-primary)',
                   borderRadius: '4px',
                   fontSize: '0.9rem'
                 }}
@@ -787,7 +792,9 @@ export default function BuscarCartas() {
                 onChange={(e) => setDireccion(e.target.value)}
                 style={{
                   padding: '5px 10px',
-                  border: '1px solid #ddd',
+                  border: '1px solid var(--panel-border)',
+                  background: 'var(--sub-panel-bg)',
+                  color: 'var(--text-primary)',
                   borderRadius: '4px',
                   fontSize: '0.9rem'
                 }}
@@ -866,15 +873,18 @@ export default function BuscarCartas() {
                   <div style={{
                     margin: '15px 0',
                     padding: '12px 20px',
-                    background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
+                    background: 'var(--sub-panel-bg)',
                     borderRadius: '8px',
+                    border: '1px solid var(--panel-border)',
                     borderLeft: '4px solid #0284c7',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
                     flexWrap: 'wrap'
                   }}>
-                    <span style={{ color: '#0369a1', fontWeight: 'bold' }}>🔮 ¿Quizás quisiste decir:</span>
+                    <span style={{ color: '#0284c7', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <PixelIcon icon={MagicEdit} size={18} style={{ color: '#0284c7' }} /> ¿Quizás quisiste decir:
+                    </span>
                     <button
                       onClick={() => {
                         setNombre(sugerencia);

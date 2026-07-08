@@ -843,7 +843,9 @@ export default function CartaDetalle() {
           {/* Columna derecha: Precios - a la altura de la imagen */}
           <div className="carta-precios">
             <div className="precios">
-              <h3>💰 Precios estimados</h3>
+              <h3 style={{ display: 'flex', alignItems: 'center' }}>
+                <PixelIcon icon={Coins} size={24} style={{ color: '#ffd700', marginRight: '8px' }} /> Precios estimados
+              </h3>
 
               {/* Precios TCGPlayer */}
               {(carta.precioNormal || carta.precioHolofoil) && (
