@@ -33,35 +33,6 @@
   --button-bg-dark: linear-gradient(135deg, #111827 0%, #374151 100%);
 }
 
-[data-theme="dark"] {
-  --bg-gradient-start: rgba(15, 23, 42, 0.95);
-  --bg-gradient-end: rgba(30, 20, 45, 0.95);
-  
-  --panel-bg: rgba(25, 30, 40, 0.95);
-  --panel-border: rgba(255, 255, 255, 0.1);
-  --sub-panel-bg: rgba(0, 0, 0, 0.3);
-  --sub-panel-border: rgba(255, 255, 255, 0.1);
-  
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --text-inverse: #111827;
-  
-  --button-bg-accent: #3b82f6;
-  --button-bg-accent-hover: #60a5fa;
-  --accent-primary: #60a5fa;
-  --accent-subtle: rgba(96, 165, 250, 0.15);
-  --accent-subtle-hover: rgba(96, 165, 250, 0.25);
-  
-  --button-bg-secondary: linear-gradient(135deg, #475569 0%, #334155 100%);
-  --button-bg-danger: #f87171;
-  --button-bg-warning: #fbbf24;
-  --button-bg-warning-hover: #f59e0b;
-  --border-warning: rgba(251, 191, 36, 0.2);
-  --button-bg-success: #34d399;
-  --button-bg-success-hover: #10b981;
-  --button-bg-dark: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-}
-
 /* Estilos globales */
 body {
   margin: 0;
