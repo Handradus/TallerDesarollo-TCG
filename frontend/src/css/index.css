@@ -106,3 +106,21 @@ html, body {
     transform: translateX(-50%) translateY(0);
   }
 }
+
+/* SweetAlert2 Dark Mode Override */
+[data-theme="dark"] .swal2-popup {
+  background-color: var(--panel-bg) !important;
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .swal2-title,
+[data-theme="dark"] .swal2-html-container,
+[data-theme="dark"] .swal2-content {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .swal2-input,
+[data-theme="dark"] .swal2-textarea,
+[data-theme="dark"] .swal2-select {
+  background-color: var(--input-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--panel-border) !important;
+}
