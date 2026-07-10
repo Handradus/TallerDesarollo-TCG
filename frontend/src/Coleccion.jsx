@@ -98,7 +98,9 @@ export default function Coleccion() {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
+            cancelButtonText: 'Cancelar',
+            background: 'var(--panel-bg)',
+            color: 'var(--text-primary)'
         });
 
         if (!confirmResult.isConfirmed) return;
@@ -124,7 +126,9 @@ export default function Coleccion() {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
+            cancelButtonText: 'Cancelar',
+            background: 'var(--panel-bg)',
+            color: 'var(--text-primary)'
         });
 
         if (!confirmResult.isConfirmed) return;
@@ -153,7 +157,9 @@ export default function Coleccion() {
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Sí, agregar',
-            cancelButtonText: 'Cancelar'
+            cancelButtonText: 'Cancelar',
+            background: 'var(--panel-bg)',
+            color: 'var(--text-primary)'
         });
         
         if (!confirmResult.isConfirmed) return;
@@ -255,6 +261,8 @@ export default function Coleccion() {
             showCancelButton: true,
             confirmButtonText: 'Guardar',
             cancelButtonText: 'Cancelar',
+            background: 'var(--panel-bg)',
+            color: 'var(--text-primary)',
             preConfirm: () => localEditForm
         }).then(async (result) => {
             if (result.isConfirmed) {
