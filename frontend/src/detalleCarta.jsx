@@ -1465,14 +1465,14 @@ export default function CartaDetalle() {
         <div className="modal-overlay" onClick={() => setMostrarModalColeccion(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
             <button className="modal-close" onClick={() => setMostrarModalColeccion(false)}>&times;</button>
-            <h2 style={{ marginTop: 0, color: '#333' }}>Agregar a Colección</h2>
+            <h2 style={{ marginTop: 0, color: 'var(--text-primary)' }}>Agregar a Colección</h2>
 
             <div style={{ margin: '20px 0' }}>
-              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Elige dónde guardar esta carta:</label>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Elige dónde guardar esta carta:</label>
               <select
                 value={selectedBinder}
                 onChange={e => setSelectedBinder(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', marginBottom: selectedBinder === 'NEW' ? '10px' : '0' }}
+                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', marginBottom: selectedBinder === 'NEW' ? '10px' : '0', backgroundColor: 'var(--input-bg, var(--panel-bg))', color: 'var(--text-primary)' }}
               >
                 <option value="">🗂️ Colección General</option>
                 {binders.map(b => (
@@ -1487,7 +1487,7 @@ export default function CartaDetalle() {
                   value={newBinderName}
                   onChange={e => setNewBinderName(e.target.value)}
                   autoFocus
-                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', boxSizing: 'border-box', backgroundColor: 'var(--input-bg, var(--panel-bg))', color: 'var(--text-primary)' }}
                 />
               )}
             </div>
@@ -1517,17 +1517,17 @@ export default function CartaDetalle() {
         <div className="modal-overlay" onClick={() => setMostrarModalDeseado(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
             <button className="modal-close" onClick={() => setMostrarModalDeseado(false)}>✕</button>
-            <h2 style={{ marginTop: 0, color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ marginTop: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <PixelIcon icon={Heart} size={24} style={{ color: '#ff6b81' }} /> Lo Quiero
             </h2>
-            <p style={{ color: '#666', marginBottom: '15px' }}>La carta se guardará como "deseada" en tu colección.</p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '15px' }}>La carta se guardará como "deseada" en tu colección.</p>
 
             <div style={{ margin: '20px 0' }}>
-              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Elige dónde guardar:</label>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Elige dónde guardar:</label>
               <select
                 value={selectedBinderDeseado}
                 onChange={e => setSelectedBinderDeseado(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', marginBottom: selectedBinderDeseado === 'NEW' ? '10px' : '0' }}
+                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', marginBottom: selectedBinderDeseado === 'NEW' ? '10px' : '0', backgroundColor: 'var(--input-bg, var(--panel-bg))', color: 'var(--text-primary)' }}
               >
                 <option value="">🗂️ Colección General</option>
                 {binders.map(b => (
@@ -1542,7 +1542,7 @@ export default function CartaDetalle() {
                   value={newBinderNameDeseado}
                   onChange={e => setNewBinderNameDeseado(e.target.value)}
                   autoFocus
-                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid var(--panel-border)', fontSize: '1rem', boxSizing: 'border-box', backgroundColor: 'var(--input-bg, var(--panel-bg))', color: 'var(--text-primary)' }}
                 />
               )}
             </div>

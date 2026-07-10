@@ -91,18 +91,60 @@ export default function Coleccion() {
         }
     }
 
-    const removeFromCollection = async (cartaId) => {
+    const removeFromCollection = async (card) => {
+        const confirmResult = await Swal.fire({
+            title: '¿Eliminar carta?',
+            text: `¿Estás seguro de que deseas eliminar ${card.nombre} de tu colección?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!confirmResult.isConfirmed) return;
+
         try {
             const token = localStorage.getItem('token');
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/collection/remove`,
-                { cartaId, binderId: selectedBinderId }, // Pass binder if scoped
+                { cartaId: card.id, binderId: selectedBinderId }, // Pass binder if scoped
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+            Swal.fire('¡Eliminada!', 'La carta ha sido eliminada.', 'success');
             fetchCollection();
         } catch (error) {
             console.error('Error removing card:', error);
+            Swal.fire('Error', 'Hubo un error al eliminar la carta.', 'error');
         }
     }
+
+    const deleteBinder = async (binder) => {
+        const confirmResult = await Swal.fire({
+            title: '¿Eliminar carpeta?',
+            text: `¿Estás seguro de que deseas eliminar la carpeta "${binder.name}"? Las cartas en su interior se moverán a tu colección general.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (!confirmResult.isConfirmed) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/collection/binders/${binder.id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            Swal.fire('¡Eliminada!', 'La carpeta ha sido eliminada.', 'success');
+            if (selectedBinderId === binder.id) {
+                setSelectedBinderId(null);
+            }
+            fetchBinders();
+            fetchCollection(); // To reflect moved cards
+        } catch (error) {
+            console.error('Error deleting binder:', error);
+            Swal.fire('Error', 'Hubo un error al eliminar la carpeta.', 'error');
+        }
+    };
 
     const addCopy = async (card) => {
         const confirmResult = await Swal.fire({
@@ -383,7 +425,7 @@ export default function Coleccion() {
                         <PixelIcon icon={Plus} size={16} />
                     </button>
                     <button
-                        onClick={(e) => { e.stopPropagation(); removeFromCollection(card.id); }}
+                        onClick={(e) => { e.stopPropagation(); removeFromCollection(card); }}
                         className="btn-danger btn-sm"
                         title="Eliminar de la colección"
                     >
@@ -413,8 +455,12 @@ export default function Coleccion() {
                             key={b.id}
                             className={selectedBinderId === b.id ? 'active' : ''}
                             onClick={() => setSelectedBinderId(b.id)}
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                         >
-                            <PixelIcon icon={Folder} size={16} /> {b.name}
+                            <span><PixelIcon icon={Folder} size={16} /> {b.name}</span>
+                            <button onClick={(e) => { e.stopPropagation(); deleteBinder(b); }} style={{background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer'}}>
+                                <PixelIcon icon={Trash} size={16} />
+                            </button>
                         </li>
                     ))}
                 </ul>

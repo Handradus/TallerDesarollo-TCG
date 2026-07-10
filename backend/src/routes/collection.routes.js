@@ -13,5 +13,6 @@ router.put('/item/:id', collectionController.updateCollectionItem);
 // Binder Routes
 router.post('/binders', collectionController.createBinder);
 router.get('/binders', collectionController.getBinders);
+router.delete('/binders/:id', collectionController.deleteBinder);
 
 module.exports = router;

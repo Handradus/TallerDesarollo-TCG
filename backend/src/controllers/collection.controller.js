@@ -188,6 +188,30 @@ const getBinders = async (req, res) => {
     }
 };
 
+const deleteBinder = async (req, res) => {
+    const userId = req.user.userId;
+    const binderId = req.params.id;
+
+    try {
+        const binder = await binderRepository.findOne({ where: { id: binderId, userId } });
+        if (!binder) {
+            return res.status(404).json({ message: 'Binder not found' });
+        }
+
+        // Move all items in this binder to the general collection (null)
+        await collectionRepository.update(
+            { customCollection: { id: binderId } },
+            { customCollection: null }
+        );
+
+        await binderRepository.remove(binder);
+        res.json({ message: 'Binder deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting binder:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 const updateCollectionItem = async (req, res) => {
     const userId = req.user.userId;
     const itemId = req.params.id;
@@ -265,5 +289,6 @@ module.exports = {
     getCollection,
     createBinder,
     getBinders,
+    deleteBinder,
     updateCollectionItem
 };
