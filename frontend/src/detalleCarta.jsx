@@ -1029,11 +1029,11 @@ export default function CartaDetalle() {
                     return p2 < p1 ? t : min;
                   }, tiendasConPrecio[0]);
                   return (
-                    <div style={{ marginTop: '15px', padding: '10px', background: 'var(--sub-panel-bg)', border: '1px solid rgba(255, 215, 0, 0.3)', borderRadius: '8px', fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-                      <strong><PixelIcon icon={Coins} size={18} style={{ color: '#ffd700', marginRight: '4px' }} /> Mejor precio en tiendas:</strong> ${tiendaMasBarata.precio} en{' '}
+                    <div style={{ marginTop: '15px', padding: '10px', background: 'var(--sub-panel-bg)', border: '1px solid var(--border-warning)', borderRadius: '8px', fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                      <strong><PixelIcon icon={Coins} size={18} style={{ color: 'var(--button-bg-warning)', marginRight: '4px' }} /> Mejor precio en tiendas:</strong> ${tiendaMasBarata.precio} en{' '}
                       <button 
                         onClick={() => handleTiendaClick(tiendaMasBarata)} 
-                        style={{ background: 'none', border: 'none', color: '#ffd700', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit', fontWeight: 'bold' }}
+                        style={{ background: 'none', border: 'none', color: 'var(--button-bg-warning)', textDecoration: 'underline', cursor: 'pointer', padding: 0, font: 'inherit', fontWeight: 'bold' }}
                       >
                         {tiendaMasBarata.nombre}
                       </button>
@@ -1043,7 +1043,7 @@ export default function CartaDetalle() {
               )}
 
               <p className="precio-disclaimer">
-                <PixelIcon icon={Lightbulb} size={16} style={{ color: '#ffd700', marginRight: '4px', filter: 'drop-shadow(0 0 2px rgba(255, 215, 0, 0.4))' }} /> Los precios son referenciales y pueden variar según la condición y disponibilidad.
+                <PixelIcon icon={Lightbulb} size={16} style={{ color: 'var(--button-bg-warning)', marginRight: '4px', filter: 'drop-shadow(0 0 2px var(--border-warning))' }} /> Los precios son referenciales y pueden variar según la condición y disponibilidad.
               </p>
             </div>
           </div>
