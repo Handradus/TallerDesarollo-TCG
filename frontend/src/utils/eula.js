@@ -133,5 +133,16 @@ export const EULA_CLAUSES = [
       "* comportamiento perjudicial para la comunidad.",
       "Estas medidas podrán adoptarse de forma temporal o permanente."
     ]
+  },
+  {
+    id: 14,
+    title: "14. Política de Cookies y Almacenamiento Local",
+    paragraphs: [
+      "La plataforma utiliza tecnologías de almacenamiento local y cookies estrictamente necesarias para el funcionamiento del servicio.",
+      "Estas tecnologías se limitan exclusivamente a:",
+      "* Mantenimiento de la sesión de autenticación del usuario.",
+      "* Persistencia de preferencias de interfaz (como la selección del modo oscuro).",
+      "La plataforma no emplea cookies de rastreo, analítica de terceros ni fines publicitarios. Al aceptar estos términos, el usuario consiente el uso de estas tecnologías esenciales."
+    ]
   }
 ];

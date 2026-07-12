@@ -333,7 +333,7 @@ export const AuthProvider = ({ children }) => {
                                 htmlFor="register-eula-checkbox"
                                 style={{ fontSize: '0.95rem', fontWeight: '600', color: '#2d3748', cursor: 'pointer' }}
                             >
-                                He leído y acepto los Términos y Condiciones de Uso
+                                He leído y acepto los Términos y Condiciones, y el uso de cookies esenciales
                             </label>
                         </div>
 
@@ -499,7 +499,7 @@ export const AuthProvider = ({ children }) => {
                                     cursor: 'pointer'
                                 }}
                             >
-                                He leído y acepto los Términos y Condiciones de Uso
+                                He leído y acepto los Términos y Condiciones, y el uso de cookies esenciales
                             </label>
                         </div>
                         
