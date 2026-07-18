@@ -188,11 +188,77 @@ router.delete('/:id/tiendas/cache', async (req, res) => {
     }
 
     await linkRepo.remove(links);
-    console.log(`🗑️ [Admin] Caché borrada para carta ID ${id}: ${links.length} links eliminados`);
+    
+    // Eliminar también el marcador diario para permitir volver a scrapear hoy
+    const DailyCardScraping = require('../entities/DailyCardScraping');
+    const markerRepo = AppDataSource.getRepository(DailyCardScraping);
+    await markerRepo.delete({ cartaId: cartaId });
+
+    console.log(`🗑️ [Admin] Caché borrada para carta ID ${id}: ${links.length} links eliminados y marcador diario reseteado.`);
     res.json({ mensaje: `Caché borrada: ${links.length} registros eliminados`, affected: links.length });
   } catch (error) {
     console.error('Error borrando caché:', error);
     res.status(500).json({ error: 'Error al borrar caché', detalle: error.message });
+  }
+});
+
+// Expirar caché de precios forzadamente (solo admin)
+router.put('/:id/tiendas/expire-cache', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'No token provided' });
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_change_me');
+  } catch (err) {
+    return res.status(403).json({ message: 'Token inválido' });
+  }
+
+  try {
+    const userRepo = AppDataSource.getRepository(User);
+    const currentUser = await userRepo.findOne({
+      where: [{ id: decoded.userId }, { email: decoded.email }]
+    });
+    
+    if (!currentUser || currentUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Solo para admins' });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: 'Error validando permisos', detalle: error.message });
+  }
+
+  const { id } = req.params;
+  try {
+    const CartaLink = require('../entities/CartaLink');
+    const linkRepo = AppDataSource.getRepository(CartaLink);
+    const cartaId = parseInt(id);
+    const links = await linkRepo.find({
+      where: { carta: { id: cartaId } }
+    });
+
+    if (links.length === 0) {
+      return res.json({ mensaje: 'No hay caché para expirar', affected: 0 });
+    }
+
+    // Setear fechaGuardado a 30 días en el pasado
+    const fechaPasada = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    links.forEach(l => {
+      l.fechaGuardado = fechaPasada;
+    });
+
+    await linkRepo.save(links);
+    
+    // Eliminar el marcador diario
+    const DailyCardScraping = require('../entities/DailyCardScraping');
+    const markerRepo = AppDataSource.getRepository(DailyCardScraping);
+    await markerRepo.delete({ cartaId: cartaId });
+
+    console.log(`⏳ [Admin] Caché expirada para carta ID ${id}: ${links.length} links caducados y marcador reseteado.`);
+    res.json({ mensaje: `Caché expirada: ${links.length} registros caducados`, affected: links.length });
+  } catch (error) {
+    console.error('Error expirando caché:', error);
+    res.status(500).json({ error: 'Error al expirar caché', detalle: error.message });
   }
 });
 

@@ -148,6 +148,33 @@ export default function CartaDetalle() {
     }
   };
 
+  const expirarCacheTiendas = async () => {
+    const confirmResult = await Swal.fire({
+      title: '¿Expirar caché?',
+      text: '¿Forzar que los precios guardados caduquen? Esto permitirá probar la reutilización de URL la próxima vez que actualices.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, expirar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.put(`${apiUrl}/api/cartas/${id}/tiendas/expire-cache`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      Swal.fire('¡Éxito!', `✅ ${res.data.mensaje}`, 'success');
+      // Forzar re-fetch de tiendas
+      setHasFetchedTiendas(false);
+      setCarta(prev => ({ ...prev, tiendasDisponibles: undefined }));
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Error', 'No se pudo expirar el caché', 'error');
+    }
+  };
+
   const agregarDeseado = () => abrirModalDeseado();
 
   const confirmarDeseado = async () => {
@@ -1130,7 +1157,27 @@ export default function CartaDetalle() {
                         fontWeight: 'bold'
                       }}
                     >
-                      🗑️ Borrar caché
+                      🧹 Limpiar Caché BD
+                    </button>
+                  )}
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={expirarCacheTiendas}
+                      title="Expirar caché para forzar reutilización de URLs"
+                      style={{
+                        marginLeft: '8px',
+                        padding: '4px 10px',
+                        fontSize: '0.75rem',
+                        backgroundColor: '#f39c12',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        verticalAlign: 'middle',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      ⏳ Expirar Caché
                     </button>
                   )}
                 </h3>
