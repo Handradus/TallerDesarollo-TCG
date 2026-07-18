@@ -170,7 +170,8 @@ async function obtenerTiendas(req, res) {
       const promesasVerificacion = tiendasPendientes.map(async (tienda) => {
         console.log(`📦 Procesando tienda: ${tienda.nombre} (${tienda.tipoBusqueda})`);
         try {
-          return await verificarYBuscarLink(carta, tienda);
+          const linkExistente = linksStaleExistentes.find(l => l.tienda.id === tienda.id) || linksRecientes.find(l => l.tienda.id === tienda.id);
+          return await verificarYBuscarLink(carta, tienda, linkExistente?.url);
         } catch (err) {
           console.warn(`⚠️ Falló verificación en ${tienda.nombre}:`, err.message);
           return null;
@@ -350,7 +351,8 @@ async function refrescarTiendas(req, res) {
     const promesasVerificacion = tiendas.map(async (tienda) => {
       console.log(`📦 Refrescando tienda: ${tienda.nombre} (${tienda.tipoBusqueda})`);
       try {
-        return await verificarYBuscarLink(carta, tienda);
+        const linkExistente = linksExistentes.find(l => l.tienda.id === tienda.id);
+        return await verificarYBuscarLink(carta, tienda, linkExistente?.url);
       } catch (err) {
         console.warn(`⚠️ Falló refresh en ${tienda.nombre}:`, err.message);
         return null;
@@ -467,7 +469,8 @@ async function obtenerTiendasAdmin(req, res) {
     const promesasVerificacion = tiendas.map(async (tienda) => {
       console.log(`📦 [ADMIN] Procesando tienda: ${tienda.nombre} (${tienda.tipoBusqueda})`);
       try {
-        return await verificarYBuscarLink(carta, tienda);
+        const linkExistente = linksExistentes.find(l => l.tienda.id === tienda.id);
+        return await verificarYBuscarLink(carta, tienda, linkExistente?.url);
       } catch (err) {
         console.warn(`⚠️ [ADMIN] Falló verificación en ${tienda.nombre}:`, err.message);
         return null;

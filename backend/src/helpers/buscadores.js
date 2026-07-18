@@ -53,6 +53,7 @@ async function httpGet(url, config = {}) {
     if (usarProxy && defaultTransport && !config.httpAgent && !config.httpsAgent && typeof config.proxy === 'undefined') {
       Object.assign(mergedConfig, defaultTransport);
     } else if (!usarProxy) {
+      console.log(`🌐 [Direct IP] Conectando sin proxy a: ${url}`);
       mergedConfig.proxy = false;
     }
 
@@ -1137,11 +1138,88 @@ async function buscarEnTiendaJumpseller(tienda, carta) {
   }
 }
 
+async function scrapearPrecioJumpseller(urlCompleta, nombreTienda) {
+  try {
+    const resProd = await httpGet(urlCompleta, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept': 'text/html',
+      }
+    });
+    
+    const $prod = cheerio.load(resProd.data);
+    
+    // Selectores de precio típicos de Jumpseller
+    const selectoresPrecio = [
+      '.product-form-price',
+      '.form-price',
+      '.current-price',
+      '.product-price',
+      '.price',
+      '#product-price'
+    ];
+    
+    let precio = null;
+    for (const selector of selectoresPrecio) {
+      const elPrecio = $prod(selector).first();
+      if (elPrecio.length > 0) {
+        const textoPrecio = elPrecio.text().trim();
+        // Si el selector devolvió múltiples precios (por ejemplo, original y descuento), limpiarPrecio los limpiará
+        const precioLimpio = limpiarPrecio(textoPrecio);
+        if (precioLimpio) {
+          precio = precioLimpio;
+          break;
+        }
+      }
+    }
+    
+    // Si no se encontró mediante selectores específicos, buscar en todo el HTML
+    if (!precio) {
+      console.log(`⚠️ Jumpseller no encontró precio con selectores específicos en ${nombreTienda}, buscando genérico`);
+      // Buscar cualquier texto que parezca precio en la zona del formulario
+      const textoForm = $prod('form[action*="/cart/add"]').text();
+      if (textoForm) {
+        precio = limpiarPrecio(textoForm);
+      }
+    }
+    
+    // Verificar stock de Jumpseller de forma precisa
+    let disponible = false;
+    
+    // Buscar el botón principal de añadir al carro del producto actual
+    const btnAdd = $prod('form[action*="/cart/add"] input[type="submit"], form[action*="/cart/add"] button[type="submit"], .adc, #button-cart');
+    
+    if (btnAdd.length > 0) {
+      const btnText = btnAdd.first().text().toLowerCase() || btnAdd.first().attr('value')?.toLowerCase() || '';
+      const isDisabled = btnAdd.first().attr('disabled') !== undefined;
+      
+      if (!isDisabled && !btnText.includes('agotado') && !btnText.includes('sin stock') && !btnText.includes('sold out') && !btnText.includes('no disponible')) {
+        disponible = true;
+      }
+    } else {
+      // Fallback seguro si no se encuentra el botón
+      const mainInfoText = $prod('.product-form, #product-actions, .product-form-price').text().toLowerCase();
+      if (!mainInfoText.includes('agotado') && !mainInfoText.includes('sin stock')) {
+        disponible = true;
+      }
+    }
+    
+    return {
+      precio,
+      disponible
+    };
+  } catch(error) {
+    console.error(`❌ Error scrapeando precio Jumpseller en ${nombreTienda}:`, error.message);
+    return null;
+  }
+}
+
 module.exports = {
   buscarEnTiendaShopify,
   buscarEnTiendaLevelUp,
   buscarEnTiendaJumpseller,
   scrapearPrecioShopify,
   scrapearPrecioLevelUp,
+  scrapearPrecioJumpseller,
   limpiarPrecio
 };

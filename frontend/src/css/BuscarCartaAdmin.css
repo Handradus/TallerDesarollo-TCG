@@ -222,6 +222,7 @@
   padding: 0.5rem 0;
   border-bottom: 1px solid #eee;
   font-size: 1rem;
+  color: var(--text-primary);
 }
 
 .cartas-nuevas li:last-child, .cartas-actualizadas li:last-child, .cartas-errores li:last-child {

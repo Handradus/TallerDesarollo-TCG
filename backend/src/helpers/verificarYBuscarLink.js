@@ -1,9 +1,9 @@
 const { AppDataSource } = require('../data-source');
 const CartaLink = require('../entities/CartaLink');
 const HistorialPrecioTienda = require('../entities/HistorialPrecioTienda');
-const { buscarEnTiendaShopify, buscarEnTiendaLevelUp, buscarEnTiendaJumpseller } = require('./buscadores');
+const { buscarEnTiendaShopify, buscarEnTiendaLevelUp, buscarEnTiendaJumpseller, scrapearPrecioShopify, scrapearPrecioLevelUp, scrapearPrecioJumpseller } = require('./buscadores');
 
-async function verificarYBuscarLink(carta, tienda) {
+async function verificarYBuscarLink(carta, tienda, urlExistente = null) {
   const linkRepo = AppDataSource.getRepository(CartaLink);
   const historialPrecioRepo = AppDataSource.getRepository(HistorialPrecioTienda);
 
@@ -22,29 +22,55 @@ async function verificarYBuscarLink(carta, tienda) {
   };
   
   console.log(`🔍 [ADMIN DEBUG] Iniciando búsqueda: "${carta.nombre}" en ${tienda.nombre}`);
-  console.log(`🔍 [ADMIN DEBUG] Configuración tienda:`, {
-    id: tienda.id,
-    nombre: tienda.nombre,
-    tipoBusqueda: tienda.tipoBusqueda,
-    urlBase: tienda.urlBase,
-    urlBusqueda: tienda.urlBusqueda
-  });
-
+  
   let resultado = null;
   const tiempoInicio = Date.now();
 
-  if (tienda.tipoBusqueda === 'shopify') {
-    console.log(`🛒 [ADMIN DEBUG] Llamando buscarEnTiendaShopify...`);
-    resultado = await buscarEnTiendaShopify(tienda, carta);
-  } else if (tienda.tipoBusqueda === 'levelup') {
-    console.log(`🎮 [ADMIN DEBUG] Llamando buscarEnTiendaLevelUp...`);
-    resultado = await buscarEnTiendaLevelUp(tienda, carta);
-  } else if (tienda.tipoBusqueda === 'jumpseller') {
-    console.log(`🛍️ [ADMIN DEBUG] Llamando buscarEnTiendaJumpseller...`);
-    resultado = await buscarEnTiendaJumpseller(tienda, carta);
-  } else {
-    console.log(`❌ [${tienda.nombre}] Tipo de búsqueda desconocido: ${tienda.tipoBusqueda}`);
-    return null;
+  // INTENTO DE REUSO DE URL (FAST-PATH)
+  if (urlExistente) {
+    console.log(`♻️ Intentando reusar URL existente para ${tienda.nombre}: ${urlExistente}`);
+    try {
+      let infoCosto = null;
+      if (tienda.tipoBusqueda === 'shopify') {
+        infoCosto = await scrapearPrecioShopify(urlExistente, tienda.nombre);
+      } else if (tienda.tipoBusqueda === 'levelup') {
+        infoCosto = await scrapearPrecioLevelUp(urlExistente);
+      } else if (tienda.tipoBusqueda === 'jumpseller') {
+        infoCosto = await scrapearPrecioJumpseller(urlExistente, tienda.nombre);
+      }
+
+      if (infoCosto && infoCosto.disponible) {
+        resultado = {
+          url: urlExistente,
+          precio: infoCosto.precio,
+          disponible: infoCosto.disponible,
+          verificada: true,
+          tipoProducto: 'reuso-cache'
+        };
+        console.log(`✅ Reuso exitoso de URL existente para ${tienda.nombre} (${Date.now() - tiempoInicio}ms)`);
+      } else {
+        console.log(`⚠️ URL existente agotada o falló. Iniciando búsqueda completa...`);
+      }
+    } catch (e) {
+      console.log(`⚠️ Error al reusar URL: ${e.message}. Iniciando búsqueda completa...`);
+    }
+  }
+
+  // SI NO HAY RESULTADO AÚN, BUSCAMOS DESDE CERO
+  if (!resultado) {
+    if (tienda.tipoBusqueda === 'shopify') {
+      console.log(`🛒 [ADMIN DEBUG] Llamando buscarEnTiendaShopify...`);
+      resultado = await buscarEnTiendaShopify(tienda, carta);
+    } else if (tienda.tipoBusqueda === 'levelup') {
+      console.log(`🎮 [ADMIN DEBUG] Llamando buscarEnTiendaLevelUp...`);
+      resultado = await buscarEnTiendaLevelUp(tienda, carta);
+    } else if (tienda.tipoBusqueda === 'jumpseller') {
+      console.log(`🛍️ [ADMIN DEBUG] Llamando buscarEnTiendaJumpseller...`);
+      resultado = await buscarEnTiendaJumpseller(tienda, carta);
+    } else {
+      console.log(`❌ [${tienda.nombre}] Tipo de búsqueda desconocido: ${tienda.tipoBusqueda}`);
+      return null;
+    }
   }
 
   const tiempoTotal = Date.now() - tiempoInicio;
