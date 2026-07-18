@@ -51,6 +51,7 @@ async function httpGet(url, config = {}) {
     };
 
     if (usarProxy && defaultTransport && !config.httpAgent && !config.httpsAgent && typeof config.proxy === 'undefined') {
+      console.log(`📡 [Proxy] Conectando a través de DataImpulse a: ${url}`);
       Object.assign(mergedConfig, defaultTransport);
     } else if (!usarProxy) {
       console.log(`🌐 [Direct IP] Conectando sin proxy a: ${url}`);
