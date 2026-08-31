@@ -1,6 +1,4 @@
-<img width="1629" height="832" alt="search_pc" src="https://github.com/user-attachments/assets/32448b8e-7828-4f6d-b441-8cfe54e42f4f" />
-<img width="1196" height="924" alt="main_pc" src="https://github.com/user-attachments/assets/eb5c5aad-02c1-4c4c-8d28-507b1115d594" />
-<img width="1870" height="927" alt="Main variante dark" src="https://github.com/user-attachments/assets/22ad5f39-6cc1-435c-bb71-fd284c8fc773" />
+
 # Taller Desarrollo TCG - Pokémon Marketplace
 
 Plataforma de compra, venta e intercambio de cartas Pokémon, con funcionalidades de tiempo real y administración.
@@ -99,3 +97,9 @@ npm run dev
 ```
 
 Abra su navegador en `http://localhost:5173`.
+
+## Imágenes de Muestra 
+
+<img width="1629" height="832" alt="search_pc" src="https://github.com/user-attachments/assets/32448b8e-7828-4f6d-b441-8cfe54e42f4f" />
+<img width="1196" height="924" alt="main_pc" src="https://github.com/user-attachments/assets/eb5c5aad-02c1-4c4c-8d28-507b1115d594" />
+<img width="1870" height="927" alt="Main variante dark" src="https://github.com/user-attachments/assets/22ad5f39-6cc1-435c-bb71-fd284c8fc773" />
